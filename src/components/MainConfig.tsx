@@ -60,13 +60,14 @@ export function MainConfig({
         <div className="absolute bottom-4 right-4 text-slate-200 text-6xl font-display font-extrabold select-none pointer-events-none opacity-20 font-serif">見</div>
         <div className="inline-flex items-center gap-1 bg-amber-100/80 text-amber-800 border border-amber-200/60 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm animate-pulse">
           <Sparkles className="w-3.5 h-3.5" />
-          연상 연합 암기 특허 기법 탑재
+          지루한 암기 없는 스토리텔링 학습법
         </div>
         <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-slate-950 tracking-tight leading-tight">
-          망각 없는 일본어 한자 & 단어 연상 암기
+          한 번 보면 평생 기억하는 일본어 한자 연상 암기
         </h2>
         <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto px-4">
-          무작정 쓰면서 지치지 마세요. 우리 뇌에 가장 친숙한 한글 <span className="font-semibold text-amber-600 underline">연상 연합(Mnemonic Story)</span>과 JLPT 기출 풀이로 딱 한 번만 보고도 잊지 않게 뇌에 확실히 각인시킵니다.
+          <span className="block">무작정 쓰면서 외우지 마세요. 가장 친숙한 스토리텔링 연상법과</span>
+          <span className="block">JLPT 기출 풀이로 일본어 실력을 확실하게 완성합니다.</span>
         </p>
       </div>
 
@@ -92,8 +93,8 @@ export function MainConfig({
                     key={num}
                     onClick={() => setKanjiCount(num)}
                     className={`py-3 px-2 rounded-xl border text-sm font-semibold transition-all ${kanjiCount === num
-                        ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10"
-                        : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
+                      ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10"
+                      : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
                       }`}
                   >
                     {num}개
@@ -120,8 +121,8 @@ export function MainConfig({
                     key={lvl.val}
                     onClick={() => setDifficulty(lvl.val)}
                     className={`py-2 px-1 text-xs font-semibold rounded-lg border transition-all ${difficulty === lvl.val
-                        ? "bg-amber-600 border-amber-600 text-white shadow-sm"
-                        : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
+                      ? "bg-amber-600 border-amber-600 text-white shadow-sm"
+                      : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
                       }`}
                   >
                     {lvl.label}
@@ -192,7 +193,8 @@ export function MainConfig({
               JLPT 기출문제 풀기
             </h4>
             <p className="text-xs text-slate-300 leading-relaxed">
-              실제 시험 기법에 맞추어진 단어 표기, 요미가나, 한자 문맥 빈칸 완성까지 엄선된 문제를 격파하여 실력을 검증해 보세요.
+              단어 표기부터 요미가나 문맥 빈칸 완성까지
+              엄선된 JLPT 기출 문제로 당신의 진짜 실력을 검증해 보세요.
             </p>
 
             {/* JLPT level selectors */}
@@ -206,8 +208,8 @@ export function MainConfig({
                     key={lvl}
                     onClick={() => setSelectedJlptLevel(lvl)}
                     className={`py-2 px-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${selectedJlptLevel === lvl
-                        ? "bg-amber-500 border-amber-500 text-slate-950 font-black shadow"
-                        : "bg-slate-800 border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-750"
+                      ? "bg-amber-500 border-amber-500 text-slate-950 font-black shadow"
+                      : "bg-slate-800 border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-750"
                       }`}
                   >
                     {lvl}
@@ -227,8 +229,8 @@ export function MainConfig({
                     key={num}
                     onClick={() => setJlptCount(num)}
                     className={`py-1.5 px-0.5 rounded-lg border text-xs font-bold transition-all cursor-pointer ${jlptCount === num
-                        ? "bg-amber-500 border-amber-500 text-slate-950 font-black shadow"
-                        : "bg-slate-800 border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-750"
+                      ? "bg-amber-500 border-amber-500 text-slate-950 font-black shadow"
+                      : "bg-slate-800 border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-750"
                       }`}
                   >
                     {num}개
@@ -258,7 +260,7 @@ export function MainConfig({
               )}
             </button>
             <div className="text-[10px] text-slate-400 text-center">
-              * 출제 확률이 높은 테마별 한자 어휘 기출 단어
+              * 실제 시험 유형 완벽 반영
             </div>
           </div>
         </div>
