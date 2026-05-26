@@ -115,7 +115,7 @@ export function JlptTest({
 
               <div className="space-y-1">
                 <p className="text-base sm:text-lg font-bold text-slate-800">
-                  Q. {jlptQuestions[currentJlptIndex].questionText}
+                  Q. {jlptQuestions[currentJlptIndex].questionText.replace(/__/g, "")}
                 </p>
                 <p className="text-xs text-slate-400">
                   * 제시된 한자어 혹은 밑줄 단어에 어울리는 최적의 독음, 표기, 또는 한국어 뜻을 보기에서 하나만 선택하십시오.
@@ -306,7 +306,7 @@ export function JlptTest({
 
                   <div className="space-y-1">
                     <h5 className="text-sm font-bold text-slate-800">
-                      Q. {q.questionText}
+                      Q. {q.questionText.replace(/__/g, "")}
                     </h5>
                   </div>
 
