@@ -1,13 +1,13 @@
 import { motion } from "motion/react";
-import { 
-  BookOpen, 
-  Zap, 
-  ArrowRight, 
-  RefreshCw, 
-  Award, 
-  CheckCircle2, 
-  AlertCircle, 
-  Sparkles 
+import {
+  BookOpen,
+  Zap,
+  ArrowRight,
+  RefreshCw,
+  Award,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles
 } from "lucide-react";
 
 interface MainConfigProps {
@@ -72,7 +72,7 @@ export function MainConfig({
 
       {/* Course Options Selection Panel */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-        
+
         {/* Options Panel Card */}
         <div className="md:col-span-3 bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 sm:p-6 space-y-5">
           <h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
@@ -87,15 +87,14 @@ export function MainConfig({
                 공부할 한자 개수 선택
               </label>
               <div className="grid grid-cols-4 gap-2">
-                {[5, 10, 20, 30].map((num) => (
+                {[5, 10, 15, 20].map((num) => (
                   <button
                     key={num}
                     onClick={() => setKanjiCount(num)}
-                    className={`py-3 px-2 rounded-xl border text-sm font-semibold transition-all ${
-                      kanjiCount === num
+                    className={`py-3 px-2 rounded-xl border text-sm font-semibold transition-all ${kanjiCount === num
                         ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10"
                         : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
-                    }`}
+                      }`}
                   >
                     {num}개
                   </button>
@@ -120,11 +119,10 @@ export function MainConfig({
                   <button
                     key={lvl.val}
                     onClick={() => setDifficulty(lvl.val)}
-                    className={`py-2 px-1 text-xs font-semibold rounded-lg border transition-all ${
-                      difficulty === lvl.val
+                    className={`py-2 px-1 text-xs font-semibold rounded-lg border transition-all ${difficulty === lvl.val
                         ? "bg-amber-600 border-amber-600 text-white shadow-sm"
                         : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
-                    }`}
+                      }`}
                   >
                     {lvl.label}
                   </button>
@@ -142,7 +140,7 @@ export function MainConfig({
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   <span>외운 한자: <strong className="text-slate-900 font-bold">{masteredKanji.length}개</strong> (공부 시작 시 자동 제외)</span>
                 </span>
-                <button 
+                <button
                   onClick={handleResetMastery}
                   className="text-[10px] text-red-500 hover:text-red-600 font-bold underline bg-white px-2.5 py-1 border border-slate-200 rounded-md shadow-xs shrink-0 cursor-pointer"
                 >
@@ -207,11 +205,10 @@ export function MainConfig({
                   <button
                     key={lvl}
                     onClick={() => setSelectedJlptLevel(lvl)}
-                    className={`py-2 px-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
-                      selectedJlptLevel === lvl
+                    className={`py-2 px-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${selectedJlptLevel === lvl
                         ? "bg-amber-500 border-amber-500 text-slate-950 font-black shadow"
                         : "bg-slate-800 border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-750"
-                    }`}
+                      }`}
                   >
                     {lvl}
                   </button>
@@ -229,11 +226,10 @@ export function MainConfig({
                   <button
                     key={num}
                     onClick={() => setJlptCount(num)}
-                    className={`py-1.5 px-0.5 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
-                      jlptCount === num
+                    className={`py-1.5 px-0.5 rounded-lg border text-xs font-bold transition-all cursor-pointer ${jlptCount === num
                         ? "bg-amber-500 border-amber-500 text-slate-950 font-black shadow"
                         : "bg-slate-800 border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-750"
-                    }`}
+                      }`}
                   >
                     {num}개
                   </button>
