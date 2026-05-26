@@ -44,7 +44,10 @@ export function useSpeech() {
       // 2. Cancel current speech immediately
       window.speechSynthesis.cancel();
       
-      const utterance = new SpeechSynthesisUtterance(text);
+      // Clean periods from readings (e.g. こお.る -> こおる) to avoid pauses in speech
+      const cleanedText = text.replace(/\./g, "");
+      
+      const utterance = new SpeechSynthesisUtterance(cleanedText);
       utterance.lang = "ja-JP";
       utterance.rate = 0.85; // Slightly slower for crisp clear listening
       

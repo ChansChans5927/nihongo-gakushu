@@ -250,7 +250,7 @@ export function KanjiStudy({
                     </span>
                     <button
                       onClick={() => speakJapanese(item.word)}
-                      className="p-1.5 rounded-lg border border-slate-200 bg-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-slate-100 text-slate-500 cursor-pointer flex items-center justify-center shrink-0"
+                      className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-all cursor-pointer flex items-center justify-center shrink-0"
                       title="어휘 발음 듣기"
                     >
                       <Volume2 className="w-3.5 h-3.5" />
