@@ -386,7 +386,6 @@ export default function App() {
       {/* Elegant minimalist bottom footer */}
       <footer className="bg-white border-t border-slate-200/80 p-4 text-center text-xs text-slate-400 space-y-1">
         <p className="font-medium">일본어 한자 & 단어 마스터 © {new Date().getFullYear()} Japanese Kanji & Word Workspace</p>
-        <p className="text-[10px] text-slate-300 font-mono">Powered by Google Gemini 3.5 & AI Studio Build Core</p>
       </footer>
     </div>
   );
