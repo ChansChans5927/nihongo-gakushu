@@ -87,14 +87,21 @@ export function KanjiStudy({
               </div>
               
               <div className="my-auto py-4">
-                <div className="text-7xl sm:text-8xl font-serif font-semibold text-slate-900 leading-none select-none select-all relative group">
+                <div 
+                  onClick={() => speakJapanese(currentKanji.kanji)}
+                  className="text-7xl sm:text-8xl font-serif font-semibold text-slate-900 leading-none select-none select-all relative group cursor-pointer hover:text-amber-600 transition-colors"
+                  title="클릭하여 발음 듣기"
+                >
                   {currentKanji.kanji}
                   <button 
-                    onClick={() => speakJapanese(currentKanji.kanji)}
-                    className="absolute -top-1 -right-4 p-1 rounded-full bg-white shadow-sm border border-slate-200/50 hover:bg-slate-50 text-slate-500 hover:text-amber-600 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      speakJapanese(currentKanji.kanji);
+                    }}
+                    className="absolute -top-2 -right-6 p-1.5 rounded-full bg-white shadow-sm border border-slate-200/50 hover:bg-slate-50 text-slate-500 hover:text-amber-600 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 cursor-pointer flex items-center justify-center"
                     title="한자 발음 듣기"
                   >
-                    <Volume2 className="w-3.5 h-3.5" />
+                    <Volume2 className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="mt-4 px-3 py-1 bg-slate-900 text-white rounded-full text-base font-bold">
@@ -181,16 +188,17 @@ export function KanjiStudy({
                     <span className="text-[10px] text-slate-400 font-mono">(音)</span>
                   </div>
                   <div className="col-span-9 p-2.5 bg-white space-y-1">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-900 font-mono">{currentKanji.onyomi}</span>
-                      <span className="text-[10px] bg-amber-100 text-amber-900 px-1 py-0.2 rounded font-bold font-mono">
+                      <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-bold font-mono">
                         {currentKanji.onyomiKorean}
                       </span>
                       <button 
                         onClick={() => speakJapanese(currentKanji.onyomi)}
-                        className="p-0.5 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-500 hover:text-slate-700 transition-all cursor-pointer flex items-center justify-center shrink-0"
+                        title="음독 발음 듣기"
                       >
-                        <Volume2 className="w-3.5 h-3.5" />
+                        <Volume2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -203,16 +211,17 @@ export function KanjiStudy({
                     <span className="text-[10px] text-slate-400 font-mono">(訓)</span>
                   </div>
                   <div className="col-span-9 p-2.5 bg-white space-y-1">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-900 font-mono">{currentKanji.hunyomi}</span>
-                      <span className="text-[10px] bg-rose-100 text-rose-900 px-1 py-0.2 rounded font-bold font-mono">
+                      <span className="text-[10px] bg-rose-100 text-rose-900 px-1.5 py-0.5 rounded font-bold font-mono">
                         {currentKanji.hunyomiKorean}
                       </span>
                       <button 
                         onClick={() => speakJapanese(currentKanji.hunyomi)}
-                        className="p-0.5 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-500 hover:text-slate-700 transition-all cursor-pointer flex items-center justify-center shrink-0"
+                        title="훈독 발음 듣기"
                       >
-                        <Volume2 className="w-3.5 h-3.5" />
+                        <Volume2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -235,16 +244,16 @@ export function KanjiStudy({
                   key={idx}
                   className="bg-slate-50 hover:bg-amber-50/20 border border-slate-100 hover:border-amber-100 rounded-xl p-3 space-y-1 text-xs transition-colors relative group"
                 >
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center gap-2">
                     <span className="font-bold text-slate-900 text-sm tracking-wide font-mono select-all">
                       {item.word}
                     </span>
                     <button
                       onClick={() => speakJapanese(item.word)}
-                      className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-200/50 text-slate-400 cursor-pointer"
+                      className="p-1.5 rounded-lg border border-slate-200 bg-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-slate-100 text-slate-500 cursor-pointer flex items-center justify-center shrink-0"
                       title="어휘 발음 듣기"
                     >
-                      <Volume2 className="w-3" />
+                      <Volume2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   <div className="flex items-center gap-1 text-[11px] text-slate-400 font-mono">
@@ -265,16 +274,16 @@ export function KanjiStudy({
             <div className="absolute -bottom-4 -right-4 text-slate-800 text-7xl font-sans font-bold select-none pointer-events-none opacity-25">
               文
             </div>
-            <div className="flex items-center justify-between text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-              <span>연상 학습 필수 예문 (例文)</span>
-              <button
-                onClick={() => speakJapanese(currentKanji.exampleSentence.japanese)}
-                className="flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white py-1 px-2 rounded-lg transition-colors cursor-pointer text-[10px] font-medium"
-              >
-                <Volume2 className="w-3.5 h-3.5" />
-                <span>예문 연속 읽기</span>
-              </button>
-            </div>
+            <div className="flex items-center justify-between text-[10px] font-bold text-amber-400 uppercase tracking-wider gap-2">
+                  <span>연상 학습 필수 예문 (例文)</span>
+                  <button
+                    onClick={() => speakJapanese(currentKanji.exampleSentence.japanese)}
+                    className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white py-1.5 px-3 rounded-lg transition-colors cursor-pointer text-xs font-semibold shrink-0"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    <span>예문 연속 읽기</span>
+                  </button>
+                </div>
 
             <div className="space-y-1.5">
               <p className="text-base sm:text-lg font-bold tracking-wide text-white select-all">

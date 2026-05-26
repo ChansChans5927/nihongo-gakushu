@@ -71,8 +71,8 @@ export function QuizTest({
         </div>
 
         {/* Big Display character for visual hints */}
-        <div className="bg-slate-50 border border-slate-100 rounded-2xl py-8 flex flex-col items-center justify-center space-y-2">
-          <div className="text-6xl font-serif font-extrabold text-slate-800 select-none">
+        <div className="bg-slate-50 border border-slate-100 rounded-2xl py-4 sm:py-8 flex flex-col items-center justify-center space-y-2">
+          <div className="text-5xl sm:text-6xl font-serif font-extrabold text-slate-800 select-none">
             {currentQuestion.type === 'kanji_match' ? (
               <span className="text-amber-500 font-sans tracking-widest animate-pulse">?</span>
             ) : (
@@ -96,7 +96,7 @@ export function QuizTest({
                 key={choiceIdx}
                 onClick={() => handleSelectAnswer(choiceIdx)}
                 className={`w-full text-left rounded-xl border font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${
-                  isKanjiMatch ? "py-5 px-6" : "p-4 text-sm"
+                  isKanjiMatch ? "py-3.5 px-4 sm:py-5 sm:px-6" : "p-3 sm:p-4 text-sm"
                 } ${
                   isSelected
                     ? "bg-blue-50 border-blue-400 text-blue-900 ring-2 ring-blue-400/20 shadow-sm"
@@ -111,7 +111,7 @@ export function QuizTest({
                   </span>
                   <span className={`leading-none ${
                     isKanjiMatch 
-                      ? "text-3xl sm:text-4xl font-serif font-extrabold text-slate-900 tracking-normal pl-2" 
+                      ? "text-2xl sm:text-4xl font-serif font-extrabold text-slate-900 tracking-normal pl-2" 
                       : "text-sm sm:text-base font-semibold"
                   }`}>
                     {choice}

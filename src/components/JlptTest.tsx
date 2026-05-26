@@ -72,7 +72,7 @@ export function JlptTest({
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-5 sm:p-6 space-y-6">
+          <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-sm p-4 sm:p-6 space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <span className="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold uppercase rounded-md tracking-wider">
                 기출 문항 #{currentJlptIndex + 1}
@@ -97,7 +97,7 @@ export function JlptTest({
                 const q = jlptQuestions[currentJlptIndex];
                 const parts = q.questionSentence.split("__");
                 return (
-                  <div className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-wide font-sans leading-relaxed text-center py-6 bg-slate-50 border border-slate-100 rounded-2xl select-all">
+                  <div className="text-lg sm:text-2xl font-semibold text-slate-900 tracking-wide font-sans leading-relaxed text-center py-4 sm:py-6 px-3 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-2xl select-all">
                     {parts.map((p, idx) => idx % 2 === 1 ? (
                       p.toLowerCase() === "blank" ? (
                         <span key={idx} className="inline-flex items-center bg-amber-50 border-2 border-dashed border-amber-400 px-3 py-1 rounded-xl text-xs tracking-widest font-bold text-amber-800 mx-1 animate-pulse select-none">
@@ -131,7 +131,7 @@ export function JlptTest({
                   <button
                     key={choiceIdx}
                     onClick={() => handleSelectJlptAnswer(choiceIdx)}
-                    className={`w-full text-left p-4.5 rounded-xl border font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${
+                    className={`w-full text-left p-3.5 sm:p-4.5 rounded-xl border font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${
                       isSelected
                         ? "bg-amber-50 border-amber-400 text-amber-900 ring-2 ring-amber-400/20 shadow-sm"
                         : "bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 shadow-xs"
@@ -201,7 +201,7 @@ export function JlptTest({
             const ratio = Math.round((correctCount / jlptQuestions.length) * 100);
 
             return (
-              <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm text-center space-y-4 relative">
+              <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm text-center space-y-4 relative">
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-rose-400 to-indigo-500" />
                 
                 <div className="mx-auto w-24 h-24 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center relative">
@@ -260,7 +260,7 @@ export function JlptTest({
               return (
                 <div
                   key={q.id}
-                  className={`bg-white border rounded-2xl overflow-hidden p-5 space-y-4 transition-all ${
+                  className={`bg-white border rounded-2xl overflow-hidden p-4 sm:p-5 space-y-4 transition-all ${
                     isCorrect 
                       ? "border-emerald-200/60 shadow-xs" 
                       : "border-red-200 shadow-sm"
@@ -274,7 +274,7 @@ export function JlptTest({
                     {isCorrect ? (
                       <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded font-bold">
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        정답 완료
+                        정답
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 bg-red-50 border border-red-200 text-red-800 px-2 py-0.5 rounded font-bold">
@@ -334,7 +334,7 @@ export function JlptTest({
                   </div>
 
                   {/* Comprehensive analysis explanation panel */}
-                  <div className="bg-slate-50 border-l-4 border-amber-500 rounded-r-xl p-4 space-y-2 text-xs leading-relaxed">
+                  <div className="bg-slate-50 border-l-4 border-amber-500 rounded-r-xl p-3 sm:p-4 space-y-2 text-xs leading-relaxed">
                     <div className="flex items-center gap-1 text-slate-900 font-bold">
                       <Sparkles className="w-4 h-4 text-amber-500" />
                       <span>기출 분석 핵심 해설</span>

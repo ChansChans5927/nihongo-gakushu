@@ -263,30 +263,43 @@ export default function App() {
               <BookMarked className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-base sm:text-lg font-display font-bold text-slate-900 tracking-tight">일본어 한자 & 단어 마스터</h1>
+              <h1 className="text-sm sm:text-lg font-display font-bold text-slate-900 tracking-tight">
+                <span className="hidden sm:inline">일본어 한자 & 단어 마스터</span>
+                <span className="inline sm:hidden">일본어 한자 & 단어</span>
+              </h1>
               <p className="text-[10px] text-slate-500 hidden sm:block font-mono tracking-wider">Mnemonic Associations & JLPT Solver</p>
             </div>
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {(phase === 'studying' || isJlptQuizActive) && (
-              <span className="text-xs bg-amber-50 border border-amber-200 text-amber-800 px-2.5 py-1 rounded-full font-mono font-medium">
-                {isJlptQuizActive ? `JLPT ${selectedJlptLevel} 테스트: ${currentJlptIndex + 1} / ${jlptQuestions.length}` : `공부 단계: ${currentKanjiIndex + 1} / ${kanjiList.length}`}
-              </span>
+              <>
+                <span className="hidden sm:inline text-xs bg-amber-50 border border-amber-200 text-amber-800 px-2.5 py-1 rounded-full font-mono font-medium">
+                  {isJlptQuizActive ? `JLPT ${selectedJlptLevel} 테스트: ${currentJlptIndex + 1} / ${jlptQuestions.length}` : `공부 단계: ${currentKanjiIndex + 1} / ${kanjiList.length}`}
+                </span>
+                <span className="inline sm:hidden text-[10px] bg-amber-50 border border-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-mono font-semibold">
+                  {isJlptQuizActive ? `JLPT ${selectedJlptLevel}: ${currentJlptIndex + 1}/${jlptQuestions.length}` : `공부: ${currentKanjiIndex + 1}/${kanjiList.length}`}
+                </span>
+              </>
             )}
             {phase === 'testing' && !isJlptQuizActive && (
-              <span className="text-xs bg-blue-50 border border-blue-200 text-blue-800 px-2.5 py-1 rounded-full font-mono font-medium">
-                테스트 단계: {currentQuestionIndex + 1} / {questions.length}
-              </span>
+              <>
+                <span className="hidden sm:inline text-xs bg-blue-50 border border-blue-200 text-blue-800 px-2.5 py-1 rounded-full font-mono font-medium">
+                  테스트 단계: {currentQuestionIndex + 1} / {questions.length}
+                </span>
+                <span className="inline sm:hidden text-[10px] bg-blue-50 border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full font-mono font-semibold">
+                  테스트: {currentQuestionIndex + 1}/${questions.length}
+                </span>
+              </>
             )}
             {phase === 'result' && !isJlptQuizActive && (
-              <span className="text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-full font-mono font-medium">
+              <span className="text-[10px] sm:text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-mono font-medium">
                 결과 리포트
               </span>
             )}
             {apiSource === 'fallback' && phase !== 'config' && (
               <span className="text-[10px] bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-medium">
-                오프라인 학습셋
+                오프라인
               </span>
             )}
           </div>
@@ -294,7 +307,7 @@ export default function App() {
       </header>
 
       {/* Main Interactive Work Area */}
-      <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+      <main className="flex-1 max-w-4xl w-full mx-auto p-3 sm:p-6 flex flex-col justify-center">
         {/* Loading error messages for JLPT */}
         {jlptErrorMsg && !isJlptQuizActive && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-800 text-sm rounded-2xl flex items-start gap-2">
