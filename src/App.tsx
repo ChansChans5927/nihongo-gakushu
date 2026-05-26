@@ -104,7 +104,7 @@ export default function App() {
       }
     } catch (err: any) {
       console.error("Failed to load kanji sets:", err);
-      setErrorMsg("서버 통신에 오류가 발생했거나 한자 데이터를 받아오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      setErrorMsg(err.message || "서버 통신에 오류가 발생했거나 한자 데이터를 받아오지 못했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +135,7 @@ export default function App() {
       }
     } catch (err: any) {
       console.error("Failed to load JLPT questions:", err);
-      setJlptErrorMsg("JLPT 기출문제를 가져오는 도중 연결 오류가 발생했습니다. 다시 시도해 주세요.");
+      setJlptErrorMsg(err.message || "JLPT 기출문제를 가져오는 도중 연결 오류가 발생했습니다. 다시 시도해 주세요.");
     } finally {
       setIsJlptLoading(false);
     }
