@@ -12,14 +12,11 @@ const PORT = parseInt(process.env.PORT || "3000", 10);
 
 app.use(express.json());
 
-// Initialize Gemini Client
+// Initialize Gemini Client (Vertex AI mode to utilize Google Cloud Credits)
 const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      "User-Agent": "aistudio-build",
-    },
-  },
+  project: process.env.GCP_PROJECT_ID,
+  location: process.env.GCP_LOCATION || "us-central1",
+  vertexai: true,
 });
 
 // POST Endpoint to generate Kanji List
@@ -29,11 +26,11 @@ app.post("/api/kanji/generate", async (req, res) => {
   const targetLevel = level || "all";
   const excludedList = Array.isArray(excludeKanji) ? excludeKanji : [];
 
-  // Check if API key is empty
-  const hasApiKey = !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === "MY_GEMINI_API_KEY" ? false : true;
+  // Check if Google Cloud Project ID is configured
+  const hasProject = !process.env.GCP_PROJECT_ID || process.env.GCP_PROJECT_ID === "YOUR_GCP_PROJECT_ID" ? false : true;
 
-  if (!hasApiKey) {
-    return res.json({ success: false, errorMsg: "Gemini API 키가 구성되지 않았습니다. .env 파일에 GEMINI_API_KEY를 설정해 주세요." });
+  if (!hasProject) {
+    return res.json({ success: false, errorMsg: "구글 클라우드 프로젝트 ID가 구성되지 않았습니다. .env 파일에 GCP_PROJECT_ID를 설정해 주세요." });
   }
 
   try {
@@ -80,7 +77,7 @@ app.post("/api/kanji/generate", async (req, res) => {
       `;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
           systemInstruction: "You are an expert Japanese and Kanji language professor who specializes in visual mnemonics, associations, and helping Korean learners master Japanese characters with minimal effort.",
@@ -193,9 +190,9 @@ app.post("/api/vocab/generate", async (req, res) => {
   const targetLevel = level || "all";
   const excludedList = Array.isArray(excludeVocab) ? excludeVocab : [];
 
-  const hasApiKey = !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === "MY_GEMINI_API_KEY" ? false : true;
-  if (!hasApiKey) {
-    return res.json({ success: false, errorMsg: "Gemini API 키가 구성되지 않았습니다. .env 파일에 GEMINI_API_KEY를 설정해 주세요." });
+  const hasProject = !process.env.GCP_PROJECT_ID || process.env.GCP_PROJECT_ID === "YOUR_GCP_PROJECT_ID" ? false : true;
+  if (!hasProject) {
+    return res.json({ success: false, errorMsg: "구글 클라우드 프로젝트 ID가 구성되지 않았습니다. .env 파일에 GCP_PROJECT_ID를 설정해 주세요." });
   }
 
   try {
@@ -252,7 +249,7 @@ app.post("/api/vocab/generate", async (req, res) => {
       `;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
           systemInstruction: "You are an expert Japanese and Kanji professor specializing in visual mnemonics, associations, and helping Korean learners master Japanese words and characters.",
@@ -387,9 +384,9 @@ app.post("/api/vocab/generate", async (req, res) => {
 
 app.post("/api/jlpt/generate", async (req, res) => {
   const { level: targetLevel, count: numQuestions } = req.body;
-  const hasApiKey = !process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === "MY_GEMINI_API_KEY" ? false : true;
-  if (!hasApiKey) {
-    return res.json({ success: false, errorMsg: "Gemini API 키가 구성되지 않았습니다. .env 파일에 GEMINI_API_KEY를 설정해 주세요." });
+  const hasProject = !process.env.GCP_PROJECT_ID || process.env.GCP_PROJECT_ID === "YOUR_GCP_PROJECT_ID" ? false : true;
+  if (!hasProject) {
+    return res.json({ success: false, errorMsg: "구글 클라우드 프로젝트 ID가 구성되지 않았습니다. .env 파일에 GCP_PROJECT_ID를 설정해 주세요." });
   }
 
   try {
@@ -440,7 +437,7 @@ app.post("/api/jlpt/generate", async (req, res) => {
       `;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
           systemInstruction: "You are an expert Japanese professor specializing in creating highly accurate JLPT mock exam questions tailored for Korean learners.",
