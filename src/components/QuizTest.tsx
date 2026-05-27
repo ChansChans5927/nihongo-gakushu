@@ -63,27 +63,76 @@ export function QuizTest({
         {/* Question description */}
         <div className="space-y-1 mt-1">
           <h3 className="text-lg sm:text-xl font-bold text-slate-900">
-            {currentQuestion.questionText}
+            {currentQuestion.type === 'blank_fill'
+              ? "제시된 일본어 예문의 빈칸에 들어갈 알맞은 단어는 무엇일까요?"
+              : currentQuestion.questionText}
           </h3>
           <p className="text-xs text-slate-400">
-            * 위 한자의 내용을 꼼꼼하게 기억해 보고, 4개의 보기 중 하나를 마우스로 정성스럽게 선택하여 발음을 체득해 보세요.
+            {currentQuestion.type === 'blank_fill'
+              ? "* 예문의 맥락과 뜻을 파악하고 알맞은 일본어 표기의 단어를 보기에서 선택해 보세요."
+              : "* 위 내용을 꼼꼼하게 기억해 보고, 4개의 보기 중 하나를 마우스로 정성스럽게 선택하여 발음을 체득해 보세요."}
           </p>
         </div>
 
         {/* Big Display character for visual hints */}
-        <div className="bg-slate-50 border border-slate-100 rounded-2xl py-4 sm:py-8 flex flex-col items-center justify-center space-y-2">
-          <div className="text-5xl sm:text-6xl font-serif font-extrabold text-slate-800 select-none">
-            {currentQuestion.type === 'kanji_match' ? (
-              <span className="text-amber-500 font-sans tracking-widest animate-pulse">?</span>
-            ) : (
-              currentQuestion.kanjiItem.kanji
-            )}
-          </div>
-          <span className="text-xs text-slate-400 font-mono">
-            {currentQuestion.type === 'kanji_match' 
-              ? "알맞은 한자를 아래 보기에서 선택하세요" 
-              : "연상 학습했던 주요 한자"}
-          </span>
+        <div className="bg-slate-50 border border-slate-100 rounded-2xl py-4 sm:py-8 flex flex-col items-center justify-center space-y-3 px-4">
+          {currentQuestion.type === 'blank_fill' && currentQuestion.vocabItem ? (
+            <div className="w-full text-center space-y-3">
+              <div className="text-lg sm:text-2xl font-semibold text-slate-800 tracking-wide font-sans leading-relaxed">
+                {(() => {
+                  const vocab = currentQuestion.vocabItem!;
+                  const sentence = vocab.exampleSentence.japanese;
+                  const word = vocab.word;
+                  
+                  const parts = sentence.split(word);
+                  if (parts.length > 1) {
+                    return (
+                      <>
+                        {parts[0]}
+                        <span className="inline-flex items-center bg-emerald-50 border-2 border-dashed border-emerald-400 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold text-emerald-800 mx-1 select-none animate-pulse">
+                          빈칸
+                        </span>
+                        {parts[1]}
+                      </>
+                    );
+                  } else {
+                    const firstChar = word[0];
+                    const charParts = sentence.split(firstChar);
+                    if (charParts.length > 1) {
+                      return (
+                        <>
+                          {charParts[0]}
+                          <span className="inline-flex items-center bg-emerald-50 border-2 border-dashed border-emerald-400 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold text-emerald-800 mx-1 select-none animate-pulse">
+                            빈칸
+                          </span>
+                          {charParts[1]}
+                        </>
+                      );
+                    }
+                  }
+                  return <span className="text-slate-800 font-bold leading-normal">{sentence}</span>;
+                })()}
+              </div>
+              <p className="text-xs text-slate-550 text-slate-500 italic">
+                해석: {currentQuestion.vocabItem.exampleSentence.meaning}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="text-4xl sm:text-5xl font-serif font-extrabold text-slate-800 select-none text-center">
+                {currentQuestion.type === 'kanji_match' ? (
+                  <span className="text-amber-500 font-sans tracking-widest animate-pulse">?</span>
+                ) : (
+                  currentQuestion.vocabItem ? currentQuestion.vocabItem.word : currentQuestion.kanjiItem?.kanji
+                )}
+              </div>
+              <span className="text-xs text-slate-400 font-mono text-center">
+                {currentQuestion.type === 'kanji_match' 
+                  ? "알맞은 표기를 아래 보기에서 선택하세요" 
+                  : "연상 학습했던 주요 내용"}
+              </span>
+            </>
+          )}
         </div>
 
         {/* Multiple choice selections */}
@@ -111,7 +160,7 @@ export function QuizTest({
                   </span>
                   <span className={`leading-none ${
                     isKanjiMatch 
-                      ? "text-2xl sm:text-4xl font-serif font-extrabold text-slate-900 tracking-normal pl-2" 
+                      ? "text-xl sm:text-2xl font-serif font-extrabold text-slate-900 tracking-normal pl-2" 
                       : "text-sm sm:text-base font-semibold"
                   }`}>
                     {choice}

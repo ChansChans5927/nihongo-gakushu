@@ -45,11 +45,34 @@ export interface KanjiItem {
 
 export interface Question {
   id: number;
-  type: 'meaning' | 'reading' | 'word_meaning' | 'kanji_match';
-  kanjiItem: KanjiItem;
+  type: 'meaning' | 'reading' | 'word_meaning' | 'kanji_match' | 'blank_fill';
+  kanjiItem?: KanjiItem;
+  vocabItem?: VocabItem;
   questionText: string;
   choices: string[];
   correctIndex: number;
+}
+
+export interface KanjiMnemonicBreakdown {
+  kanji: string;
+  meaning: string;
+  mnemonic: string;
+}
+
+export interface VocabItem {
+  id: string;
+  word: string;
+  hiragana: string;
+  pronunciation: string;
+  meaning: string;
+  jlptLevel: string;
+  kanjiBreakdown: KanjiMnemonicBreakdown[];
+  exampleSentence: {
+    japanese: string;
+    hiragana: string;
+    pronunciation: string;
+    meaning: string;
+  };
 }
 
 export interface JlptQuestion {

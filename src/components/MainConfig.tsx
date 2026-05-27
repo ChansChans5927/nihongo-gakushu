@@ -13,6 +13,8 @@ import {
 interface MainConfigProps {
   kanjiCount: number;
   setKanjiCount: (count: number) => void;
+  vocabCount: number;
+  setVocabCount: (count: number) => void;
   difficulty: string;
   setDifficulty: (level: string) => void;
   jlptCount: number;
@@ -20,17 +22,24 @@ interface MainConfigProps {
   selectedJlptLevel: string;
   setSelectedJlptLevel: (level: string) => void;
   masteredKanji: string[];
+  masteredVocab: string[];
   isLoading: boolean;
   isJlptLoading: boolean;
   errorMsg: string | null;
   startKanjiStudy: () => void;
+  startVocabStudy: () => void;
   startJlptQuiz: () => void;
   handleResetMastery: () => void;
+  handleResetVocabMastery: () => void;
+  studyMode: 'kanji' | 'vocab';
+  setStudyMode: (mode: 'kanji' | 'vocab') => void;
 }
 
 export function MainConfig({
   kanjiCount,
   setKanjiCount,
+  vocabCount,
+  setVocabCount,
   difficulty,
   setDifficulty,
   jlptCount,
@@ -38,12 +47,17 @@ export function MainConfig({
   selectedJlptLevel,
   setSelectedJlptLevel,
   masteredKanji,
+  masteredVocab,
   isLoading,
   isJlptLoading,
   errorMsg,
   startKanjiStudy,
+  startVocabStudy,
   startJlptQuiz,
-  handleResetMastery
+  handleResetMastery,
+  handleResetVocabMastery,
+  studyMode,
+  setStudyMode
 }: MainConfigProps) {
   return (
     <motion.div
@@ -76,37 +90,69 @@ export function MainConfig({
 
         {/* Options Panel Card */}
         <div className="md:col-span-3 bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5 sm:p-6 space-y-5">
-          <h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-amber-500" />
-            단어 외우기 학습 설정
-          </h3>
+          {/* Tab Selector */}
+          <div className="flex border-b border-slate-100 pb-3 justify-between items-center flex-wrap gap-2">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <BookOpen className={`w-5 h-5 ${studyMode === 'vocab' ? 'text-emerald-500' : 'text-amber-500'}`} />
+              {studyMode === 'vocab' ? '일본어 단어 암기 코스' : '일본어 한자 암기 코스'}
+            </h3>
+            <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200/50">
+              <button
+                type="button"
+                onClick={() => setStudyMode('kanji')}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                  studyMode === 'kanji'
+                    ? "bg-white text-slate-950 shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                한자 공부
+              </button>
+              <button
+                type="button"
+                onClick={() => setStudyMode('vocab')}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                  studyMode === 'vocab'
+                    ? "bg-white text-slate-950 shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                단어 공부
+              </button>
+            </div>
+          </div>
 
           <div className="space-y-4">
             {/* Select box for quantity */}
             <div>
-              <label htmlFor="kanji-count-select" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                공부할 한자 개수 선택
+              <label htmlFor="study-count-select" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                {studyMode === 'vocab' ? '공부할 단어 개수 선택' : '공부할 한자 개수 선택'}
               </label>
               <div className="grid grid-cols-4 gap-2">
-                {[5, 10, 15, 20].map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => setKanjiCount(num)}
-                    className={`py-3 px-2 rounded-xl border text-sm font-semibold transition-all ${kanjiCount === num
-                      ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10"
-                      : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
-                      }`}
-                  >
-                    {num}개
-                  </button>
-                ))}
+                {[5, 10, 15, 20].map((num) => {
+                  const currentCount = studyMode === 'vocab' ? vocabCount : kanjiCount;
+                  const handleSelectCount = studyMode === 'vocab' ? () => setVocabCount(num) : () => setKanjiCount(num);
+                  return (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={handleSelectCount}
+                      className={`py-3 px-2 rounded-xl border text-sm font-semibold transition-all cursor-pointer ${currentCount === num
+                        ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10"
+                        : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
+                        }`}
+                    >
+                      {num}개
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* JLPT Levels Select Box */}
             <div>
               <label htmlFor="jlpt-level-select" className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                한자 난이도 (JLPT 레벨)
+                {studyMode === 'vocab' ? '단어 난이도 (JLPT 레벨)' : '한자 난이도 (JLPT 레벨)'}
               </label>
               <div className="grid grid-cols-6 gap-1.5">
                 {[
@@ -119,9 +165,10 @@ export function MainConfig({
                 ].map((lvl) => (
                   <button
                     key={lvl.val}
+                    type="button"
                     onClick={() => setDifficulty(lvl.val)}
-                    className={`py-2 px-1 text-xs font-semibold rounded-lg border transition-all ${difficulty === lvl.val
-                      ? "bg-amber-600 border-amber-600 text-white shadow-sm"
+                    className={`py-2 px-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${difficulty === lvl.val
+                      ? (studyMode === 'vocab' ? "bg-emerald-600 border-emerald-600 text-white shadow-sm" : "bg-amber-600 border-amber-600 text-white shadow-sm")
                       : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
                       }`}
                   >
@@ -130,19 +177,36 @@ export function MainConfig({
                 ))}
               </div>
               <p className="text-[11px] text-slate-400 mt-2">
-                * N5는 기초적인 생활 한자이며, 단계가 올라갈수록 학업이나 업무용 고급 한자입니다.
+                * N5는 기초적인 생활 {studyMode === 'vocab' ? '단어' : '한자'}이며, 단계가 올라갈수록 학업이나 업무용 고급 {studyMode === 'vocab' ? '단어' : '한자'}입니다.
               </p>
             </div>
 
             {/* Exclusions Inventory Display */}
-            {masteredKanji.length > 0 && (
+            {studyMode === 'kanji' && masteredKanji.length > 0 && (
               <div className="flex items-center justify-between bg-slate-50 border border-slate-200/60 p-3 rounded-xl text-xs gap-2">
                 <span className="text-slate-600 font-semibold flex items-center gap-1">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   <span>외운 한자: <strong className="text-slate-900 font-bold">{masteredKanji.length}개</strong> (공부 시작 시 자동 제외)</span>
                 </span>
                 <button
+                  type="button"
                   onClick={handleResetMastery}
+                  className="text-[10px] text-red-500 hover:text-red-600 font-bold underline bg-white px-2.5 py-1 border border-slate-200 rounded-md shadow-xs shrink-0 cursor-pointer"
+                >
+                  전체 초기화
+                </button>
+              </div>
+            )}
+
+            {studyMode === 'vocab' && masteredVocab.length > 0 && (
+              <div className="flex items-center justify-between bg-slate-50 border border-slate-200/60 p-3 rounded-xl text-xs gap-2">
+                <span className="text-slate-600 font-semibold flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>외운 단어: <strong className="text-slate-900 font-bold">{masteredVocab.length}개</strong> (공부 시작 시 자동 제외)</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={handleResetVocabMastery}
                   className="text-[10px] text-red-500 hover:text-red-600 font-bold underline bg-white px-2.5 py-1 border border-slate-200 rounded-md shadow-xs shrink-0 cursor-pointer"
                 >
                   전체 초기화
@@ -160,19 +224,25 @@ export function MainConfig({
 
           {/* Submit Button */}
           <button
-            onClick={startKanjiStudy}
+            onClick={studyMode === 'vocab' ? startVocabStudy : startKanjiStudy}
             disabled={isLoading}
-            className="w-full py-4 px-6 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-amber-600 hover:to-orange-500 text-white font-medium rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-55 active:scale-[0.98]"
+            className={`w-full py-4 px-6 bg-gradient-to-r text-white font-medium rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-55 active:scale-[0.98] ${
+              studyMode === 'vocab'
+                ? "from-slate-900 to-slate-800 hover:from-emerald-600 hover:to-teal-500"
+                : "from-slate-900 to-slate-800 hover:from-amber-600 hover:to-orange-500"
+            }`}
           >
             {isLoading ? (
               <>
                 <RefreshCw className="w-5 h-5 animate-spin" />
-                <span>AI가 한자 및 단어 구성하는 중...</span>
+                <span>AI가 {studyMode === 'vocab' ? '단어 및 한자' : '한자 및 단어'} 구성하는 중...</span>
               </>
             ) : (
               <>
-                <Zap className="w-5 h-5 text-amber-400 fill-amber-300" />
-                <span className="text-base font-bold">단어 공부 시작하기</span>
+                <Zap className={`w-5 h-5 ${studyMode === 'vocab' ? 'text-emerald-400 fill-emerald-300' : 'text-amber-400 fill-amber-300'}`} />
+                <span className="text-base font-bold">
+                  {studyMode === 'vocab' ? '단어 공부 시작하기' : '한자 공부 시작하기'}
+                </span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

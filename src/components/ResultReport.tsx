@@ -7,7 +7,9 @@ interface ResultReportProps {
   userAnswers: { [questionId: number]: number };
   isLoading: boolean;
   startKanjiStudy: () => void;
+  startVocabStudy: () => void;
   handleGoHome: () => void;
+  studyMode: 'kanji' | 'vocab';
 }
 
 export function ResultReport({
@@ -15,7 +17,9 @@ export function ResultReport({
   userAnswers,
   isLoading,
   startKanjiStudy,
-  handleGoHome
+  startVocabStudy,
+  handleGoHome,
+  studyMode
 }: ResultReportProps) {
   
   // Calculate score values
@@ -67,12 +71,12 @@ export function ResultReport({
 
         <div className="pt-2 flex justify-center gap-3">
           <button
-            onClick={startKanjiStudy}
+            onClick={studyMode === 'vocab' ? startVocabStudy : startKanjiStudy}
             disabled={isLoading}
             className="py-2.5 px-5 bg-slate-950 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-            <span>새로운 한자 코스 풀기</span>
+            <span>{studyMode === 'vocab' ? "새로운 단어 코스 풀기" : "새로운 한자 코스 풀기"}</span>
           </button>
           
           <button
@@ -125,13 +129,57 @@ export function ResultReport({
                 </div>
 
                 {/* Question Text */}
-                <div className="space-y-1">
-                  <div className="text-base font-bold text-slate-900 flex items-center gap-1.5">
-                    <span className="text-xl font-serif text-slate-800 font-bold bg-slate-100 px-2 py-0.5 rounded">
-                      {q.kanjiItem.kanji}
-                    </span>
-                    <span>{q.questionText}</span>
-                  </div>
+                <div className="space-y-2">
+                  {q.type === 'blank_fill' && q.vocabItem ? (
+                    <div className="space-y-1.5 w-full">
+                      <p className="text-xs font-bold text-slate-400 tracking-wider">제시된 예문</p>
+                      <div className="text-base font-semibold text-slate-805 text-slate-800 tracking-wide font-sans leading-relaxed py-2.5 bg-slate-50 border border-slate-100 rounded-xl px-4 select-all">
+                        {(() => {
+                          const vocab = q.vocabItem;
+                          const sentence = vocab.exampleSentence.japanese;
+                          const word = vocab.word;
+                          const parts = sentence.split(word);
+                          if (parts.length > 1) {
+                            return (
+                              <>
+                                {parts[0]}
+                                <strong className="text-emerald-600 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
+                                  {word}
+                                </strong>
+                                {parts[1]}
+                              </>
+                            );
+                          } else {
+                            const firstChar = word[0];
+                            const charParts = sentence.split(firstChar);
+                            if (charParts.length > 1) {
+                              return (
+                                <>
+                                  {charParts[0]}
+                                  <strong className="text-emerald-600 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
+                                    {word}
+                                  </strong>
+                                  {charParts[1]}
+                                </>
+                              );
+                            }
+                          }
+                          return <span className="font-bold text-emerald-800">{sentence}</span>;
+                        })()}
+                      </div>
+                      <p className="text-xs text-slate-500 italic">* 해석: {q.vocabItem.exampleSentence.meaning}</p>
+                      <div className="text-sm font-bold text-slate-900 mt-2">
+                        Q. 빈칸에 들어갈 알맞은 단어는 무엇일까요?
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-base font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xl font-serif text-slate-800 font-bold bg-slate-100 px-2 py-0.5 rounded">
+                        {q.vocabItem ? q.vocabItem.word : q.kanjiItem?.kanji}
+                      </span>
+                      <span>{q.questionText}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Selected result panel */}
@@ -164,22 +212,49 @@ export function ResultReport({
                       <Sparkles className="w-4 h-4 text-amber-500" />
                       <span>연상 기억 구원해설: 이렇게 연상해서 외우면 쉽습니다!</span>
                     </div>
-                    <p className="text-amber-950 font-medium leading-relaxed bg-white/75 p-3 rounded-lg border border-amber-200/50">
-                      📌 한자 <strong className="text-sm font-serif text-amber-900 underline underline-offset-3 decoration-amber-500 font-extrabold">{q.kanjiItem.kanji}</strong>의 본래 명칭 : <strong className="text-slate-800 font-bold">{q.kanjiItem.meaning}</strong>
-                      <br />
-                      {q.kanjiItem.mnemonic}
-                    </p>
-                    <div className="flex flex-wrap gap-2 text-[10px] text-amber-800 pt-1 font-mono font-medium">
-                      <span>중요 음독: {q.kanjiItem.onyomi} ({q.kanjiItem.onyomiKorean})</span>
-                      <span>•</span>
-                      <span>중요 훈독: {q.kanjiItem.hunyomi} ({q.kanjiItem.hunyomiKorean})</span>
-                    </div>
+                    {q.vocabItem ? (
+                      <div className="space-y-2.5 bg-white/75 p-3 rounded-lg border border-amber-200/50">
+                        <p className="text-slate-800 font-bold">
+                          📌 단어: {q.vocabItem.word} ({q.vocabItem.hiragana}) - {q.vocabItem.meaning}
+                        </p>
+                        <div className="space-y-2.5 pt-1.5 border-t border-slate-200/50">
+                          {q.vocabItem.kanjiBreakdown && q.vocabItem.kanjiBreakdown.map((kj, kjIdx) => (
+                            <div key={kjIdx} className="space-y-0.5">
+                              <span className="font-bold text-emerald-800 text-[11px] block">
+                                한자 [{kj.kanji}] - {kj.meaning}
+                              </span>
+                              <p className="text-slate-600 leading-relaxed font-sans">
+                                {kj.mnemonic}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : q.kanjiItem ? (
+                      <p className="text-amber-950 font-medium leading-relaxed bg-white/75 p-3 rounded-lg border border-amber-200/50">
+                        📌 한자 <strong className="text-sm font-serif text-amber-900 underline underline-offset-3 decoration-amber-500 font-extrabold">{q.kanjiItem.kanji}</strong>의 본래 명칭 : <strong className="text-slate-800 font-bold">{q.kanjiItem.meaning}</strong>
+                        <br />
+                        {q.kanjiItem.mnemonic}
+                      </p>
+                    ) : null}
+                    
+                    {!q.vocabItem && q.kanjiItem && (
+                      <div className="flex flex-wrap gap-2 text-[10px] text-amber-800 pt-1 font-mono font-medium">
+                        <span>중요 음독: {q.kanjiItem.onyomi} ({q.kanjiItem.onyomiKorean})</span>
+                        <span>•</span>
+                        <span>중요 훈독: {q.kanjiItem.hunyomi} ({q.kanjiItem.hunyomiKorean})</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {isCorrect && (
                   <div className="text-[11px] text-slate-400 font-mono italic">
-                    * 한자연상팁: {q.kanjiItem.meaning} ({q.kanjiItem.onyomiKorean}/{q.kanjiItem.hunyomiKorean}) - {q.kanjiItem.mnemonic.slice(0, 40)}...
+                    {q.vocabItem ? (
+                      `* 단어연상팁: ${q.vocabItem.word} (${q.vocabItem.meaning})`
+                    ) : q.kanjiItem ? (
+                      `* 한자연상팁: ${q.kanjiItem.meaning} (${q.kanjiItem.onyomiKorean}/${q.kanjiItem.hunyomiKorean}) - ${q.kanjiItem.mnemonic.slice(0, 40)}...`
+                    ) : ''}
                   </div>
                 )}
 

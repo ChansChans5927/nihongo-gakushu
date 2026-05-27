@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "motion/react";
 import { BookMarked, BookOpen, CheckCircle2 } from "lucide-react";
-import { KanjiItem, Question, JlptQuestion } from "./types";
-import { generateQuiz } from "./utils";
+import { KanjiItem, Question, JlptQuestion, VocabItem } from "./types";
+import { generateQuiz, generateVocabQuiz } from "./utils";
 import { useSpeech } from "./hooks/useSpeech";
 import { MainConfig } from "./components/MainConfig";
 import { KanjiStudy } from "./components/KanjiStudy";
+import { VocabStudy } from "./components/VocabStudy";
 import { QuizTest } from "./components/QuizTest";
 import { ResultReport } from "./components/ResultReport";
 import { JlptTest } from "./components/JlptTest";
@@ -31,6 +32,15 @@ export default function App() {
   
   // Mastered Kanji List
   const [masteredKanji, setMasteredKanji] = useState<string[]>([]);
+  
+  // Study Mode State: 'kanji' | 'vocab'
+  const [studyMode, setStudyMode] = useState<'kanji' | 'vocab'>('kanji');
+
+  // Vocab States
+  const [vocabCount, setVocabCount] = useState<number>(5);
+  const [vocabList, setVocabList] = useState<VocabItem[]>([]);
+  const [currentVocabIndex, setCurrentVocabIndex] = useState<number>(0);
+  const [masteredVocab, setMasteredVocab] = useState<string[]>([]);
   
   // JLPT Past Exam Subsystem States
   const [selectedJlptLevel, setSelectedJlptLevel] = useState<string>("N5");
@@ -60,6 +70,15 @@ export default function App() {
         console.error("Failed to parse mastered kanji", e);
       }
     }
+    // Load mastered vocab list
+    const savedVocab = localStorage.getItem("mastered_vocab");
+    if (savedVocab) {
+      try {
+        setMasteredVocab(JSON.parse(savedVocab));
+      } catch (e) {
+        console.error("Failed to parse mastered vocab", e);
+      }
+    }
   }, []);
 
   const saveMasteredKanji = (list: string[]) => {
@@ -70,6 +89,17 @@ export default function App() {
   const handleResetMastery = () => {
     if (confirm("외운 한자 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?")) {
       saveMasteredKanji([]);
+    }
+  };
+
+  const saveMasteredVocab = (list: string[]) => {
+    setMasteredVocab(list);
+    localStorage.setItem("mastered_vocab", JSON.stringify(list));
+  };
+
+  const handleResetVocabMastery = () => {
+    if (confirm("외운 단어 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?")) {
+      saveMasteredVocab([]);
     }
   };
 
@@ -110,6 +140,43 @@ export default function App() {
     }
   };
 
+  // Trigger Vocab Study Generation from server Express + Gemini API
+  const startVocabStudy = async () => {
+    setIsLoading(true);
+    setErrorMsg(null);
+    setCurrentVocabIndex(0);
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setIsGraded(false);
+    setIsJlptQuizActive(false);
+
+    try {
+      const response = await fetch("/api/vocab/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          count: vocabCount, 
+          level: difficulty,
+          excludeVocab: masteredVocab 
+        }),
+      });
+      const resData = await response.json();
+      
+      if (resData.success && resData.data && resData.data.length > 0) {
+        setVocabList(resData.data);
+        setApiSource(resData.source || "gemini");
+        setPhase('studying');
+      } else {
+        throw new Error(resData.errorMsg || "단어를 불러오는 데 실패했습니다.");
+      }
+    } catch (err: any) {
+      console.error("Failed to load vocab sets:", err);
+      setErrorMsg(err.message || "서버 통신에 오류가 발생했거나 단어 데이터를 받아오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // JLPT Past Exam Study Initializer
   const startJlptQuiz = async () => {
     setIsJlptLoading(true);
@@ -143,22 +210,41 @@ export default function App() {
 
   // Navigates study slides
   const handleNextStudy = () => {
-    if (currentKanjiIndex < kanjiList.length - 1) {
-      setCurrentKanjiIndex(prev => prev + 1);
+    if (studyMode === 'vocab') {
+      if (currentVocabIndex < vocabList.length - 1) {
+        setCurrentVocabIndex(prev => prev + 1);
+      } else {
+        const generatedQuiz = generateVocabQuiz(vocabList);
+        setQuestions(generatedQuiz);
+        setUserAnswers({});
+        setCurrentQuestionIndex(0);
+        setIsGraded(false);
+        setPhase('testing');
+      }
     } else {
-      // Completed last study item -> Generate quiz questions from current list
-      const generatedQuiz = generateQuiz(kanjiList);
-      setQuestions(generatedQuiz);
-      setUserAnswers({});
-      setCurrentQuestionIndex(0);
-      setIsGraded(false);
-      setPhase('testing');
+      if (currentKanjiIndex < kanjiList.length - 1) {
+        setCurrentKanjiIndex(prev => prev + 1);
+      } else {
+        // Completed last study item -> Generate quiz questions from current list
+        const generatedQuiz = generateQuiz(kanjiList);
+        setQuestions(generatedQuiz);
+        setUserAnswers({});
+        setCurrentQuestionIndex(0);
+        setIsGraded(false);
+        setPhase('testing');
+      }
     }
   };
 
   const handlePrevStudy = () => {
-    if (currentKanjiIndex > 0) {
-      setCurrentKanjiIndex(prev => prev - 1);
+    if (studyMode === 'vocab') {
+      if (currentVocabIndex > 0) {
+        setCurrentVocabIndex(prev => prev - 1);
+      }
+    } else {
+      if (currentKanjiIndex > 0) {
+        setCurrentKanjiIndex(prev => prev - 1);
+      }
     }
   };
 
@@ -197,10 +283,16 @@ export default function App() {
     setIsGraded(true);
     setPhase('result');
 
-    // Add learned Kanji to masteredKanji and save so they don't appear in "새로운 한자 코스 풀기"
-    const finishedKanjis = kanjiList.map(item => item.kanji);
-    const updated = Array.from(new Set([...masteredKanji, ...finishedKanjis]));
-    saveMasteredKanji(updated);
+    if (studyMode === 'vocab') {
+      const finishedVocab = vocabList.map(item => item.word);
+      const updated = Array.from(new Set([...masteredVocab, ...finishedVocab]));
+      saveMasteredVocab(updated);
+    } else {
+      // Add learned Kanji to masteredKanji and save so they don't appear in "새로운 한자 코스 풀기"
+      const finishedKanjis = kanjiList.map(item => item.kanji);
+      const updated = Array.from(new Set([...masteredKanji, ...finishedKanjis]));
+      saveMasteredKanji(updated);
+    }
   };
 
   // JLPT state handlers
@@ -247,6 +339,7 @@ export default function App() {
   const handleGoHome = () => {
     setPhase('config');
     setKanjiList([]);
+    setVocabList([]);
     setQuestions([]);
   };
 
@@ -275,10 +368,18 @@ export default function App() {
             {(phase === 'studying' || isJlptQuizActive) && (
               <>
                 <span className="hidden sm:inline text-xs bg-amber-50 border border-amber-200 text-amber-800 px-2.5 py-1 rounded-full font-mono font-medium">
-                  {isJlptQuizActive ? `JLPT ${selectedJlptLevel} 테스트: ${currentJlptIndex + 1} / ${jlptQuestions.length}` : `공부 단계: ${currentKanjiIndex + 1} / ${kanjiList.length}`}
+                  {isJlptQuizActive 
+                    ? `JLPT ${selectedJlptLevel} 테스트: ${currentJlptIndex + 1} / ${jlptQuestions.length}` 
+                    : studyMode === 'vocab'
+                    ? `공부 단계: ${currentVocabIndex + 1} / ${vocabList.length}`
+                    : `공부 단계: ${currentKanjiIndex + 1} / ${kanjiList.length}`}
                 </span>
                 <span className="inline sm:hidden text-[10px] bg-amber-50 border border-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-mono font-semibold">
-                  {isJlptQuizActive ? `JLPT ${selectedJlptLevel}: ${currentJlptIndex + 1}/${jlptQuestions.length}` : `공부: ${currentKanjiIndex + 1}/${kanjiList.length}`}
+                  {isJlptQuizActive 
+                    ? `JLPT ${selectedJlptLevel}: ${currentJlptIndex + 1}/${jlptQuestions.length}` 
+                    : studyMode === 'vocab'
+                    ? `공부: ${currentVocabIndex + 1}/${vocabList.length}`
+                    : `공부: ${currentKanjiIndex + 1}/${kanjiList.length}`}
                 </span>
               </>
             )}
@@ -323,6 +424,8 @@ export default function App() {
             <MainConfig
               kanjiCount={kanjiCount}
               setKanjiCount={setKanjiCount}
+              vocabCount={vocabCount}
+              setVocabCount={setVocabCount}
               difficulty={difficulty}
               setDifficulty={setDifficulty}
               jlptCount={jlptCount}
@@ -330,24 +433,43 @@ export default function App() {
               selectedJlptLevel={selectedJlptLevel}
               setSelectedJlptLevel={setSelectedJlptLevel}
               masteredKanji={masteredKanji}
+              masteredVocab={masteredVocab}
               isLoading={isLoading}
               isJlptLoading={isJlptLoading}
               errorMsg={errorMsg}
               startKanjiStudy={startKanjiStudy}
+              startVocabStudy={startVocabStudy}
               startJlptQuiz={startJlptQuiz}
               handleResetMastery={handleResetMastery}
+              handleResetVocabMastery={handleResetVocabMastery}
+              studyMode={studyMode}
+              setStudyMode={setStudyMode}
             />
           )}
 
           {/* PHASE 2: Step-by-Step Interactive Studying Screen */}
-          {phase === 'studying' && !isJlptQuizActive && kanjiList.length > 0 && (
-            <KanjiStudy
-              kanjiList={kanjiList}
-              currentKanjiIndex={currentKanjiIndex}
-              handlePrevStudy={handlePrevStudy}
-              handleNextStudy={handleNextStudy}
-              speakJapanese={speakJapanese}
-            />
+          {phase === 'studying' && !isJlptQuizActive && (
+            studyMode === 'vocab' ? (
+              vocabList.length > 0 && (
+                <VocabStudy
+                  vocabList={vocabList}
+                  currentVocabIndex={currentVocabIndex}
+                  handlePrevStudy={handlePrevStudy}
+                  handleNextStudy={handleNextStudy}
+                  speakJapanese={speakJapanese}
+                />
+              )
+            ) : (
+              kanjiList.length > 0 && (
+                <KanjiStudy
+                  kanjiList={kanjiList}
+                  currentKanjiIndex={currentKanjiIndex}
+                  handlePrevStudy={handlePrevStudy}
+                  handleNextStudy={handleNextStudy}
+                  speakJapanese={speakJapanese}
+                />
+              )
+            )
           )}
 
           {/* PHASE 3: Objective Challenge Quiz Testing Screen */}
@@ -371,7 +493,9 @@ export default function App() {
               userAnswers={userAnswers}
               isLoading={isLoading}
               startKanjiStudy={startKanjiStudy}
+              startVocabStudy={startVocabStudy}
               handleGoHome={handleGoHome}
+              studyMode={studyMode}
             />
           )}
 

@@ -1,4 +1,4 @@
-import { KanjiItem, Question } from "./types";
+import { KanjiItem, Question, VocabItem } from "./types";
 
 // Level-specific fallback distractors (N5 to N1) to prevent "flimsy/easy" quizzes
 const LEVEL_DECOYS: Record<string, {
@@ -148,4 +148,90 @@ function shuffle(array: string[]): string[] {
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
+}
+
+export function generateVocabQuiz(vocabList: VocabItem[]): Question[] {
+  const questions: Question[] = [];
+  
+  vocabList.forEach((item, index) => {
+    // 0: Word Meaning ("뜻 맞추기")
+    // 1: Word Reading / Hiragana ("요미가나 읽기 맞추기")
+    // 2: Word Kanji Match ("뜻을 보고 올바른 한자 단어 맞추기")
+    // 3: Blank Fill in Example ("예문 빈칸 채우기")
+    const typeIndex = index % 4;
+    let type: 'meaning' | 'reading' | 'kanji_match' | 'blank_fill' = 'meaning';
+    
+    if (typeIndex === 1) type = 'reading';
+    else if (typeIndex === 2) type = 'kanji_match';
+    else if (typeIndex === 3) type = 'blank_fill';
+
+    let questionText = "";
+    let choices: string[] = [];
+    let correctValue = "";
+
+    const levelKey = (item.jlptLevel && LEVEL_DECOYS[item.jlptLevel]) ? item.jlptLevel : "N3";
+    const levelDecoy = LEVEL_DECOYS[levelKey];
+
+    if (type === 'meaning') {
+      questionText = `일본어 단어 '${item.word}' (${item.hiragana})의 올바른 한국어 뜻은 무엇일까요?`;
+      correctValue = item.meaning;
+
+      const decoys = vocabList
+        .filter((v) => v.word !== item.word)
+        .map((v) => v.meaning);
+      choices = shuffle([correctValue, ...getDistinctValues(decoys, 3, correctValue, levelDecoy.wordMeanings)]);
+    } else if (type === 'reading') {
+      questionText = `일본어 단어 '${item.word}'의 올바른 요미가나(읽기)와 발음은 무엇일까요?`;
+      correctValue = `${item.hiragana} (${item.pronunciation})`;
+
+      const decoys = vocabList
+        .filter((v) => v.word !== item.word)
+        .map((v) => `${v.hiragana} (${v.pronunciation})`);
+      choices = shuffle([correctValue, ...getDistinctValues(decoys, 3, correctValue, levelDecoy.readings)]);
+    } else if (type === 'kanji_match') {
+      questionText = `한국어 뜻이 '${item.meaning}'인 알맞은 일본어 단어 표기(한자)는 무엇일까요?`;
+      correctValue = item.word;
+
+      const decoys = vocabList
+        .filter((v) => v.word !== item.word)
+        .map((v) => v.word);
+      choices = shuffle([correctValue, ...getDistinctValues(decoys, 3, correctValue, levelDecoy.kanjis)]);
+    } else {
+      let sentence = item.exampleSentence.japanese;
+      const wordToReplace = item.word;
+      
+      let sentenceWithBlank = sentence;
+      if (sentence.includes(wordToReplace)) {
+        sentenceWithBlank = sentence.replace(wordToReplace, "__blank__");
+      } else {
+        const firstChar = wordToReplace[0];
+        if (sentence.includes(firstChar)) {
+          sentenceWithBlank = sentence.replace(firstChar, "__blank__");
+        } else {
+          sentenceWithBlank = `__blank__ (문장: ${sentence})`;
+        }
+      }
+
+      questionText = `다음 일본어 예문의 빈칸(__blank__)에 들어갈 알맞은 단어는 무엇일까요?\n\n"${sentenceWithBlank}"`;
+      correctValue = item.word;
+
+      const decoys = vocabList
+        .filter((v) => v.word !== item.word)
+        .map((v) => v.word);
+      choices = shuffle([correctValue, ...getDistinctValues(decoys, 3, correctValue, levelDecoy.kanjis)]);
+    }
+
+    const correctIndex = choices.indexOf(correctValue);
+
+    questions.push({
+      id: index + 1,
+      type,
+      vocabItem: item,
+      questionText,
+      choices,
+      correctIndex
+    });
+  });
+
+  return questions;
 }
