@@ -45,7 +45,7 @@ export function QuizTest({
           </span>
         </div>
         <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-          <div 
+          <div
             className="bg-blue-500 h-full rounded-full transition-all duration-300"
             style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
           />
@@ -54,7 +54,7 @@ export function QuizTest({
 
       {/* Quiz Card View Component */}
       <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden p-5 sm:p-6 space-y-6">
-        
+
         {/* Visual badge */}
         <span className="px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-800 text-[10px] font-bold uppercase rounded-md tracking-wider">
           Question 0{currentQuestion.id}
@@ -76,16 +76,13 @@ export function QuizTest({
 
         {/* Big Display character for visual hints */}
         <div className="bg-slate-50 border border-slate-100 rounded-2xl py-4 sm:py-8 flex flex-col items-center justify-center space-y-3 px-4">
-          {currentQuestion.type === 'blank_fill' && currentQuestion.vocabItem ? (
+          {currentQuestion.type === 'blank_fill' ? (
             <div className="w-full text-center space-y-3">
               <div className="text-lg sm:text-2xl font-semibold text-slate-800 tracking-wide font-sans leading-relaxed">
                 {(() => {
-                  const vocab = currentQuestion.vocabItem!;
-                  const sentence = vocab.exampleSentence.japanese;
-                  const word = vocab.word;
-                  
-                  const parts = sentence.split(word);
-                  if (parts.length > 1) {
+                  const sentence = currentQuestion.questionSentence || "";
+                  if (sentence.includes("__blank__")) {
+                    const parts = sentence.split("__blank__");
                     return (
                       <>
                         {parts[0]}
@@ -95,27 +92,49 @@ export function QuizTest({
                         {parts[1]}
                       </>
                     );
-                  } else {
-                    const firstChar = word[0];
-                    const charParts = sentence.split(firstChar);
-                    if (charParts.length > 1) {
+                  }
+
+                  // Fallback to vocab word splitting if __blank__ is not in questionSentence
+                  const vocab = currentQuestion.vocabItem;
+                  if (vocab) {
+                    const word = vocab.word;
+                    const vocabSentence = vocab.exampleSentence.japanese;
+                    const parts = vocabSentence.split(word);
+                    if (parts.length > 1) {
                       return (
                         <>
-                          {charParts[0]}
+                          {parts[0]}
                           <span className="inline-flex items-center bg-emerald-50 border-2 border-dashed border-emerald-400 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold text-emerald-800 mx-1 select-none animate-pulse">
                             빈칸
                           </span>
-                          {charParts[1]}
+                          {parts[1]}
                         </>
                       );
+                    } else {
+                      const firstChar = word[0];
+                      const charParts = vocabSentence.split(firstChar);
+                      if (charParts.length > 1) {
+                        return (
+                          <>
+                            {charParts[0]}
+                            <span className="inline-flex items-center bg-emerald-50 border-2 border-dashed border-emerald-400 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold text-emerald-800 mx-1 select-none animate-pulse">
+                              빈칸
+                            </span>
+                            {charParts[1]}
+                          </>
+                        );
+                      }
                     }
+                    return <span className="text-slate-800 font-bold leading-normal">{vocabSentence}</span>;
                   }
                   return <span className="text-slate-800 font-bold leading-normal">{sentence}</span>;
                 })()}
               </div>
-              <p className="text-xs text-slate-550 text-slate-500 italic">
-                해석: {currentQuestion.vocabItem.exampleSentence.meaning}
-              </p>
+              {currentQuestion.vocabItem && (
+                <p className="text-xs text-slate-500 italic">
+                  해석: {currentQuestion.vocabItem.exampleSentence.meaning}
+                </p>
+              )}
             </div>
           ) : (
             <>
@@ -127,8 +146,8 @@ export function QuizTest({
                 )}
               </div>
               <span className="text-xs text-slate-400 font-mono text-center">
-                {currentQuestion.type === 'kanji_match' 
-                  ? "알맞은 표기를 아래 보기에서 선택하세요" 
+                {currentQuestion.type === 'kanji_match'
+                  ? "알맞은 표기를 아래 보기에서 선택하세요"
                   : "연상 학습했던 주요 내용"}
               </span>
             </>
@@ -144,25 +163,21 @@ export function QuizTest({
               <button
                 key={choiceIdx}
                 onClick={() => handleSelectAnswer(choiceIdx)}
-                className={`w-full text-left rounded-xl border font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${
-                  isKanjiMatch ? "py-3.5 px-4 sm:py-5 sm:px-6" : "p-3 sm:p-4 text-sm"
-                } ${
-                  isSelected
+                className={`w-full text-left rounded-xl border font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${isKanjiMatch ? "py-3.5 px-4 sm:py-5 sm:px-6" : "p-3 sm:p-4 text-sm"
+                  } ${isSelected
                     ? "bg-blue-50 border-blue-400 text-blue-900 ring-2 ring-blue-400/20 shadow-sm"
                     : "bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 shadow-xs"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-4">
-                  <span className={`w-7 h-7 rounded-full flex items-center justify-center font-mono text-xs ${
-                    isSelected ? "bg-blue-500 text-white font-bold" : "bg-slate-100 text-slate-500"
-                  }`}>
+                  <span className={`w-7 h-7 rounded-full flex items-center justify-center font-mono text-xs ${isSelected ? "bg-blue-500 text-white font-bold" : "bg-slate-100 text-slate-500"
+                    }`}>
                     {choiceIdx + 1}
                   </span>
-                  <span className={`leading-none ${
-                    isKanjiMatch 
-                      ? "text-xl sm:text-2xl font-serif font-extrabold text-slate-900 tracking-normal pl-2" 
+                  <span className={`leading-none ${isKanjiMatch
+                      ? "text-xl sm:text-2xl font-serif font-extrabold text-slate-900 tracking-normal pl-2"
                       : "text-sm sm:text-base font-semibold"
-                  }`}>
+                    }`}>
                     {choice}
                   </span>
                 </div>

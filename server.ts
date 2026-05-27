@@ -211,37 +211,42 @@ app.post("/api/vocab/generate", async (req, res) => {
       "Focus on common daily life verbs and adjectives (e.g. 食べる, 行く, 楽しい).",
       "Focus on nouns related to objects, places, or jobs (e.g. 教室, 銀行, 会社員).",
       "Focus on abstract vocabulary, emotions, or social concepts (e.g. 感謝, 経済, 協力).",
-      "Focus on vocabulary related to movement, direction, or time (e.g. 出발, 準備, 週末)."
+      "Focus on vocabulary related to movement, direction, or time (e.g. 準備, 週末)."
     ];
 
     const promises = batchSizes.map(async (size, idx) => {
       const focusHint = batchInstructions[idx % batchInstructions.length];
       const prompt = `
-        Create a list of exactly ${size} Japanese vocabulary (단어) learning cards for a Korean speaker studying Japanese.
+        Create a list of exactly ${size} Japanese vocabulary (단어) learning cards for a Korean speaker studying Japanese, AND a corresponding set of exactly ${size} multiple-choice quiz questions to test them.
         Target JLPT difficulty level filter: ${targetLevel === "all" ? "A high quality balanced mix of useful JLPT levels from N5 to N1" : `Strictly JLPT ${targetLevel}`} level characters.
         
         Focus hint for this specific small batch of ${size} words (which MUST be followed to ensure word diversity): ${focusHint}
         
         CRITICAL CONSTRAINTS:
-        1. Strictly ensure all generated words contain at least one Kanji (한자) character (e.g., 食べる, 勉強, 銀行). Words containing only Hiragana or Katakana (e.g., する, カメラ) are strictly forbidden.
+        1. Strictly ensure all generated words contain at least one Kanji (한자) character (e.g., 食べる, 勉強, 銀行). Words containing only Hiragana or Katakana (e.g., 하는, くる, 카메라) are strictly forbidden.
         2. Ensure all generated words are globally unique.
         3. ABSOLUTELY EXCLUDE the following list of Japanese words (which the user has already mastered): ${JSON.stringify(excludedList)}. Do not include any of these words in the response.
+        4. CRITICAL QUESTION QUALITY CONSTRAINT:
+           - In the "quiz" array, NEVER include the target Japanese Kanji character or Japanese word directly inside the "questionText" for 'kanji_match' or 'blank_fill' types!
+           - For example, if the target word is "広い" containing Kanji "広", do NOT ask "다음 한자 '広'가 포함된 단어는 무엇일까요?". This is too easy and exposes the answer.
+           - Instead, ask for the Korean meaning/definition/reading in Korean: "한국어 뜻이 '넓다'인 알맞은 일본어 단어 표기(한자)는 무엇일까요?" or "훈음이 '넓을 광'인 한자가 포함된 일본어 단어는 무엇일까요?".
+           - Ensure the questionText only describes the target in terms of its Korean meaning, Hiragana/pronunciation pronunciation, or grammar, without showing the actual Japanese Kanji/word character in the question itself.
         
-        For each vocabulary word:
-        - "word": The Japanese word with Kanji (e.g., "通行", "食べる").
-        - "hiragana": Hiragana reading (e.g., "つうこう", "たべる").
-        - "pronunciation": Korean pronunciation phonetics (e.g., "츠우코우", "타베루").
-        - "meaning": Korean meaning/translation (e.g., "통행", "먹다").
-        - "jlptLevel": The JLPT level of the word (e.g., N5, N4, N3, N2, N1).
-        - "kanjiBreakdown": An array representing each Kanji character inside the word. For each Kanji in the word, provide:
-          - "kanji": The single Kanji character (e.g., "通").
-          - "meaning": The Korean Hanja name, format: "뜻 음" (e.g. "통할 통").
-          - "mnemonic": A highly intuitive visual association mnemonic storytelling in Korean, strictly under 2 sentences, describing how to memorize this specific Kanji.
-        - "exampleSentence": One natural educational Japanese sentence using the word. Provide:
-          - "japanese": The Japanese sentence.
-          - "hiragana": The Hiragana layout.
-          - "pronunciation": Korean pronunciation.
-          - "meaning": Korean translation.
+        For the "data" array:
+        - Generate exactly ${size} vocabulary cards (with id, word, hiragana, pronunciation, meaning, jlptLevel, kanjiBreakdown, exampleSentence).
+        - Under exampleSentence, provide "japanese", "hiragana", "pronunciation", "meaning". It should be a natural sentence.
+        
+        For the "quiz" array:
+        - Generate exactly ${size} multiple-choice questions (one corresponding to each generated vocabulary card).
+        - Distribute different question types: 'meaning', 'reading', 'kanji_match', and 'blank_fill'.
+        - CRITICAL RULE FOR "blank_fill" TYPE:
+          - Use the generated exampleSentence but replace the target word with "__blank__". For example, if the sentence is "私は毎日新聞を読みます。" and the word is "読む", the questionSentence must be "私は毎日新聞を__blank__。".
+          - The 4 choices MUST be conjugated in the exact same grammatical form to fit the sentence context (e.g., if the sentence is '新聞を__blank__。', choices should be '読みます', '買います', '飲みます', '走ります'). This tests if the user can choose the correct verb conjugation for the context!
+          - The correctIndex is the 0-based index of the correct conjugated choice (e.g. '読みます').
+          - The questionText should be: "제시된 일본어 예문의 빈칸에 들어갈 알맞은 단어는 무엇일까요?"
+        - For 'meaning' type: The questionText asks for the Korean meaning of the Japanese word. Choices are Korean meanings.
+        - For 'reading' type: The questionText asks for the pronunciation/reading of the Japanese word. Choices are readings in Hiragana with pronunciation.
+        - For 'kanji_match' type: The questionText asks for the correct Japanese word spelling based on its Korean meaning. Choices are base Japanese words.
         
         Make sure to return absolutely valid JSON following the provided responseSchema precisely.
       `;
@@ -253,80 +258,127 @@ app.post("/api/vocab/generate", async (req, res) => {
           systemInstruction: "You are an expert Japanese and Kanji professor specializing in visual mnemonics, associations, and helping Korean learners master Japanese words and characters.",
           responseMimeType: "application/json",
           responseSchema: {
-            type: Type.ARRAY,
-            description: "List of Japanese vocabulary cards",
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING, description: "Unique alphabetic id" },
-                word: { type: Type.STRING, description: "The Japanese word containing Kanji" },
-                hiragana: { type: Type.STRING, description: "Hiragana reading of the word" },
-                pronunciation: { type: Type.STRING, description: "Korean pronunciation phonetics of the word" },
-                meaning: { type: Type.STRING, description: "Korean meaning" },
-                jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
-                kanjiBreakdown: {
-                  type: Type.ARRAY,
-                  description: "Array breakdown of Kanjis contained in this word",
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      kanji: { type: Type.STRING, description: "Single Kanji character" },
-                      meaning: { type: Type.STRING, description: "Korean Hanja name, e.g. 통할 통" },
-                      mnemonic: { type: Type.STRING, description: "Korean mnemonic visual association storyline, under 2 sentences" }
-                    },
-                    required: ["kanji", "meaning", "mnemonic"]
-                  }
-                },
-                exampleSentence: {
+            type: Type.OBJECT,
+            properties: {
+              data: {
+                type: Type.ARRAY,
+                description: "List of Japanese vocabulary study cards",
+                items: {
                   type: Type.OBJECT,
-                  description: "One natural educational Japanese sentence",
                   properties: {
-                    japanese: { type: Type.STRING, description: "Japanese sentence" },
-                    hiragana: { type: Type.STRING, description: "Hiragana layout" },
-                    pronunciation: { type: Type.STRING, description: "Korean pronunciation" },
-                    meaning: { type: Type.STRING, description: "Korean translation" }
+                    id: { type: Type.STRING, description: "Unique alphabetic id" },
+                    word: { type: Type.STRING, description: "The Japanese word containing Kanji" },
+                    hiragana: { type: Type.STRING, description: "Hiragana reading of the word" },
+                    pronunciation: { type: Type.STRING, description: "Korean pronunciation phonetics of the word" },
+                    meaning: { type: Type.STRING, description: "Korean meaning" },
+                    jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
+                    kanjiBreakdown: {
+                      type: Type.ARRAY,
+                      description: "Array breakdown of Kanjis contained in this word",
+                      items: {
+                        type: Type.OBJECT,
+                        properties: {
+                          kanji: { type: Type.STRING, description: "Single Kanji character" },
+                          meaning: { type: Type.STRING, description: "Korean Hanja name, e.g. 통할 통" },
+                          mnemonic: { type: Type.STRING, description: "Korean mnemonic visual association storyline, under 2 sentences" }
+                        },
+                        required: ["kanji", "meaning", "mnemonic"]
+                      }
+                    },
+                    exampleSentence: {
+                      type: Type.OBJECT,
+                      description: "One natural educational Japanese sentence",
+                      properties: {
+                        japanese: { type: Type.STRING, description: "Japanese sentence" },
+                        hiragana: { type: Type.STRING, description: "Hiragana layout" },
+                        pronunciation: { type: Type.STRING, description: "Korean pronunciation" },
+                        meaning: { type: Type.STRING, description: "Korean translation" }
+                      },
+                      required: ["japanese", "hiragana", "pronunciation", "meaning"]
+                    }
                   },
-                  required: ["japanese", "hiragana", "pronunciation", "meaning"]
+                  required: [
+                    "id", "word", "hiragana", "pronunciation", "meaning", "jlptLevel",
+                    "kanjiBreakdown", "exampleSentence"
+                  ]
                 }
               },
-              required: [
-                "id", "word", "hiragana", "pronunciation", "meaning", "jlptLevel",
-                "kanjiBreakdown", "exampleSentence"
-              ]
-            }
+              quiz: {
+                type: Type.ARRAY,
+                description: "List of multiple choice questions matching the generated vocabulary cards.",
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.INTEGER, description: "Question ID" },
+                    type: { type: Type.STRING, description: "One of: meaning, reading, kanji_match, blank_fill" },
+                    targetWord: { type: Type.STRING, description: "The target word from study cards" },
+                    questionText: { type: Type.STRING, description: "Question instruction text in Korean" },
+                    questionSentence: { type: Type.STRING, description: "Sentence with '__blank__' replacing target word (e.g., '本を__blank__。'). For other types, empty string." },
+                    choices: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                      description: "Exactly 4 choices. Conjugated to match blank context if blank_fill."
+                    },
+                    correctIndex: { type: Type.INTEGER, description: "Correct choice index" },
+                    explanation: { type: Type.STRING, description: "Korean answer explanation" }
+                  },
+                  required: ["id", "type", "targetWord", "questionText", "questionSentence", "choices", "correctIndex", "explanation"]
+                }
+              }
+            },
+            required: ["data", "quiz"]
           }
         }
       });
 
-      const bodyText = response.text || "[]";
+      const bodyText = response.text || "{}";
       try {
         return JSON.parse(bodyText.trim());
       } catch (parseErr) {
         console.error("Failed to parse single vocab batch JSON response. Body text:", bodyText);
-        return [];
+        return { data: [], quiz: [] };
       }
     });
 
     const parsedBatches = await Promise.all(promises);
 
     const mergedData: any[] = [];
+    let mergedQuiz: any[] = [];
     const seenWords = new Set<string>();
 
     for (const batch of parsedBatches) {
-      if (Array.isArray(batch)) {
-        for (const item of batch) {
+      if (batch && Array.isArray(batch.data)) {
+        for (const item of batch.data) {
           if (item && item.word && !seenWords.has(item.word) && !excludedList.includes(item.word)) {
             seenWords.add(item.word);
             mergedData.push(item);
           }
         }
       }
+      if (batch && Array.isArray(batch.quiz)) {
+        for (const q of batch.quiz) {
+          mergedQuiz.push(q);
+        }
+      }
     }
+
+    // Filter quiz to only contain questions for words that were actually kept
+    mergedQuiz = mergedQuiz.filter(q => seenWords.has(q.targetWord));
+
+    // Re-index quiz questions
+    mergedQuiz = mergedQuiz.map((q, idx) => {
+      const associatedItem = mergedData.find(item => item.word === q.targetWord);
+      return {
+        ...q,
+        id: idx + 1,
+        vocabItem: associatedItem
+      };
+    });
 
     if (mergedData.length === 0) {
       return res.json({ success: false, errorMsg: "일본어 단어를 생성하지 못했습니다. 다시 시도해 주세요." });
     }
-    res.json({ success: true, source: "gemini_parallel", data: mergedData });
+    res.json({ success: true, source: "gemini_parallel", data: mergedData, quiz: mergedQuiz });
   } catch (err) {
     console.error("Gemini API vocab generation error:", err);
     res.json({ success: false, errorMsg: `일본어 단어 생성 중 오류가 발생했습니다: ${err.message}` });

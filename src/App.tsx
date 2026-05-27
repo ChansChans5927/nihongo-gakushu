@@ -41,6 +41,7 @@ export default function App() {
   const [vocabList, setVocabList] = useState<VocabItem[]>([]);
   const [currentVocabIndex, setCurrentVocabIndex] = useState<number>(0);
   const [masteredVocab, setMasteredVocab] = useState<string[]>([]);
+  const [vocabQuestions, setVocabQuestions] = useState<Question[]>([]);
   
   // JLPT Past Exam Subsystem States
   const [selectedJlptLevel, setSelectedJlptLevel] = useState<string>("N5");
@@ -164,6 +165,7 @@ export default function App() {
       
       if (resData.success && resData.data && resData.data.length > 0) {
         setVocabList(resData.data);
+        setVocabQuestions(resData.quiz || []);
         setApiSource(resData.source || "gemini");
         setPhase('studying');
       } else {
@@ -214,8 +216,8 @@ export default function App() {
       if (currentVocabIndex < vocabList.length - 1) {
         setCurrentVocabIndex(prev => prev + 1);
       } else {
-        const generatedQuiz = generateVocabQuiz(vocabList);
-        setQuestions(generatedQuiz);
+        const nextQuestions = vocabQuestions.length > 0 ? vocabQuestions : generateVocabQuiz(vocabList);
+        setQuestions(nextQuestions);
         setUserAnswers({});
         setCurrentQuestionIndex(0);
         setIsGraded(false);

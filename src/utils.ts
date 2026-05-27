@@ -45,7 +45,7 @@ const LEVEL_DECOYS: Record<string, {
  */
 export function generateQuiz(kanjiList: KanjiItem[]): Question[] {
   const questions: Question[] = [];
-  
+
   kanjiList.forEach((item, index) => {
     // Dynamically distribute different question structures:
     // 0: Hanja Meaning ("뜻과 음 맞추기")
@@ -54,7 +54,7 @@ export function generateQuiz(kanjiList: KanjiItem[]): Question[] {
     // 3: Match Kanji from meaning ("뜻/음 보고 한자 맞추기")
     const typeIndex = index % 4;
     let type: 'meaning' | 'reading' | 'word_meaning' | 'kanji_match' = 'meaning';
-    
+
     if (typeIndex === 1) type = 'reading';
     else if (typeIndex === 2) type = 'word_meaning';
     else if (typeIndex === 3) type = 'kanji_match';
@@ -122,7 +122,7 @@ function getDistinctValues(arr: string[], count: number, exceptValue: string, fa
   const uniques = Array.from(new Set(arr)).filter((v) => v && v !== exceptValue);
   const shuffled = uniques.sort(() => 0.5 - Math.random());
   const selected = shuffled.slice(0, count);
-  
+
   // Fill in if there aren't enough unique alternative answers from the quiz list
   let fallbackIndex = 0;
   const shuffledFallbackPool = [...fallbackPool].sort(() => 0.5 - Math.random());
@@ -132,7 +132,7 @@ function getDistinctValues(arr: string[], count: number, exceptValue: string, fa
       selected.push(fallback);
     }
   }
-  
+
   // Last resort fillers
   while (selected.length < count) {
     selected.push(`임의보기 ${selected.length + 1}`);
@@ -152,7 +152,7 @@ function shuffle(array: string[]): string[] {
 
 export function generateVocabQuiz(vocabList: VocabItem[]): Question[] {
   const questions: Question[] = [];
-  
+
   vocabList.forEach((item, index) => {
     // 0: Word Meaning ("뜻 맞추기")
     // 1: Word Reading / Hiragana ("요미가나 읽기 맞추기")
@@ -160,7 +160,7 @@ export function generateVocabQuiz(vocabList: VocabItem[]): Question[] {
     // 3: Blank Fill in Example ("예문 빈칸 채우기")
     const typeIndex = index % 4;
     let type: 'meaning' | 'reading' | 'kanji_match' | 'blank_fill' = 'meaning';
-    
+
     if (typeIndex === 1) type = 'reading';
     else if (typeIndex === 2) type = 'kanji_match';
     else if (typeIndex === 3) type = 'blank_fill';
@@ -199,7 +199,7 @@ export function generateVocabQuiz(vocabList: VocabItem[]): Question[] {
     } else {
       let sentence = item.exampleSentence.japanese;
       const wordToReplace = item.word;
-      
+
       let sentenceWithBlank = sentence;
       if (sentence.includes(wordToReplace)) {
         sentenceWithBlank = sentence.replace(wordToReplace, "__blank__");

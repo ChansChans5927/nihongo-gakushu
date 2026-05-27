@@ -21,7 +21,7 @@ export function ResultReport({
   handleGoHome,
   studyMode
 }: ResultReportProps) {
-  
+
   // Calculate score values
   const getScoreData = () => {
     let correctCount = 0;
@@ -48,7 +48,7 @@ export function ResultReport({
       {/* Score Assessment Header Grid */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm overflow-hidden text-center space-y-4 relative">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-400" />
-        
+
         <div className="mx-auto w-24 h-24 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center relative">
           <div className="text-3xl font-display font-extrabold text-slate-900 font-mono">
             {scoreData.correctCount} / {scoreData.totalCount}
@@ -63,7 +63,7 @@ export function ResultReport({
             테스트 결과: 임의 암기 격파 성적 {scoreData.percentage}점!
           </h3>
           <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-            {scoreData.percentage === 100 
+            {scoreData.percentage === 100
               ? "놀랍습니다! 연상 이미지가 머릿속에 완벽하게 기억되었습니다. 장기 기억으로 완벽 이관되었습니다."
               : "틀린 문제를 복습하면 연상 고리가 더욱 단단해집니다. 아래 연상법 해설을 다시 정독해 보세요."}
           </p>
@@ -78,7 +78,7 @@ export function ResultReport({
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
             <span>{studyMode === 'vocab' ? "새로운 단어 코스 풀기" : "새로운 한자 코스 풀기"}</span>
           </button>
-          
+
           <button
             onClick={handleGoHome}
             className="py-2.5 px-5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
@@ -103,18 +103,17 @@ export function ResultReport({
             return (
               <div
                 key={q.id}
-                className={`bg-white border rounded-2xl overflow-hidden p-5 space-y-4 transition-all ${
-                  isCorrect 
-                    ? "border-emerald-200/60 shadow-xs" 
+                className={`bg-white border rounded-2xl overflow-hidden p-5 space-y-4 transition-all ${isCorrect
+                    ? "border-emerald-200/60 shadow-xs"
                     : "border-red-200 shadow-sm"
-                }`}
+                  }`}
               >
                 {/* Status label row */}
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-mono font-bold text-slate-400">
                     문제 #{idx + 1}
                   </span>
-                  
+
                   {isCorrect ? (
                     <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded font-bold">
                       <CheckCircle2 className="w-3.5 h-3.5" />
@@ -130,44 +129,65 @@ export function ResultReport({
 
                 {/* Question Text */}
                 <div className="space-y-2">
-                  {q.type === 'blank_fill' && q.vocabItem ? (
+                  {q.type === 'blank_fill' ? (
                     <div className="space-y-1.5 w-full">
                       <p className="text-xs font-bold text-slate-400 tracking-wider">제시된 예문</p>
-                      <div className="text-base font-semibold text-slate-805 text-slate-800 tracking-wide font-sans leading-relaxed py-2.5 bg-slate-50 border border-slate-100 rounded-xl px-4 select-all">
+                      <div className="text-base font-semibold text-slate-800 tracking-wide font-sans leading-relaxed py-2.5 bg-slate-50 border border-slate-100 rounded-xl px-4 select-all">
                         {(() => {
-                          const vocab = q.vocabItem;
-                          const sentence = vocab.exampleSentence.japanese;
-                          const word = vocab.word;
-                          const parts = sentence.split(word);
-                          if (parts.length > 1) {
+                          const sentence = q.questionSentence || "";
+                          const correctAnswer = q.choices[q.correctIndex] || "";
+                          if (sentence.includes("__blank__")) {
+                            const parts = sentence.split("__blank__");
                             return (
                               <>
                                 {parts[0]}
                                 <strong className="text-emerald-600 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
-                                  {word}
+                                  {correctAnswer}
                                 </strong>
                                 {parts[1]}
                               </>
                             );
-                          } else {
-                            const firstChar = word[0];
-                            const charParts = sentence.split(firstChar);
-                            if (charParts.length > 1) {
+                          }
+
+                          // Fallback to vocab word splitting if __blank__ is not in questionSentence
+                          const vocab = q.vocabItem;
+                          if (vocab) {
+                            const word = vocab.word;
+                            const vocabSentence = vocab.exampleSentence.japanese;
+                            const parts = vocabSentence.split(word);
+                            if (parts.length > 1) {
                               return (
                                 <>
-                                  {charParts[0]}
+                                  {parts[0]}
                                   <strong className="text-emerald-600 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
                                     {word}
                                   </strong>
-                                  {charParts[1]}
+                                  {parts[1]}
                                 </>
                               );
+                            } else {
+                              const firstChar = word[0];
+                              const charParts = vocabSentence.split(firstChar);
+                              if (charParts.length > 1) {
+                                return (
+                                  <>
+                                    {charParts[0]}
+                                    <strong className="text-emerald-600 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
+                                      {word}
+                                    </strong>
+                                    {charParts[1]}
+                                  </>
+                                );
+                              }
                             }
+                            return <span className="font-bold text-emerald-800">{vocabSentence}</span>;
                           }
                           return <span className="font-bold text-emerald-800">{sentence}</span>;
                         })()}
                       </div>
-                      <p className="text-xs text-slate-500 italic">* 해석: {q.vocabItem.exampleSentence.meaning}</p>
+                      {q.vocabItem && (
+                        <p className="text-xs text-slate-500 italic">* 해석: {q.vocabItem.exampleSentence.meaning}</p>
+                      )}
                       <div className="text-sm font-bold text-slate-900 mt-2">
                         Q. 빈칸에 들어갈 알맞은 단어는 무엇일까요?
                       </div>
@@ -191,15 +211,14 @@ export function ResultReport({
                     </span>
                   </div>
 
-                  <div className={`p-3 rounded-xl space-y-0.5 border ${
-                    isCorrect 
-                      ? "bg-slate-50 border-slate-100" 
+                  <div className={`p-3 rounded-xl space-y-0.5 border ${isCorrect
+                      ? "bg-slate-50 border-slate-100"
                       : "bg-red-50/50 border-red-100"
-                  }`}>
+                    }`}>
                     <span className="text-slate-400 font-medium block">내가 선택한 보기</span>
                     <span className={`font-semibold ${isCorrect ? "text-slate-800" : "text-red-700 font-bold"}`}>
-                      {selectedIdx !== undefined 
-                        ? q.choices[selectedIdx] 
+                      {selectedIdx !== undefined
+                        ? q.choices[selectedIdx]
                         : "선택하지 않음 (시간 초과)"}
                     </span>
                   </div>
@@ -237,7 +256,7 @@ export function ResultReport({
                         {q.kanjiItem.mnemonic}
                       </p>
                     ) : null}
-                    
+
                     {!q.vocabItem && q.kanjiItem && (
                       <div className="flex flex-wrap gap-2 text-[10px] text-amber-800 pt-1 font-mono font-medium">
                         <span>중요 음독: {q.kanjiItem.onyomi} ({q.kanjiItem.onyomiKorean})</span>

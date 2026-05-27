@@ -23,18 +23,18 @@ export interface KanjiItem {
   grade: string;         // e.g. "초등 1학년" 
   mnemonic: string;      // Easy association mnemonics storyboard
   meaning: string;       // Korean translation of the character (e.g. "볼 견")
-  
+
   // Onyomi (Chinese Reading)
   onyomi: string;        // Hiragana (e.g. "けん")
   onyomiKorean: string;  // Korean sound (e.g. "켄")
-  
+
   // Hunyomi (Japanese Reading)
   hunyomi: string;       // Hiragana (e.g. "み.る")
   hunyomiKorean: string; // Korean sound (e.g. "미루")
-  
+
   relatedWords: RelatedWord[];
   radicalsBreakdown?: RadicalPart[]; // Explanation of building block components or radicals in Kanji
-  
+
   exampleSentence: {
     japanese: string;      // Japanese (e.g. "新しい発見がありました。")
     hiragana: string;      // Kanji written in Hiragana (e.g. "あたらしい はっけん가 ありました。")
@@ -51,6 +51,8 @@ export interface Question {
   questionText: string;
   choices: string[];
   correctIndex: number;
+  questionSentence?: string;
+  explanation?: string;
 }
 
 export interface KanjiMnemonicBreakdown {
