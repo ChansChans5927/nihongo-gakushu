@@ -532,7 +532,7 @@ export default function App() {
           <div className="flex items-center gap-1.5 sm:gap-2">
             {currentUser && (
               <div className="flex items-center gap-2 mr-2 border-r border-slate-200 pr-2">
-                <span className="hidden sm:inline text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full flex items-center gap-1">
+                <span className="hidden sm:inline-flex whitespace-nowrap text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full items-center gap-1">
                   <User className="w-3.5 h-3.5 text-slate-500" />
                   <strong>{currentUser.username}</strong>님
                 </span>

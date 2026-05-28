@@ -83,7 +83,7 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
           <p className="text-xs text-slate-500">
             {isLogin
               ? "학습 기록을 DB에 저장하여 언제든 이어 공부할 수 있습니다."
-              : "비밀번호는 암호화(Salting+Hashing)되어 안전하게 보관됩니다."}
+              : "비밀번호는 암호화되어 안전하게 보관됩니다."}
           </p>
         </div>
 
@@ -92,18 +92,16 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
           <button
             type="button"
             onClick={() => toggleTab(true)}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-              isLogin ? "bg-white text-slate-950 shadow-xs" : "text-slate-500 hover:text-slate-800"
-            }`}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${isLogin ? "bg-white text-slate-950 shadow-xs" : "text-slate-500 hover:text-slate-800"
+              }`}
           >
             로그인
           </button>
           <button
             type="button"
             onClick={() => toggleTab(false)}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-              !isLogin ? "bg-white text-slate-950 shadow-xs" : "text-slate-500 hover:text-slate-800"
-            }`}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${!isLogin ? "bg-white text-slate-950 shadow-xs" : "text-slate-500 hover:text-slate-800"
+              }`}
           >
             회원가입
           </button>
@@ -194,9 +192,8 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full py-3.5 px-4 bg-gradient-to-r ${
-              isLogin ? "from-slate-900 to-slate-800" : "from-amber-500 to-rose-500"
-            } text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:pointer-events-none active:scale-[0.98] mt-2`}
+            className={`w-full py-3.5 px-4 bg-gradient-to-r ${isLogin ? "from-slate-900 to-slate-800" : "from-amber-500 to-rose-500"
+              } text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:pointer-events-none active:scale-[0.98] mt-2`}
           >
             {isLoading ? (
               <>
