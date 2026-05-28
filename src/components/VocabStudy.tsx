@@ -71,16 +71,15 @@ export function VocabStudy({
         </div>
 
         <div className="p-5 sm:p-6 space-y-5">
-          
           {/* Main Vocab Character Visual Panel */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
             
             {/* Left side card: Large Word Display */}
-            <div className="md:col-span-4 bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col justify-between items-center text-center relative overflow-hidden">
-              <div className="my-auto py-4 space-y-2">
+            <div className="lg:col-span-4 bg-slate-50 border border-slate-100 rounded-2xl p-4 sm:p-5 flex flex-col justify-between items-center text-center relative overflow-hidden">
+              <div className="my-auto py-3 space-y-2">
                 <div 
                   onClick={() => speakJapanese(currentVocab.word)}
-                  className="text-5xl sm:text-6xl font-serif font-semibold text-slate-900 leading-none select-none select-all relative group cursor-pointer hover:text-emerald-600 transition-colors"
+                  className="text-4xl sm:text-6xl font-serif font-semibold text-slate-900 leading-none select-none select-all relative group cursor-pointer hover:text-emerald-600 transition-colors"
                   title="클릭하여 발음 듣기"
                 >
                   {currentVocab.word}
@@ -100,18 +99,18 @@ export function VocabStudy({
                   {currentVocab.hiragana} ({currentVocab.pronunciation})
                 </div>
 
-                <div className="inline-block mt-2 px-4 py-1.5 bg-slate-900 text-white rounded-full text-base font-bold">
+                <div className="inline-block mt-2 px-3.5 py-1.5 bg-slate-900 text-white rounded-full text-base font-bold">
                   {currentVocab.meaning}
                 </div>
               </div>
 
-              <div className="w-full text-center border-t border-slate-200/50 pt-2 text-[11px] text-slate-400 font-medium">
+              <div className="w-full text-center border-t border-slate-200/50 pt-2 text-[10px] text-slate-450 font-medium">
                 구성 한자 정보 포함 단어
               </div>
             </div>
 
             {/* Right side card: Kanjis breakdown & mnemonics */}
-            <div className="md:col-span-8 flex flex-col justify-between space-y-4">
+            <div className="lg:col-span-8 flex flex-col justify-between space-y-4">
               
               <div className="bg-emerald-50/50 border border-emerald-200/50 rounded-2xl p-4 space-y-3 relative">
                 <div className="absolute top-2.5 right-2 text-emerald-500/80">
@@ -126,22 +125,22 @@ export function VocabStudy({
                     currentVocab.kanjiBreakdown.map((kj, kjIdx) => (
                       <div 
                         key={kjIdx}
-                        className="bg-white border border-slate-200/60 rounded-xl p-3.5 shadow-3xs flex items-start gap-3.5 hover:border-emerald-300 transition-colors"
+                        className="bg-white border border-slate-200/60 rounded-xl p-3 sm:p-3.5 shadow-3xs flex items-start gap-3 hover:border-emerald-300 transition-colors"
                       >
                         <div 
                           onClick={() => speakJapanese(kj.kanji)}
-                          className="text-2xl font-serif font-black text-emerald-700 bg-emerald-50 rounded-lg w-12 h-12 flex items-center justify-center border border-emerald-100 cursor-pointer hover:bg-emerald-100 transition-colors shrink-0"
+                          className="text-xl font-serif font-black text-emerald-700 bg-emerald-50 rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-emerald-100 cursor-pointer hover:bg-emerald-100 transition-colors shrink-0"
                           title="클릭하여 발음 듣기"
                         >
                           {kj.kanji}
                         </div>
-                        <div className="flex-1 space-y-1">
+                        <div className="flex-1 space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-slate-800">
+                            <span className="text-xs font-bold text-slate-850">
                               {kj.meaning}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-600 leading-relaxed font-sans font-medium">
+                          <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed font-sans font-medium">
                             {kj.mnemonic}
                           </p>
                         </div>

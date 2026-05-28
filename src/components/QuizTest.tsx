@@ -175,8 +175,8 @@ export function QuizTest({
                     {choiceIdx + 1}
                   </span>
                   <span className={`leading-none ${isKanjiMatch
-                      ? "text-xl sm:text-2xl font-serif font-extrabold text-slate-900 tracking-normal pl-2"
-                      : "text-sm sm:text-base font-semibold"
+                    ? "text-xl sm:text-2xl font-serif font-extrabold text-slate-900 tracking-normal pl-2"
+                    : "text-sm sm:text-base font-semibold"
                     }`}>
                     {choice}
                   </span>

@@ -15,25 +15,25 @@ import { AuthCard } from "./components/AuthCard";
 export default function App() {
   // App Phase States: 'config' | 'studying' | 'testing' | 'result'
   const [phase, setPhase] = useState<'config' | 'studying' | 'testing' | 'result'>('config');
-  
+
   // Configuration Settings
   const [kanjiCount, setKanjiCount] = useState<number>(5);
   const [difficulty, setDifficulty] = useState<string>("all");
   const [jlptCount, setJlptCount] = useState<number>(5);
-  
+
   // Quiz and Study lists
   const [kanjiList, setKanjiList] = useState<KanjiItem[]>([]);
   const [currentKanjiIndex, setCurrentKanjiIndex] = useState<number>(0);
-  
+
   // Testing States
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [userAnswers, setUserAnswers] = useState<{ [questionId: number]: number }>({});
   const [isGraded, setIsGraded] = useState<boolean>(false);
-  
+
   // Mastered Kanji List
   const [masteredKanji, setMasteredKanji] = useState<string[]>([]);
-  
+
   // Study Mode State: 'kanji' | 'vocab'
   const [studyMode, setStudyMode] = useState<'kanji' | 'vocab'>('kanji');
 
@@ -43,7 +43,7 @@ export default function App() {
   const [currentVocabIndex, setCurrentVocabIndex] = useState<number>(0);
   const [masteredVocab, setMasteredVocab] = useState<string[]>([]);
   const [vocabQuestions, setVocabQuestions] = useState<Question[]>([]);
-  
+
   // JLPT Past Exam Subsystem States
   const [selectedJlptLevel, setSelectedJlptLevel] = useState<string>("N5");
   const [jlptQuestions, setJlptQuestions] = useState<JlptQuestion[]>([]);
@@ -98,13 +98,13 @@ export default function App() {
           try {
             const parsed = JSON.parse(localKanji);
             syncKanjis = parsed.filter((item: string) => !(resData.masteredKanjis || []).includes(item));
-          } catch (e) {}
+          } catch (e) { }
         }
         if (localVocab) {
           try {
             const parsed = JSON.parse(localVocab);
             syncVocabs = parsed.filter((item: string) => !(resData.masteredVocabs || []).includes(item));
-          } catch (e) {}
+          } catch (e) { }
         }
 
         if (syncKanjis.length > 0) {
@@ -250,16 +250,16 @@ export default function App() {
         response = await fetch("/api/kanji/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            count: kanjiCount, 
+          body: JSON.stringify({
+            count: kanjiCount,
             level: difficulty,
-            excludeKanji: masteredKanji 
+            excludeKanji: masteredKanji
           }),
         });
       }
-      
+
       const resData = await response.json();
-      
+
       if (resData.success && resData.data && resData.data.length > 0) {
         setKanjiList(resData.data);
         setApiSource(resData.source || "mongodb_cache");
@@ -306,16 +306,16 @@ export default function App() {
         response = await fetch("/api/vocab/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            count: vocabCount, 
+          body: JSON.stringify({
+            count: vocabCount,
             level: difficulty,
-            excludeVocab: masteredVocab 
+            excludeVocab: masteredVocab
           }),
         });
       }
-      
+
       const resData = await response.json();
-      
+
       if (resData.success && resData.data && resData.data.length > 0) {
         setVocabList(resData.data);
         setVocabQuestions(resData.quiz || []);
@@ -348,7 +348,7 @@ export default function App() {
         body: JSON.stringify({ level: selectedJlptLevel, count: jlptCount }),
       });
       const resData = await response.json();
-      
+
       if (resData.success && resData.data && resData.data.length > 0) {
         setJlptQuestions(resData.data);
         setIsJlptQuizActive(true);
@@ -517,7 +517,7 @@ export default function App() {
       {/* Upper Navigation Bar */}
       <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-200/80 z-40 px-4 py-3 sm:px-6">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <button 
+          <button
             onClick={handleGoHome}
             className="flex items-center gap-2 group focus:outline-none text-left"
           >
@@ -552,18 +552,18 @@ export default function App() {
             {(phase === 'studying' || isJlptQuizActive) && (
               <>
                 <span className="hidden sm:inline text-xs bg-amber-50 border border-amber-200 text-amber-800 px-2.5 py-1 rounded-full font-mono font-medium">
-                  {isJlptQuizActive 
-                    ? `JLPT ${selectedJlptLevel} 테스트: ${currentJlptIndex + 1} / ${jlptQuestions.length}` 
+                  {isJlptQuizActive
+                    ? `JLPT ${selectedJlptLevel} 테스트: ${currentJlptIndex + 1} / ${jlptQuestions.length}`
                     : studyMode === 'vocab'
-                    ? `공부 단계: ${currentVocabIndex + 1} / ${vocabList.length}`
-                    : `공부 단계: ${currentKanjiIndex + 1} / ${kanjiList.length}`}
+                      ? `공부 단계: ${currentVocabIndex + 1} / ${vocabList.length}`
+                      : `공부 단계: ${currentKanjiIndex + 1} / ${kanjiList.length}`}
                 </span>
                 <span className="inline sm:hidden text-[10px] bg-amber-50 border border-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-mono font-semibold">
-                  {isJlptQuizActive 
-                    ? `JLPT ${selectedJlptLevel}: ${currentJlptIndex + 1}/${jlptQuestions.length}` 
+                  {isJlptQuizActive
+                    ? `JLPT ${selectedJlptLevel}: ${currentJlptIndex + 1}/${jlptQuestions.length}`
                     : studyMode === 'vocab'
-                    ? `공부: ${currentVocabIndex + 1}/${vocabList.length}`
-                    : `공부: ${currentKanjiIndex + 1}/${kanjiList.length}`}
+                      ? `공부: ${currentVocabIndex + 1}/${vocabList.length}`
+                      : `공부: ${currentKanjiIndex + 1}/${kanjiList.length}`}
                 </span>
               </>
             )}

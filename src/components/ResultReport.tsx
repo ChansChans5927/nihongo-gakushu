@@ -104,8 +104,8 @@ export function ResultReport({
               <div
                 key={q.id}
                 className={`bg-white border rounded-2xl overflow-hidden p-5 space-y-4 transition-all ${isCorrect
-                    ? "border-emerald-200/60 shadow-xs"
-                    : "border-red-200 shadow-sm"
+                  ? "border-emerald-200/60 shadow-xs"
+                  : "border-red-200 shadow-sm"
                   }`}
               >
                 {/* Status label row */}
@@ -212,8 +212,8 @@ export function ResultReport({
                   </div>
 
                   <div className={`p-3 rounded-xl space-y-0.5 border ${isCorrect
-                      ? "bg-slate-50 border-slate-100"
-                      : "bg-red-50/50 border-red-100"
+                    ? "bg-slate-50 border-slate-100"
+                    : "bg-red-50/50 border-red-100"
                     }`}>
                     <span className="text-slate-400 font-medium block">내가 선택한 보기</span>
                     <span className={`font-semibold ${isCorrect ? "text-slate-800" : "text-red-700 font-bold"}`}>

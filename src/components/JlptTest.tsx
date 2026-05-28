@@ -1,13 +1,13 @@
 import { motion } from "motion/react";
-import { 
-  Award, 
-  CheckCircle2, 
-  CornerDownRight, 
-  ArrowRight, 
-  RefreshCw, 
-  HelpCircle, 
-  XCircle, 
-  Sparkles 
+import {
+  Award,
+  CheckCircle2,
+  CornerDownRight,
+  ArrowRight,
+  RefreshCw,
+  HelpCircle,
+  XCircle,
+  Sparkles
 } from "lucide-react";
 import { JlptQuestion } from "../types";
 
@@ -65,7 +65,7 @@ export function JlptTest({
               </span>
             </div>
             <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="bg-gradient-to-r from-amber-500 to-rose-500 h-full rounded-full transition-all duration-300"
                 style={{ width: `${((currentJlptIndex + 1) / jlptQuestions.length) * 100}%` }}
               />
@@ -91,7 +91,7 @@ export function JlptTest({
                 <CornerDownRight className="w-3.5 h-3.5 text-amber-500" />
                 다음 JLPT 지문을 읽고 물음에 답하십시오
               </h3>
-              
+
               {/* Split sentence logic */}
               {(() => {
                 const q = jlptQuestions[currentJlptIndex];
@@ -131,16 +131,14 @@ export function JlptTest({
                   <button
                     key={choiceIdx}
                     onClick={() => handleSelectJlptAnswer(choiceIdx)}
-                    className={`w-full text-left p-3.5 sm:p-4.5 rounded-xl border font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${
-                      isSelected
+                    className={`w-full text-left p-3.5 sm:p-4.5 rounded-xl border font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${isSelected
                         ? "bg-amber-50 border-amber-400 text-amber-900 ring-2 ring-amber-400/20 shadow-sm"
                         : "bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 shadow-xs"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-4">
-                      <span className={`w-7 h-7 rounded-full flex items-center justify-center font-mono text-xs ${
-                        isSelected ? "bg-amber-500 text-slate-950 font-black" : "bg-slate-100 text-slate-500"
-                      }`}>
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center font-mono text-xs ${isSelected ? "bg-amber-500 text-slate-950 font-black" : "bg-slate-100 text-slate-500"
+                        }`}>
                         {choiceIdx + 1}
                       </span>
                       <span className="text-sm sm:text-base font-semibold text-slate-800">
@@ -203,7 +201,7 @@ export function JlptTest({
             return (
               <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm text-center space-y-4 relative">
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-rose-400 to-indigo-500" />
-                
+
                 <div className="mx-auto w-24 h-24 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center relative">
                   <div className="text-3xl font-display font-extrabold text-slate-900 font-mono">
                     {correctCount} / {jlptQuestions.length}
@@ -233,7 +231,7 @@ export function JlptTest({
                     <RefreshCw className={`w-3.5 h-3.5 ${isJlptLoading ? "animate-spin" : ""}`} />
                     <span>한 번 더 응시하기</span>
                   </button>
-                  
+
                   <button
                     onClick={handleGoHomeJlpt}
                     className="py-2.5 px-5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
@@ -260,17 +258,16 @@ export function JlptTest({
               return (
                 <div
                   key={q.id}
-                  className={`bg-white border rounded-2xl overflow-hidden p-4 sm:p-5 space-y-4 transition-all ${
-                    isCorrect 
-                      ? "border-emerald-200/60 shadow-xs" 
+                  className={`bg-white border rounded-2xl overflow-hidden p-4 sm:p-5 space-y-4 transition-all ${isCorrect
+                      ? "border-emerald-200/60 shadow-xs"
                       : "border-red-200 shadow-sm"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-mono font-bold text-slate-400">
                       기출문제 #{idx + 1}
                     </span>
-                    
+
                     {isCorrect ? (
                       <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded font-bold">
                         <CheckCircle2 className="w-3.5 h-3.5" />
@@ -319,15 +316,14 @@ export function JlptTest({
                       </span>
                     </div>
 
-                    <div className={`p-3 rounded-xl space-y-0.5 border ${
-                      isCorrect 
-                        ? "bg-slate-50 border-slate-100" 
+                    <div className={`p-3 rounded-xl space-y-0.5 border ${isCorrect
+                        ? "bg-slate-50 border-slate-100"
                         : "bg-red-50/50 border-red-100"
-                    }`}>
+                      }`}>
                       <span className="text-slate-400 font-medium block">내가 고른 답</span>
                       <span className={`font-semibold ${isCorrect ? "text-slate-800" : "text-red-700 font-bold"}`}>
-                        {ansIdx !== undefined 
-                          ? q.choices[ansIdx] 
+                        {ansIdx !== undefined
+                          ? q.choices[ansIdx]
                           : "응답 없음"}
                       </span>
                     </div>

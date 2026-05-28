@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  BookOpen, 
-  Sparkles, 
-  Volume2, 
-  CornerDownRight, 
-  ArrowRight 
+import {
+  BookOpen,
+  Sparkles,
+  Volume2,
+  CornerDownRight,
+  ArrowRight
 } from "lucide-react";
 import { KanjiItem, RadicalPart } from "../types";
 import { RadicalModal } from "./RadicalModal";
@@ -26,7 +26,7 @@ export function KanjiStudy({
   speakJapanese
 }: KanjiStudyProps) {
   const [activeRadical, setActiveRadical] = useState<RadicalPart | null>(null);
-  
+
   const currentKanji = kanjiList[currentKanjiIndex];
 
   return (
@@ -50,7 +50,7 @@ export function KanjiStudy({
           </span>
         </div>
         <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-          <div 
+          <div
             className="bg-gradient-to-r from-amber-500 to-rose-500 h-full rounded-full transition-all duration-300"
             style={{ width: `${((currentKanjiIndex + 1) / kanjiList.length) * 100}%` }}
           />
@@ -59,7 +59,7 @@ export function KanjiStudy({
 
       {/* TEXTBOOK CORE CARD: Realizing Book-Aesthetic Page */}
       <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col shrink-0">
-        
+
         {/* Book style index header */}
         <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
           <span className="font-mono text-xs text-slate-400 font-bold">
@@ -76,24 +76,24 @@ export function KanjiStudy({
         </div>
 
         <div className="p-5 sm:p-6 space-y-5">
-          
+
           {/* Outer grid matching photo content */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
-            
+
             {/* Character Card Visual Panel (Left side in Book page) */}
             <div className="md:col-span-4 bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col justify-between items-center text-center relative overflow-hidden">
               <div className="absolute top-2 left-2 text-[10px] text-slate-400 font-mono font-bold">
                 {currentKanji.strokeCount} 획
               </div>
-              
+
               <div className="my-auto py-4">
-                <div 
+                <div
                   onClick={() => speakJapanese(currentKanji.kanji)}
                   className="text-7xl sm:text-8xl font-serif font-semibold text-slate-900 leading-none select-none select-all relative group cursor-pointer hover:text-amber-600 transition-colors"
                   title="클릭하여 발음 듣기"
                 >
                   {currentKanji.kanji}
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       speakJapanese(currentKanji.kanji);
@@ -116,7 +116,7 @@ export function KanjiStudy({
 
             {/* STORYBOARD & MEMORIZATION EXPLANATION PANEL */}
             <div className="md:col-span-8 flex flex-col justify-between space-y-4">
-              
+
               {/* Associative 스토리 보드 */}
               <div className="bg-amber-50/50 border border-amber-200/50 rounded-2xl p-4 space-y-2 relative">
                 <div className="absolute top-2.5 right-2 text-amber-400/80">
@@ -140,7 +140,7 @@ export function KanjiStudy({
                     {currentKanji.radicalsBreakdown.map((rad, radIdx) => {
                       const hasDetails = !!(rad.mnemonic || rad.onyomi || rad.hunyomi);
                       return (
-                        <div 
+                        <div
                           key={radIdx}
                           onClick={() => {
                             if (hasDetails) {
@@ -165,7 +165,7 @@ export function KanjiStudy({
                               )}
                             </div>
                           </div>
-                          
+
                           {hasDetails && (
                             <div className="flex items-center gap-1 text-[9px] text-amber-700 font-black bg-amber-50/80 border border-amber-100 rounded-full px-2 py-0.5 shrink-0 group-hover:bg-amber-100 transition-colors">
                               <Sparkles className="w-2.5 h-2.5 text-amber-500" />
@@ -193,7 +193,7 @@ export function KanjiStudy({
                       <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-bold font-mono">
                         {currentKanji.onyomiKorean}
                       </span>
-                      <button 
+                      <button
                         onClick={() => speakJapanese(currentKanji.onyomi)}
                         className="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-500 hover:text-slate-700 transition-all cursor-pointer flex items-center justify-center shrink-0"
                         title="음독 발음 듣기"
@@ -216,7 +216,7 @@ export function KanjiStudy({
                       <span className="text-[10px] bg-rose-100 text-rose-900 px-1.5 py-0.5 rounded font-bold font-mono">
                         {currentKanji.hunyomiKorean}
                       </span>
-                      <button 
+                      <button
                         onClick={() => speakJapanese(currentKanji.hunyomi)}
                         className="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-500 hover:text-slate-700 transition-all cursor-pointer flex items-center justify-center shrink-0"
                         title="훈독 발음 듣기"
@@ -275,15 +275,15 @@ export function KanjiStudy({
               文
             </div>
             <div className="flex items-center justify-between text-[10px] font-bold text-amber-400 uppercase tracking-wider gap-2">
-                  <span>연상 학습 필수 예문 (例文)</span>
-                  <button
-                    onClick={() => speakJapanese(currentKanji.exampleSentence.japanese)}
-                    className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white py-1.5 px-3 rounded-lg transition-colors cursor-pointer text-xs font-semibold shrink-0"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                    <span>예문 연속 읽기</span>
-                  </button>
-                </div>
+              <span>연상 학습 필수 예문 (例文)</span>
+              <button
+                onClick={() => speakJapanese(currentKanji.exampleSentence.japanese)}
+                className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white py-1.5 px-3 rounded-lg transition-colors cursor-pointer text-xs font-semibold shrink-0"
+              >
+                <Volume2 className="w-4 h-4" />
+                <span>예문 연속 읽기</span>
+              </button>
+            </div>
 
             <div className="space-y-1.5">
               <p className="text-base sm:text-lg font-bold tracking-wide text-white select-all">
@@ -331,9 +331,9 @@ export function KanjiStudy({
       {/* Radical Modal popup inside the studying screen */}
       <AnimatePresence>
         {activeRadical && (
-          <RadicalModal 
-            activeRadical={activeRadical} 
-            onClose={() => setActiveRadical(null)} 
+          <RadicalModal
+            activeRadical={activeRadical}
+            onClose={() => setActiveRadical(null)}
           />
         )}
       </AnimatePresence>
