@@ -792,8 +792,7 @@ app.post("/api/progress/reset", async (req, res) => {
 
 // POST Endpoint to fetch review cards
 app.post("/api/progress/review", async (req, res) => {
-  const { username, type, count } = req.body;
-  const numCount = parseInt(count, 10) || 5;
+  const { username, type } = req.body;
 
   if (!username || !type) {
     return res.json({ success: false, errorMsg: "올바르지 않은 요청 데이터입니다." });
@@ -814,9 +813,8 @@ app.post("/api/progress/review", async (req, res) => {
       return res.json({ success: true, data: [], quiz: [], message: "복습할 단어가 아직 없습니다!" });
     }
 
-    // Shuffle and pick
-    const shuffled = [...list].sort(() => 0.5 - Math.random());
-    const selectedKeys = shuffled.slice(0, numCount);
+    // Shuffle and pick all items
+    const selectedKeys = [...list].sort(() => 0.5 - Math.random());
 
     if (type === "kanji") {
       const prompt = `

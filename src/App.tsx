@@ -243,8 +243,7 @@ export default function App() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: currentUser.username,
-            type: "kanji",
-            count: kanjiCount
+            type: "kanji"
           })
         });
       } else {
@@ -300,8 +299,7 @@ export default function App() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: currentUser.username,
-            type: "vocab",
-            count: vocabCount
+            type: "vocab"
           })
         });
       } else {
