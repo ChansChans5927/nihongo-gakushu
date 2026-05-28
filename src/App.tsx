@@ -220,7 +220,8 @@ export default function App() {
   };
 
   // Trigger Study Generation from server Express + Gemini API
-  const startKanjiStudy = async () => {
+  const startKanjiStudy = async (isReviewOverride?: boolean) => {
+    const isReview = typeof isReviewOverride === 'boolean' ? isReviewOverride : isReviewMode;
     setIsLoading(true);
     setErrorMsg(null);
     setCurrentKanjiIndex(0);
@@ -228,10 +229,12 @@ export default function App() {
     setUserAnswers({});
     setIsGraded(false);
     setIsJlptQuizActive(false); // make sure JLPT mode is closed
+    setIsReviewMode(isReview);
+    setStudyMode('kanji');
 
     try {
       let response;
-      if (isReviewMode) {
+      if (isReview) {
         if (!currentUser) {
           throw new Error("로그인이 필요한 서비스입니다.");
         }
@@ -274,7 +277,8 @@ export default function App() {
   };
 
   // Trigger Vocab Study Generation from server Express + Gemini API
-  const startVocabStudy = async () => {
+  const startVocabStudy = async (isReviewOverride?: boolean) => {
+    const isReview = typeof isReviewOverride === 'boolean' ? isReviewOverride : isReviewMode;
     setIsLoading(true);
     setErrorMsg(null);
     setCurrentVocabIndex(0);
@@ -282,10 +286,12 @@ export default function App() {
     setUserAnswers({});
     setIsGraded(false);
     setIsJlptQuizActive(false);
+    setIsReviewMode(isReview);
+    setStudyMode('vocab');
 
     try {
       let response;
-      if (isReviewMode) {
+      if (isReview) {
         if (!currentUser) {
           throw new Error("로그인이 필요한 서비스입니다.");
         }

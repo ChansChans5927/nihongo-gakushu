@@ -6,8 +6,8 @@ interface ResultReportProps {
   questions: Question[];
   userAnswers: { [questionId: number]: number };
   isLoading: boolean;
-  startKanjiStudy: () => void;
-  startVocabStudy: () => void;
+  startKanjiStudy: (isReview?: boolean) => void;
+  startVocabStudy: (isReview?: boolean) => void;
   handleGoHome: () => void;
   studyMode: 'kanji' | 'vocab';
 }
