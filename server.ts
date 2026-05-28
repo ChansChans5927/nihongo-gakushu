@@ -3,6 +3,7 @@ import path from "path";
 import dotenv from "dotenv";
 import { GoogleGenAI, Type } from "@google/genai";
 import { createServer as createViteServer } from "vite";
+import { MongoClient } from "mongodb";
 
 // Load environment variables
 dotenv.config();
@@ -19,6 +20,8 @@ const ai = new GoogleGenAI({
   vertexai: true,
 });
 
+let db: any = null;
+
 // POST Endpoint to generate Kanji List
 app.post("/api/kanji/generate", async (req, res) => {
   const { count, level, excludeKanji } = req.body;
@@ -34,8 +37,47 @@ app.post("/api/kanji/generate", async (req, res) => {
   }
 
   try {
+    let cachedKanjis: any[] = [];
+    if (db) {
+      const query: any = {};
+      if (targetLevel !== "all") {
+        query.jlptLevel = targetLevel;
+      }
+      if (excludedList.length > 0) {
+        query.kanji = { $nin: excludedList };
+      }
+      try {
+        cachedKanjis = await db.collection("kanjis").find(query).toArray();
+      } catch (err) {
+        console.error("Failed to fetch cached kanjis from MongoDB:", err);
+      }
+    }
+
+    // If we have enough in the cache, shuffle and return them
+    if (cachedKanjis.length >= numCount) {
+      const shuffled = cachedKanjis.sort(() => 0.5 - Math.random());
+      const selected = shuffled.slice(0, numCount);
+      console.log(`[Kanji Gen] Served ${numCount} cards instantly from MongoDB cache.`);
+      return res.json({ success: true, source: "mongodb_cache", data: selected });
+    }
+
+    // Otherwise, we need to generate the difference
+    const missingCount = numCount - cachedKanjis.length;
+
+    // Fetch all kanji characters in the DB to exclude them from AI generation
+    let allDbKanjis: string[] = [];
+    if (db) {
+      try {
+        const dbKanjis = await db.collection("kanjis").find({}, { projection: { kanji: 1 } }).toArray();
+        allDbKanjis = dbKanjis.map((item: any) => item.kanji);
+      } catch (err) {
+        console.error("Failed to fetch all DB kanjis for exclusion:", err);
+      }
+    }
+    const fullExcludedList = Array.from(new Set([...excludedList, ...allDbKanjis]));
+
     const batchSizes: number[] = [];
-    let remaining = numCount;
+    let remaining = missingCount;
     while (remaining > 0) {
       const size = Math.min(remaining, 5);
       batchSizes.push(size);
@@ -62,7 +104,7 @@ app.post("/api/kanji/generate", async (req, res) => {
         
         CRITICAL DUPLICATION CONSTRAINT:
         - Strictly ensure all generated Kanji are globally unique.
-        - ABSOLUTELY EXCLUDE the following list of Kanji characters (which the user has already mastered): ${JSON.stringify(excludedList)}. Do not include any of these characters in the response.
+        - ABSOLUTELY EXCLUDE the following list of Kanji characters (which the user has already mastered): ${JSON.stringify(fullExcludedList)}. Do not include any of these characters in the response.
         
         CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
         - **Radical Breakdown Accuracy**: Deconstruct the Kanji into its actual visual components. If a part is not a standard Kanji, do NOT map it to an incorrect character (e.g., do NOT map the right side of '拝' to '未'). Describe it directly as a shape (e.g., component: "丰", meaning: "양손을 맞잡은 모양").
@@ -81,6 +123,7 @@ app.post("/api/kanji/generate", async (req, res) => {
         Make sure to return absolutely valid JSON following the provided responseSchema precisely.
       `;
 
+      const startTime = Date.now();
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: prompt,
@@ -151,8 +194,11 @@ app.post("/api/kanji/generate", async (req, res) => {
           }
         }
       });
-
+      const endTime = Date.now();
+      const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+      const usage = response.usageMetadata;
       const bodyText = response.text || "[]";
+      console.log(`[Kanji Gen] Batch size ${size} took ${elapsed}s. Prompt: ${usage?.promptTokenCount}t, Output: ${usage?.candidatesTokenCount}t (${usage?.candidatesTokenCount ? (usage.candidatesTokenCount / Number(elapsed)).toFixed(1) : 0} t/s)`);
       try {
         return JSON.parse(bodyText.trim());
       } catch (parseErr) {
@@ -163,8 +209,8 @@ app.post("/api/kanji/generate", async (req, res) => {
 
     const parsedBatches = await Promise.all(promises);
 
-    // Merge, deduplicate, and fill fallback if needed
-    const mergedData: any[] = [];
+    // Merge, deduplicate, and save to database
+    const newGeneratedCards: any[] = [];
     const seenKanji = new Set<string>();
 
     for (const batch of parsedBatches) {
@@ -172,16 +218,27 @@ app.post("/api/kanji/generate", async (req, res) => {
         for (const item of batch) {
           if (item && item.kanji && !seenKanji.has(item.kanji) && !excludedList.includes(item.kanji)) {
             seenKanji.add(item.kanji);
-            mergedData.push(item);
+            newGeneratedCards.push(item);
           }
         }
       }
     }
 
+    if (newGeneratedCards.length > 0 && db) {
+      try {
+        await db.collection("kanjis").insertMany(newGeneratedCards);
+        console.log(`[Kanji Gen] Cached ${newGeneratedCards.length} new cards to MongoDB.`);
+      } catch (err) {
+        console.error("Failed to insert new kanjis into MongoDB:", err);
+      }
+    }
+
+    const mergedData = [...cachedKanjis, ...newGeneratedCards];
+
     if (mergedData.length === 0) {
       return res.json({ success: false, errorMsg: "한자를 생성하지 못했습니다. 다시 시도해 주세요." });
     }
-    res.json({ success: true, source: "gemini_parallel", data: mergedData });
+    res.json({ success: true, source: cachedKanjis.length > 0 ? "mongodb_hybrid" : "gemini_parallel", data: mergedData });
   } catch (err) {
     console.error("Gemini API generation error:", err);
     res.json({ success: false, errorMsg: `한자 생성 중 오류가 발생했습니다: ${err.message}` });
@@ -201,8 +258,72 @@ app.post("/api/vocab/generate", async (req, res) => {
   }
 
   try {
+    let cachedVocabs: any[] = [];
+    if (db) {
+      const query: any = {};
+      if (targetLevel !== "all") {
+        query.jlptLevel = targetLevel;
+      }
+      if (excludedList.length > 0) {
+        query.word = { $nin: excludedList };
+      }
+      try {
+        cachedVocabs = await db.collection("vocabs").find(query).toArray();
+      } catch (err) {
+        console.error("Failed to fetch cached vocabs from MongoDB:", err);
+      }
+    }
+
+    // Check if we have enough matching vocab in DB with corresponding quiz questions
+    let selectedVocabs: any[] = [];
+    let selectedQuizzes: any[] = [];
+    let hasAllQuizzes = false;
+
+    if (cachedVocabs.length >= numCount) {
+      // Shuffle and take numCount
+      const shuffled = cachedVocabs.sort(() => 0.5 - Math.random());
+      selectedVocabs = shuffled.slice(0, numCount);
+      
+      const vocabWords = selectedVocabs.map(item => item.word);
+      try {
+        selectedQuizzes = await db.collection("vocab_quizzes").find({ targetWord: { $in: vocabWords } }).toArray();
+        hasAllQuizzes = selectedVocabs.every(v => selectedQuizzes.some(q => q.targetWord === v.word));
+      } catch (err) {
+        console.error("Failed to fetch cached vocab quizzes:", err);
+      }
+    }
+
+    if (hasAllQuizzes && selectedVocabs.length >= numCount) {
+      // Re-index quiz questions for selection
+      const formattedQuiz = selectedQuizzes.map((q, idx) => {
+        const associatedItem = selectedVocabs.find(item => item.word === q.targetWord);
+        return {
+          ...q,
+          id: idx + 1,
+          vocabItem: associatedItem
+        };
+      });
+      console.log(`[Vocab Gen] Served ${numCount} cards & quizzes instantly from MongoDB cache.`);
+      return res.json({ success: true, source: "mongodb_cache", data: selectedVocabs, quiz: formattedQuiz });
+    }
+
+    // Otherwise, we need to generate the difference
+    const missingCount = numCount - selectedVocabs.length;
+
+    // Fetch all vocab words currently in DB to exclude them from AI generation
+    let allDbVocabs: string[] = [];
+    if (db) {
+      try {
+        const dbVocabs = await db.collection("vocabs").find({}, { projection: { word: 1 } }).toArray();
+        allDbVocabs = dbVocabs.map((item: any) => item.word);
+      } catch (err) {
+        console.error("Failed to fetch all DB vocabs for exclusion:", err);
+      }
+    }
+    const fullExcludedList = Array.from(new Set([...excludedList, ...allDbVocabs]));
+
     const batchSizes: number[] = [];
-    let remaining = numCount;
+    let remaining = missingCount;
     while (remaining > 0) {
       const size = Math.min(remaining, 5);
       batchSizes.push(size);
@@ -212,7 +333,7 @@ app.post("/api/vocab/generate", async (req, res) => {
     const batchInstructions = [
       "Focus on common daily life verbs and adjectives (e.g. 食べる, 行く, 楽しい).",
       "Focus on nouns related to objects, places, or jobs (e.g. 教室, 銀行, 会社員).",
-      "Focus on abstract vocabulary, emotions, or social concepts (e.g. 感謝, 経済, 協力).",
+      "Focus on abstract vocabulary, emotions, or social concepts (e.g. 感謝, 경제, 협력).",
       "Focus on vocabulary related to movement, direction, or time (e.g. 準備, 週末)."
     ];
 
@@ -225,17 +346,17 @@ app.post("/api/vocab/generate", async (req, res) => {
         Focus hint for this specific small batch of ${size} words (which MUST be followed to ensure word diversity): ${focusHint}
         
         CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
-        - **Radical Breakdown Accuracy**: For each Kanji in \`kanjiBreakdown\`, deconstruct it into its actual visual components. If a part is not a standard Kanji, do NOT map it to an incorrect character (e.g., do NOT map the right side of '拝' to '未'). Describe it directly as a shape (e.g., "양손을 맞잡은 모양").
+        - **Radical Breakdown Accuracy**: For each Kanji in \`kanjiBreakdown\`, deconstruct it into its actual visual components. If a part is not a standard Kanji, do NOT map it to an incorrect character (e.g., do NOT map the right side of '拝' to '미'). Describe it directly as a shape (e.g., "양손을 맞잡은 모양").
         - **Mnemonic Consistency**: The mnemonic story for each Kanji must be strictly consistent with its components. Do not mention unrelated characters or meanings (e.g., for '換', use '扌' and '奐'; do NOT mention '황새 황').
         - **Pictorial Explanations**: Describe ancient pictographs or non-standard symbols as visual shapes representing objects or actions rather than forcing a modern character match.
 
         CRITICAL CONSTRAINTS:
         1. Strictly ensure all generated words contain at least one Kanji (한자) character (e.g., 食べる, 勉強, 銀行). Words containing only Hiragana or Katakana (e.g., 하는, くる, 카메라) are strictly forbidden.
         2. Ensure all generated words are globally unique.
-        3. ABSOLUTELY EXCLUDE the following list of Japanese words (which the user has already mastered): ${JSON.stringify(excludedList)}. Do not include any of these words in the response.
+        3. ABSOLUTELY EXCLUDE the following list of Japanese words (which the user has already mastered): ${JSON.stringify(fullExcludedList)}. Do not include any of these words in the response.
         4. CRITICAL QUESTION QUALITY CONSTRAINT:
            - In the "quiz" array, NEVER include the target Japanese Kanji character or Japanese word directly inside the "questionText" for 'kanji_match' or 'blank_fill' types!
-           - For example, if the target word is "広い" containing Kanji "広", do NOT ask "다음 한자 '広'가 포함된 단어는 무엇일까요?". This is too easy and exposes the answer.
+           - For example, if the target word is "広い" containing Kanji "広", do NOT ask "다음 한자 '광'이 포함된 단어는 무엇일까요?". This is too easy and exposes the answer.
            - Instead, ask for the Korean meaning/definition/reading in Korean: "한국어 뜻이 '넓다'인 알맞은 일본어 단어 표기(한자)는 무엇일까요?" or "훈음이 '넓을 광'인 한자가 포함된 일본어 단어는 무엇일까요?".
            - Ensure the questionText only describes the target in terms of its Korean meaning, Hiragana/pronunciation pronunciation, or grammar, without showing the actual Japanese Kanji/word character in the question itself.
         
@@ -247,9 +368,9 @@ app.post("/api/vocab/generate", async (req, res) => {
         - Generate exactly ${size} multiple-choice questions (one corresponding to each generated vocabulary card).
         - Distribute different question types: 'meaning', 'reading', 'kanji_match', and 'blank_fill'.
         - CRITICAL RULE FOR "blank_fill" TYPE:
-          - Use the generated exampleSentence but replace the target word with "__blank__". For example, if the sentence is "私は毎日新聞を読みます。" and the word is "読む", the questionSentence must be "私は毎日新聞を__blank__。".
-          - The 4 choices MUST be conjugated in the exact same grammatical form to fit the sentence context (e.g., if the sentence is '新聞を__blank__。', choices should be '読みます', '買います', '飲みます', '走ります'). This tests if the user can choose the correct verb conjugation for the context!
-          - The correctIndex is the 0-based index of the correct conjugated choice (e.g. '読みます').
+          - Use the generated exampleSentence but replace the target word with "__blank__". For example, if the sentence is "私は毎日新聞를読みます。" and the word is "読む", the questionSentence must be "저는 매일 신문을 __blank__。".
+          - The 4 choices MUST be conjugated in the exact same grammatical form to fit the sentence context.
+          - The correctIndex is the 0-based index of the correct conjugated choice.
           - The questionText should be: "제시된 일본어 예문의 빈칸에 들어갈 알맞은 단어는 무엇일까요?"
         - For 'meaning' type: The questionText asks for the Korean meaning of the Japanese word. Choices are Korean meanings.
         - For 'reading' type: The questionText asks for the pronunciation/reading of the Japanese word. Choices are readings in Hiragana with pronunciation.
@@ -258,6 +379,7 @@ app.post("/api/vocab/generate", async (req, res) => {
         Make sure to return absolutely valid JSON following the provided responseSchema precisely.
       `;
 
+      const startTime = Date.now();
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: prompt,
@@ -320,7 +442,7 @@ app.post("/api/vocab/generate", async (req, res) => {
                     type: { type: Type.STRING, description: "One of: meaning, reading, kanji_match, blank_fill" },
                     targetWord: { type: Type.STRING, description: "The target word from study cards" },
                     questionText: { type: Type.STRING, description: "Question instruction text in Korean" },
-                    questionSentence: { type: Type.STRING, description: "Sentence with '__blank__' replacing target word (e.g., '本を__blank__。'). For other types, empty string." },
+                    questionSentence: { type: Type.STRING, description: "Sentence with '__blank__' replacing target word (e.g., '本을__blank__。'). For other types, empty string." },
                     choices: {
                       type: Type.ARRAY,
                       items: { type: Type.STRING },
@@ -337,8 +459,11 @@ app.post("/api/vocab/generate", async (req, res) => {
           }
         }
       });
-
+      const endTime = Date.now();
+      const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+      const usage = response.usageMetadata;
       const bodyText = response.text || "{}";
+      console.log(`[Vocab Gen] Batch size ${size} took ${elapsed}s. Prompt: ${usage?.promptTokenCount}t, Output: ${usage?.candidatesTokenCount}t (${usage?.candidatesTokenCount ? (usage.candidatesTokenCount / Number(elapsed)).toFixed(1) : 0} t/s)`);
       try {
         return JSON.parse(bodyText.trim());
       } catch (parseErr) {
@@ -349,8 +474,8 @@ app.post("/api/vocab/generate", async (req, res) => {
 
     const parsedBatches = await Promise.all(promises);
 
-    const mergedData: any[] = [];
-    let mergedQuiz: any[] = [];
+    const newGeneratedVocabs: any[] = [];
+    const newGeneratedQuizzes: any[] = [];
     const seenWords = new Set<string>();
 
     for (const batch of parsedBatches) {
@@ -358,16 +483,34 @@ app.post("/api/vocab/generate", async (req, res) => {
         for (const item of batch.data) {
           if (item && item.word && !seenWords.has(item.word) && !excludedList.includes(item.word)) {
             seenWords.add(item.word);
-            mergedData.push(item);
+            newGeneratedVocabs.push(item);
           }
         }
       }
       if (batch && Array.isArray(batch.quiz)) {
         for (const q of batch.quiz) {
-          mergedQuiz.push(q);
+          newGeneratedQuizzes.push(q);
         }
       }
     }
+
+    // Filter new quizzes to only keep those whose target words were actually kept
+    const keptQuizzes = newGeneratedQuizzes.filter(q => seenWords.has(q.targetWord));
+
+    if (db && newGeneratedVocabs.length > 0) {
+      try {
+        await db.collection("vocabs").insertMany(newGeneratedVocabs);
+        if (keptQuizzes.length > 0) {
+          await db.collection("vocab_quizzes").insertMany(keptQuizzes);
+        }
+        console.log(`[Vocab Gen] Cached ${newGeneratedVocabs.length} new cards & quizzes to MongoDB.`);
+      } catch (err) {
+        console.error("Failed to insert new vocabs into MongoDB:", err);
+      }
+    }
+
+    const mergedData = [...selectedVocabs, ...newGeneratedVocabs];
+    let mergedQuiz = [...selectedQuizzes, ...keptQuizzes];
 
     // Filter quiz to only contain questions for words that were actually kept
     mergedQuiz = mergedQuiz.filter(q => seenWords.has(q.targetWord));
@@ -520,6 +663,21 @@ app.post("/api/jlpt/generate", async (req, res) => {
 
 // Configure Vite or Serve static built content
 async function startServer() {
+  // Connect to MongoDB Atlas
+  const mongoUri = process.env.MONGODB_URI;
+  if (mongoUri) {
+    try {
+      const client = new MongoClient(mongoUri);
+      await client.connect();
+      db = client.db("nihongo_gakushu");
+      console.log("Connected to MongoDB Atlas successfully.");
+    } catch (dbErr) {
+      console.error("Failed to connect to MongoDB Atlas:", dbErr);
+    }
+  } else {
+    console.warn("MONGODB_URI is not configured in .env. Running without DB caching.");
+  }
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
