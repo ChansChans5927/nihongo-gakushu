@@ -90,3 +90,7 @@ export interface JlptQuestion {
   explanation: string;
 }
 
+export interface UserSession {
+  username: string;
+}
+

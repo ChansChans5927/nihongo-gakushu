@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
+import crypto from "crypto";
 import { GoogleGenAI, Type } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 import { MongoClient } from "mongodb";
@@ -37,47 +38,10 @@ app.post("/api/kanji/generate", async (req, res) => {
   }
 
   try {
-    let cachedKanjis: any[] = [];
-    if (db) {
-      const query: any = {};
-      if (targetLevel !== "all") {
-        query.jlptLevel = targetLevel;
-      }
-      if (excludedList.length > 0) {
-        query.kanji = { $nin: excludedList };
-      }
-      try {
-        cachedKanjis = await db.collection("kanjis").find(query).toArray();
-      } catch (err) {
-        console.error("Failed to fetch cached kanjis from MongoDB:", err);
-      }
-    }
-
-    // If we have enough in the cache, shuffle and return them
-    if (cachedKanjis.length >= numCount) {
-      const shuffled = cachedKanjis.sort(() => 0.5 - Math.random());
-      const selected = shuffled.slice(0, numCount);
-      console.log(`[Kanji Gen] Served ${numCount} cards instantly from MongoDB cache.`);
-      return res.json({ success: true, source: "mongodb_cache", data: selected });
-    }
-
-    // Otherwise, we need to generate the difference
-    const missingCount = numCount - cachedKanjis.length;
-
-    // Fetch all kanji characters in the DB to exclude them from AI generation
-    let allDbKanjis: string[] = [];
-    if (db) {
-      try {
-        const dbKanjis = await db.collection("kanjis").find({}, { projection: { kanji: 1 } }).toArray();
-        allDbKanjis = dbKanjis.map((item: any) => item.kanji);
-      } catch (err) {
-        console.error("Failed to fetch all DB kanjis for exclusion:", err);
-      }
-    }
-    const fullExcludedList = Array.from(new Set([...excludedList, ...allDbKanjis]));
+    const fullExcludedList = Array.from(new Set(excludedList));
 
     const batchSizes: number[] = [];
-    let remaining = missingCount;
+    let remaining = numCount;
     while (remaining > 0) {
       const size = Math.min(remaining, 5);
       batchSizes.push(size);
@@ -224,21 +188,14 @@ app.post("/api/kanji/generate", async (req, res) => {
       }
     }
 
-    if (newGeneratedCards.length > 0 && db) {
-      try {
-        await db.collection("kanjis").insertMany(newGeneratedCards);
-        console.log(`[Kanji Gen] Cached ${newGeneratedCards.length} new cards to MongoDB.`);
-      } catch (err) {
-        console.error("Failed to insert new kanjis into MongoDB:", err);
-      }
-    }
 
-    const mergedData = [...cachedKanjis, ...newGeneratedCards];
+
+    const mergedData = newGeneratedCards;
 
     if (mergedData.length === 0) {
       return res.json({ success: false, errorMsg: "한자를 생성하지 못했습니다. 다시 시도해 주세요." });
     }
-    res.json({ success: true, source: cachedKanjis.length > 0 ? "mongodb_hybrid" : "gemini_parallel", data: mergedData });
+    res.json({ success: true, source: "gemini_parallel", data: mergedData });
   } catch (err) {
     console.error("Gemini API generation error:", err);
     res.json({ success: false, errorMsg: `한자 생성 중 오류가 발생했습니다: ${err.message}` });
@@ -497,17 +454,7 @@ app.post("/api/vocab/generate", async (req, res) => {
     // Filter new quizzes to only keep those whose target words were actually kept
     const keptQuizzes = newGeneratedQuizzes.filter(q => seenWords.has(q.targetWord));
 
-    if (db && newGeneratedVocabs.length > 0) {
-      try {
-        await db.collection("vocabs").insertMany(newGeneratedVocabs);
-        if (keptQuizzes.length > 0) {
-          await db.collection("vocab_quizzes").insertMany(keptQuizzes);
-        }
-        console.log(`[Vocab Gen] Cached ${newGeneratedVocabs.length} new cards & quizzes to MongoDB.`);
-      } catch (err) {
-        console.error("Failed to insert new vocabs into MongoDB:", err);
-      }
-    }
+
 
     const mergedData = [...selectedVocabs, ...newGeneratedVocabs];
     let mergedQuiz = [...selectedQuizzes, ...keptQuizzes];
@@ -657,6 +604,342 @@ app.post("/api/jlpt/generate", async (req, res) => {
   } catch (err) {
     console.error("Gemini API JLPT generation error:", err);
     res.json({ success: false, errorMsg: `JLPT 문제 생성 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+
+// Password encryption helper functions (Salt + PBKDF2)
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, storedHash: string): boolean {
+  try {
+    const [salt, hash] = storedHash.split(":");
+    const checkHash = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
+    return hash === checkHash;
+  } catch (err) {
+    return false;
+  }
+}
+
+// POST Endpoint for User Registration
+app.post("/api/auth/register", async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password || username.trim() === "" || password.trim() === "") {
+    return res.json({ success: false, errorMsg: "아이디와 비밀번호를 모두 입력해 주세요." });
+  }
+
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다. 잠시 후 다시 시도해 주세요." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    const existingUser = await db.collection("users").findOne({ username: normalizedUsername });
+    if (existingUser) {
+      return res.json({ success: false, errorMsg: "이미 존재하는 아이디입니다." });
+    }
+
+    const hashedPassword = hashPassword(password.trim());
+    await db.collection("users").insertOne({
+      username: normalizedUsername,
+      displayName: username.trim(),
+      password: hashedPassword,
+      createdAt: new Date()
+    });
+
+    res.json({ success: true, user: { username: username.trim() } });
+  } catch (err: any) {
+    console.error("Registration error:", err);
+    res.json({ success: false, errorMsg: `회원가입 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint for User Login
+app.post("/api/auth/login", async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password || username.trim() === "" || password.trim() === "") {
+    return res.json({ success: false, errorMsg: "아이디와 비밀번호를 모두 입력해 주세요." });
+  }
+
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다. 잠시 후 다시 시도해 주세요." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    const user = await db.collection("users").findOne({ username: normalizedUsername });
+    if (!user || !verifyPassword(password.trim(), user.password)) {
+      return res.json({ success: false, errorMsg: "아이디 또는 비밀번호가 올바르지 않습니다." });
+    }
+
+    res.json({ success: true, user: { username: user.displayName } });
+  } catch (err: any) {
+    console.error("Login error:", err);
+    res.json({ success: false, errorMsg: `로그인 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// GET Endpoint to fetch user progress
+app.get("/api/progress/get", async (req, res) => {
+  const { username } = req.query;
+  if (!username) {
+    return res.json({ success: false, errorMsg: "사용자 정보가 필요합니다." });
+  }
+
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+
+  try {
+    const normalizedUsername = String(username).trim().toLowerCase();
+    const progress = await db.collection("progress").findOne({ username: normalizedUsername });
+    res.json({
+      success: true,
+      masteredKanjis: progress?.masteredKanjis || [],
+      masteredVocabs: progress?.masteredVocabs || []
+    });
+  } catch (err: any) {
+    console.error("Get progress error:", err);
+    res.json({ success: false, errorMsg: `진행률을 가져오는 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint to save user progress
+app.post("/api/progress/save", async (req, res) => {
+  const { username, type, items, cardDetails, quizDetails } = req.body;
+  if (!username || !type || !Array.isArray(items)) {
+    return res.json({ success: false, errorMsg: "올바르지 않은 요청 데이터입니다." });
+  }
+
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    const field = type === "kanji" ? "masteredKanjis" : "masteredVocabs";
+
+    // 1. Save mastered item IDs to user progress
+    await db.collection("progress").updateOne(
+      { username: normalizedUsername },
+      { $addToSet: { [field]: { $each: items } } },
+      { upsert: true }
+    );
+
+    // 2. Save full card details to global collection only when user successfully masters them (only for vocab cards, as kanji cards don't use global DB cache)
+    if (Array.isArray(cardDetails) && cardDetails.length > 0 && type === "vocab") {
+      const ops = cardDetails.map((c: any) => ({
+        updateOne: {
+          filter: { word: c.word },
+          update: { $set: c },
+          upsert: true
+        }
+      }));
+      await db.collection("vocabs").bulkWrite(ops);
+      console.log(`[DB Sync] Upserted ${cardDetails.length} vocab details to DB on master.`);
+
+      if (Array.isArray(quizDetails) && quizDetails.length > 0) {
+        const quizOps = quizDetails.map((q: any) => ({
+          updateOne: {
+            filter: { targetWord: q.targetWord, type: q.type },
+            update: { $set: q },
+            upsert: true
+          }
+        }));
+        await db.collection("vocab_quizzes").bulkWrite(quizOps);
+        console.log(`[DB Sync] Upserted ${quizDetails.length} quiz details to DB on master.`);
+      }
+    }
+
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Save progress error:", err);
+    res.json({ success: false, errorMsg: `진행률 저장 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint to reset user progress
+app.post("/api/progress/reset", async (req, res) => {
+  const { username, type } = req.body;
+  if (!username || !type) {
+    return res.json({ success: false, errorMsg: "올바르지 않은 요청 데이터입니다." });
+  }
+
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    const field = type === "kanji" ? "masteredKanjis" : "masteredVocabs";
+
+    await db.collection("progress").updateOne(
+      { username: normalizedUsername },
+      { $set: { [field]: [] } },
+      { upsert: true }
+    );
+
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Reset progress error:", err);
+    res.json({ success: false, errorMsg: `진행률 초기화 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint to fetch review cards
+app.post("/api/progress/review", async (req, res) => {
+  const { username, type, count } = req.body;
+  const numCount = parseInt(count, 10) || 5;
+
+  if (!username || !type) {
+    return res.json({ success: false, errorMsg: "올바르지 않은 요청 데이터입니다." });
+  }
+
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    const progress = await db.collection("progress").findOne({ username: normalizedUsername });
+    const list: string[] = type === "kanji" 
+      ? (progress?.masteredKanjis || []) 
+      : (progress?.masteredVocabs || []);
+
+    if (list.length === 0) {
+      return res.json({ success: true, data: [], quiz: [], message: "복습할 단어가 아직 없습니다!" });
+    }
+
+    // Shuffle and pick
+    const shuffled = [...list].sort(() => 0.5 - Math.random());
+    const selectedKeys = shuffled.slice(0, numCount);
+
+    if (type === "kanji") {
+      const prompt = `
+        Create exactly ${selectedKeys.length} Japanese Kanji (한자) learning cards for a Korean speaker studying Japanese.
+        Specifically, generate cards for the following characters: ${JSON.stringify(selectedKeys)}.
+        
+        For each Kanji character, provide concise, creative, and easy-to-remember Korean mnemonics/association stories ("mnemonic" - 외우는 방법).
+        To prevent truncation and ensure snappy responses, keep all mnemonics and explanations very brief (maximum 2 concise sentences each).
+        
+        The properties for each card:
+        - "id", "kanji" (must match one of the requested characters), "strokeCount", "jlptLevel", "grade", "mnemonic", "meaning", "onyomi", "onyomiKorean", "hunyomi", "hunyomiKorean", "radicalsBreakdown", "relatedWords" (exactly 3), "exampleSentence".
+        
+        CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
+        - **Radical Breakdown Accuracy**: Deconstruct the Kanji into its actual visual components. If a part is not a standard Kanji, do NOT map it to an incorrect character (e.g., do NOT map the right side of '拝' to '未'). Describe it directly as a shape (e.g., component: "丰", meaning: "양손을 맞잡은 모양").
+        - **Mnemonic Consistency**: The mnemonic story must be strictly consistent with the components in \`radicalsBreakdown\`. Do not mention unrelated characters or meanings (e.g., for '換', use '扌' and '奐'; do NOT mention '황새 황').
+        - **Pictorial Explanations**: Describe ancient pictographs or non-standard symbols as visual shapes representing objects or actions rather than forcing a modern character match.
+
+        Make sure to return absolutely valid JSON following the provided responseSchema precisely.
+      `;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          systemInstruction: "You are an expert Japanese and Kanji language professor who specializes in visual mnemonics, associations, and helping Korean learners master Japanese characters with minimal effort.",
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            description: "List of Kanji learning cards",
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING, description: "Unique alphabetic id" },
+                kanji: { type: Type.STRING, description: "The single Kanji character" },
+                strokeCount: { type: Type.INTEGER, description: "Stroke count as an integer" },
+                jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
+                grade: { type: Type.STRING, description: "School grade or level (e.g., 초등 1학년, 상용 한자)" },
+                mnemonic: { type: Type.STRING, description: "An intuitive visual association storyboard in Korean (strictly maximum 2 brief sentences, under 40 Korean words)" },
+                meaning: { type: Type.STRING, description: "Korean meaning and Hanja reading Name (e.g., 볼 견)" },
+                onyomi: { type: Type.STRING, description: "Main Onyomi readings in Hiragana split by comma" },
+                onyomiKorean: { type: Type.STRING, description: "Main Onyomi Korean pronunciations split by comma" },
+                hunyomi: { type: Type.STRING, description: "Main Hunyomi readings in Hiragana split by comma" },
+                hunyomiKorean: { type: Type.STRING, description: "Main Hunyomi Korean pronunciations split by comma" },
+                radicalsBreakdown: {
+                  type: Type.ARRAY,
+                  description: "Array of sub-parts or radicals comprising this Kanji character",
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      component: { type: Type.STRING, description: "The component or radical, e.g. '目' or '儿'" },
+                      meaning: { type: Type.STRING, description: "Korean explanation or meaning of this component, e.g. '눈 목'" },
+                      mnemonic: { type: Type.STRING, description: "Highly concise Korean mnemonic visual association storyline, under 1 sentence (maximum 15 words)" }
+                    },
+                    required: ["component", "meaning", "mnemonic"]
+                  }
+                },
+                relatedWords: {
+                  type: Type.ARRAY,
+                  description: "Array of exactly 3 relevant study words using this Kanji",
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      word: { type: Type.STRING, description: "The Japanese word" },
+                      hiragana: { type: Type.STRING, description: "Hiragana writing" },
+                      pronunciation: { type: Type.STRING, description: "Korean pronunciation" },
+                      meaning: { type: Type.STRING, description: "Korean translation" }
+                    },
+                    required: ["word", "hiragana", "pronunciation", "meaning"]
+                  }
+                },
+                exampleSentence: {
+                  type: Type.OBJECT,
+                  description: "One natural educational Japanese sentence",
+                  properties: {
+                    japanese: { type: Type.STRING, description: "Japanese sentence" },
+                    hiragana: { type: Type.STRING, description: "Hiragana layout" },
+                    pronunciation: { type: Type.STRING, description: "Korean pronunciation" },
+                    meaning: { type: Type.STRING, description: "Korean translation" }
+                  },
+                  required: ["japanese", "hiragana", "pronunciation", "meaning"]
+                }
+              },
+              required: [
+                "id", "kanji", "strokeCount", "jlptLevel", "grade", "mnemonic", "meaning",
+                "onyomi", "onyomiKorean", "hunyomi", "hunyomiKorean", "relatedWords", "exampleSentence", "radicalsBreakdown"
+              ]
+            }
+          }
+        }
+      });
+
+      const bodyText = response.text || "[]";
+      try {
+        const cards = JSON.parse(bodyText.trim());
+        // Shuffle the results to match requested count order
+        const orderedCards = selectedKeys.map(k => cards.find((c: any) => c.kanji === k)).filter(Boolean);
+        res.json({ success: true, data: orderedCards });
+      } catch (parseErr) {
+        console.error("Failed to parse review kanjis:", parseErr);
+        res.json({ success: false, errorMsg: "복습용 한자 카드 생성에 실패했습니다." });
+      }
+    } else {
+      const cards = await db.collection("vocabs").find({ word: { $in: selectedKeys } }).toArray();
+      const quizzes = await db.collection("vocab_quizzes").find({ targetWord: { $in: selectedKeys } }).toArray();
+      
+      const orderedCards = selectedKeys.map(w => cards.find(c => c.word === w)).filter(Boolean);
+      // Re-index quizzes for display
+      const orderedQuizzes = selectedKeys.map((w, idx) => {
+        const q = quizzes.find(item => item.targetWord === w);
+        if (!q) return null;
+        const associatedItem = orderedCards.find(c => c.word === w);
+        return {
+          ...q,
+          id: idx + 1,
+          vocabItem: associatedItem
+        };
+      }).filter(Boolean);
+
+      res.json({ success: true, data: orderedCards, quiz: orderedQuizzes });
+    }
+  } catch (err: any) {
+    console.error("Review fetching error:", err);
+    res.json({ success: false, errorMsg: `복습 단어를 가져오는 중 오류가 발생했습니다: ${err.message}` });
   }
 });
 

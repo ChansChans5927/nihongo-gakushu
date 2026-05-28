@@ -33,6 +33,8 @@ interface MainConfigProps {
   handleResetVocabMastery: () => void;
   studyMode: 'kanji' | 'vocab';
   setStudyMode: (mode: 'kanji' | 'vocab') => void;
+  isReviewMode: boolean;
+  setIsReviewMode: (mode: boolean) => void;
 }
 
 export function MainConfig({
@@ -57,7 +59,9 @@ export function MainConfig({
   handleResetMastery,
   handleResetVocabMastery,
   studyMode,
-  setStudyMode
+  setStudyMode,
+  isReviewMode,
+  setIsReviewMode
 }: MainConfigProps) {
   const isAnyLoading = isLoading || isJlptLoading;
 
@@ -221,6 +225,47 @@ export function MainConfig({
                 </button>
               </div>
             )}
+
+            {/* Study Mode Selector (New vs Review) */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                학습 모드 선택
+              </label>
+              <div className="grid grid-cols-2 gap-2 bg-slate-50 p-1 rounded-xl border border-slate-200/50">
+                <button
+                  type="button"
+                  onClick={() => setIsReviewMode(false)}
+                  disabled={isAnyLoading}
+                  className={`py-2 px-3 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    !isReviewMode
+                      ? (studyMode === 'vocab' ? "bg-emerald-600 text-white shadow-xs" : "bg-amber-600 text-white shadow-xs")
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  새로운 {studyMode === 'vocab' ? '단어' : '한자'} 학습
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsReviewMode(true)}
+                  disabled={isAnyLoading || (studyMode === 'vocab' ? masteredVocab.length === 0 : masteredKanji.length === 0)}
+                  className={`py-2 px-3 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1 disabled:opacity-45 disabled:cursor-not-allowed ${
+                    isReviewMode
+                      ? (studyMode === 'vocab' ? "bg-emerald-600 text-white shadow-xs" : "bg-amber-600 text-white shadow-xs")
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  <span>외운 {studyMode === 'vocab' ? '단어' : '한자'} 복습</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isReviewMode ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                    {studyMode === 'vocab' ? masteredVocab.length : masteredKanji.length}
+                  </span>
+                </button>
+              </div>
+              {(studyMode === 'vocab' ? masteredVocab.length === 0 : masteredKanji.length === 0) && (
+                <p className="text-[10px] text-slate-400">
+                  * 외운 내역이 없으면 복습 모드를 선택할 수 없습니다. 먼저 학습을 진행해 주세요.
+                </p>
+              )}
+            </div>
           </div>
 
           {errorMsg && (
@@ -243,7 +288,12 @@ export function MainConfig({
             {isLoading ? (
               <>
                 <RefreshCw className="w-5 h-5 animate-spin" />
-                <span>AI가 {studyMode === 'vocab' ? '단어 및 한자' : '한자 및 단어'} 구성하는 중...</span>
+                <span>
+                  {isReviewMode 
+                    ? `DB에서 복습할 ${studyMode === 'vocab' ? '단어' : '한자'}를 불러오는 중...` 
+                    : `AI가 ${studyMode === 'vocab' ? '단어 및 한자' : '한자 및 단어'} 구성하는 중...`
+                  }
+                </span>
               </>
             ) : isJlptLoading ? (
               <>
@@ -254,7 +304,10 @@ export function MainConfig({
               <>
                 <Zap className={`w-5 h-5 ${studyMode === 'vocab' ? 'text-emerald-400 fill-emerald-300' : 'text-amber-400 fill-amber-300'}`} />
                 <span className="text-base font-bold">
-                  {studyMode === 'vocab' ? '단어 공부 시작하기' : '한자 공부 시작하기'}
+                  {isReviewMode
+                    ? `${studyMode === 'vocab' ? '단어 복습 시작하기' : '한자 복습 시작하기'}`
+                    : `${studyMode === 'vocab' ? '단어 공부 시작하기' : '한자 공부 시작하기'}`
+                  }
                 </span>
                 <ArrowRight className="w-4 h-4" />
               </>

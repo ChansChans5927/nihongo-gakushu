@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { AnimatePresence } from "motion/react";
-import { BookMarked, BookOpen, CheckCircle2 } from "lucide-react";
-import { KanjiItem, Question, JlptQuestion, VocabItem } from "./types";
+import { AnimatePresence, motion } from "motion/react";
+import { BookMarked, BookOpen, CheckCircle2, User, LogOut } from "lucide-react";
+import { KanjiItem, Question, JlptQuestion, VocabItem, UserSession } from "./types";
 import { generateQuiz, generateVocabQuiz } from "./utils";
 import { useSpeech } from "./hooks/useSpeech";
 import { MainConfig } from "./components/MainConfig";
@@ -10,6 +10,7 @@ import { VocabStudy } from "./components/VocabStudy";
 import { QuizTest } from "./components/QuizTest";
 import { ResultReport } from "./components/ResultReport";
 import { JlptTest } from "./components/JlptTest";
+import { AuthCard } from "./components/AuthCard";
 
 export default function App() {
   // App Phase States: 'config' | 'studying' | 'testing' | 'result'
@@ -53,54 +54,168 @@ export default function App() {
   const [isJlptLoading, setIsJlptLoading] = useState<boolean>(false);
   const [jlptErrorMsg, setJlptErrorMsg] = useState<string | null>(null);
 
+
   // Loading & Error boundary states
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [apiSource, setApiSource] = useState<string>("gemini");
 
+  // User Authentication & Review States
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
+  const [isReviewMode, setIsReviewMode] = useState<boolean>(false);
+
   // Hook for speech synthesis
   const { textToSpeechSupported, speakJapanese } = useSpeech();
 
+  // Load session from localStorage on mount
   useEffect(() => {
-    // Load mastered kanji list
-    const saved = localStorage.getItem("mastered_kanji");
-    if (saved) {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
       try {
-        setMasteredKanji(JSON.parse(saved));
+        setCurrentUser(JSON.parse(savedUser));
       } catch (e) {
-        console.error("Failed to parse mastered kanji", e);
-      }
-    }
-    // Load mastered vocab list
-    const savedVocab = localStorage.getItem("mastered_vocab");
-    if (savedVocab) {
-      try {
-        setMasteredVocab(JSON.parse(savedVocab));
-      } catch (e) {
-        console.error("Failed to parse mastered vocab", e);
+        console.error("Failed to parse user session", e);
       }
     }
   }, []);
 
-  const saveMasteredKanji = (list: string[]) => {
-    setMasteredKanji(list);
-    localStorage.setItem("mastered_kanji", JSON.stringify(list));
-  };
+  // Fetch progress from MongoDB and sync with localStorage data if any
+  const fetchUserProgress = async (username: string) => {
+    try {
+      const response = await fetch(`/api/progress/get?username=${encodeURIComponent(username)}`);
+      const resData = await response.json();
+      if (resData.success) {
+        setMasteredKanji(resData.masteredKanjis || []);
+        setMasteredVocab(resData.masteredVocabs || []);
 
-  const handleResetMastery = () => {
-    if (confirm("외운 한자 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?")) {
-      saveMasteredKanji([]);
+        // Sync local storage data if user previously worked offline/without account
+        const localKanji = localStorage.getItem("mastered_kanji");
+        const localVocab = localStorage.getItem("mastered_vocab");
+        let syncKanjis: string[] = [];
+        let syncVocabs: string[] = [];
+
+        if (localKanji) {
+          try {
+            const parsed = JSON.parse(localKanji);
+            syncKanjis = parsed.filter((item: string) => !(resData.masteredKanjis || []).includes(item));
+          } catch (e) {}
+        }
+        if (localVocab) {
+          try {
+            const parsed = JSON.parse(localVocab);
+            syncVocabs = parsed.filter((item: string) => !(resData.masteredVocabs || []).includes(item));
+          } catch (e) {}
+        }
+
+        if (syncKanjis.length > 0) {
+          await fetch("/api/progress/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, type: "kanji", items: syncKanjis })
+          });
+          setMasteredKanji(prev => Array.from(new Set([...prev, ...syncKanjis])));
+          localStorage.removeItem("mastered_kanji");
+        }
+        if (syncVocabs.length > 0) {
+          await fetch("/api/progress/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, type: "vocab", items: syncVocabs })
+          });
+          setMasteredVocab(prev => Array.from(new Set([...prev, ...syncVocabs])));
+          localStorage.removeItem("mastered_vocab");
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch user progress from DB:", err);
     }
   };
 
-  const saveMasteredVocab = (list: string[]) => {
-    setMasteredVocab(list);
-    localStorage.setItem("mastered_vocab", JSON.stringify(list));
+  // Load progress when user signs in
+  useEffect(() => {
+    if (currentUser) {
+      fetchUserProgress(currentUser.username);
+    } else {
+      setMasteredKanji([]);
+      setMasteredVocab([]);
+    }
+  }, [currentUser]);
+
+  const saveMasteredKanji = async (list: string[], newlyLearned: string[] = []) => {
+    setMasteredKanji(list);
+    if (currentUser && newlyLearned.length > 0) {
+      try {
+        const masteredDetails = kanjiList.filter(item => newlyLearned.includes(item.kanji));
+        await fetch("/api/progress/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: currentUser.username,
+            type: "kanji",
+            items: newlyLearned,
+            cardDetails: masteredDetails
+          })
+        });
+      } catch (err) {
+        console.error("Failed to save mastered kanji to DB:", err);
+      }
+    }
   };
 
-  const handleResetVocabMastery = () => {
+  const handleResetMastery = async () => {
+    if (confirm("외운 한자 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?")) {
+      setMasteredKanji([]);
+      if (currentUser) {
+        try {
+          await fetch("/api/progress/reset", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: currentUser.username, type: "kanji" })
+          });
+        } catch (err) {
+          console.error("Failed to reset progress in DB:", err);
+        }
+      }
+    }
+  };
+
+  const saveMasteredVocab = async (list: string[], newlyLearned: string[] = []) => {
+    setMasteredVocab(list);
+    if (currentUser && newlyLearned.length > 0) {
+      try {
+        const masteredDetails = vocabList.filter(item => newlyLearned.includes(item.word));
+        const masteredQuizzes = vocabQuestions.filter(q => newlyLearned.includes(q.targetWord));
+        await fetch("/api/progress/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: currentUser.username,
+            type: "vocab",
+            items: newlyLearned,
+            cardDetails: masteredDetails,
+            quizDetails: masteredQuizzes
+          })
+        });
+      } catch (err) {
+        console.error("Failed to save mastered vocab to DB:", err);
+      }
+    }
+  };
+
+  const handleResetVocabMastery = async () => {
     if (confirm("외운 단어 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?")) {
-      saveMasteredVocab([]);
+      setMasteredVocab([]);
+      if (currentUser) {
+        try {
+          await fetch("/api/progress/reset", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: currentUser.username, type: "vocab" })
+          });
+        } catch (err) {
+          console.error("Failed to reset progress in DB:", err);
+        }
+      }
     }
   };
 
@@ -115,23 +230,40 @@ export default function App() {
     setIsJlptQuizActive(false); // make sure JLPT mode is closed
 
     try {
-      const response = await fetch("/api/kanji/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          count: kanjiCount, 
-          level: difficulty,
-          excludeKanji: masteredKanji 
-        }),
-      });
+      let response;
+      if (isReviewMode) {
+        if (!currentUser) {
+          throw new Error("로그인이 필요한 서비스입니다.");
+        }
+        response = await fetch("/api/progress/review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: currentUser.username,
+            type: "kanji",
+            count: kanjiCount
+          })
+        });
+      } else {
+        response = await fetch("/api/kanji/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            count: kanjiCount, 
+            level: difficulty,
+            excludeKanji: masteredKanji 
+          }),
+        });
+      }
+      
       const resData = await response.json();
       
       if (resData.success && resData.data && resData.data.length > 0) {
         setKanjiList(resData.data);
-        setApiSource(resData.source || "gemini");
+        setApiSource(resData.source || "mongodb_cache");
         setPhase('studying');
       } else {
-        throw new Error(resData.errorMsg || "한자를 불러오는 데 실패했습니다.");
+        throw new Error(resData.errorMsg || resData.message || "한자를 불러오는 데 실패했습니다.");
       }
     } catch (err: any) {
       console.error("Failed to load kanji sets:", err);
@@ -152,24 +284,41 @@ export default function App() {
     setIsJlptQuizActive(false);
 
     try {
-      const response = await fetch("/api/vocab/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          count: vocabCount, 
-          level: difficulty,
-          excludeVocab: masteredVocab 
-        }),
-      });
+      let response;
+      if (isReviewMode) {
+        if (!currentUser) {
+          throw new Error("로그인이 필요한 서비스입니다.");
+        }
+        response = await fetch("/api/progress/review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: currentUser.username,
+            type: "vocab",
+            count: vocabCount
+          })
+        });
+      } else {
+        response = await fetch("/api/vocab/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            count: vocabCount, 
+            level: difficulty,
+            excludeVocab: masteredVocab 
+          }),
+        });
+      }
+      
       const resData = await response.json();
       
       if (resData.success && resData.data && resData.data.length > 0) {
         setVocabList(resData.data);
         setVocabQuestions(resData.quiz || []);
-        setApiSource(resData.source || "gemini");
+        setApiSource(resData.source || "mongodb_cache");
         setPhase('studying');
       } else {
-        throw new Error(resData.errorMsg || "단어를 불러오는 데 실패했습니다.");
+        throw new Error(resData.errorMsg || resData.message || "단어를 불러오는 데 실패했습니다.");
       }
     } catch (err: any) {
       console.error("Failed to load vocab sets:", err);
@@ -286,14 +435,20 @@ export default function App() {
     setPhase('result');
 
     if (studyMode === 'vocab') {
-      const finishedVocab = vocabList.map(item => item.word);
-      const updated = Array.from(new Set([...masteredVocab, ...finishedVocab]));
-      saveMasteredVocab(updated);
+      const correctVocabList = questions
+        .filter(q => userAnswers[q.id] === q.correctIndex && q.vocabItem)
+        .map(q => q.vocabItem!.word as string);
+      const finishedVocab = Array.from(new Set<string>(correctVocabList));
+      const updated = Array.from(new Set<string>([...masteredVocab, ...finishedVocab]));
+      saveMasteredVocab(updated, finishedVocab);
     } else {
       // Add learned Kanji to masteredKanji and save so they don't appear in "새로운 한자 코스 풀기"
-      const finishedKanjis = kanjiList.map(item => item.kanji);
-      const updated = Array.from(new Set([...masteredKanji, ...finishedKanjis]));
-      saveMasteredKanji(updated);
+      const correctKanjiList = questions
+        .filter(q => userAnswers[q.id] === q.correctIndex && q.kanjiItem)
+        .map(q => q.kanjiItem!.kanji as string);
+      const finishedKanjis = Array.from(new Set<string>(correctKanjiList));
+      const updated = Array.from(new Set<string>([...masteredKanji, ...finishedKanjis]));
+      saveMasteredKanji(updated, finishedKanjis);
     }
   };
 
@@ -345,6 +500,14 @@ export default function App() {
     setQuestions([]);
   };
 
+  const handleLogout = () => {
+    if (confirm("로그아웃 하시겠습니까?")) {
+      setCurrentUser(null);
+      localStorage.removeItem("user");
+      setIsReviewMode(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-amber-100 selection:text-amber-950 flex flex-col">
       {/* Upper Navigation Bar */}
@@ -367,6 +530,21 @@ export default function App() {
           </button>
 
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {currentUser && (
+              <div className="flex items-center gap-2 mr-2 border-r border-slate-200 pr-2">
+                <span className="hidden sm:inline text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full flex items-center gap-1">
+                  <User className="w-3.5 h-3.5 text-slate-500" />
+                  <strong>{currentUser.username}</strong>님
+                </span>
+                <button
+                  onClick={handleLogout}
+                  title="로그아웃"
+                  className="p-1.5 text-slate-500 hover:text-red-500 hover:bg-slate-100 rounded-lg transition-all cursor-pointer flex items-center justify-center"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            )}
             {(phase === 'studying' || isJlptQuizActive) && (
               <>
                 <span className="hidden sm:inline text-xs bg-amber-50 border border-amber-200 text-amber-800 px-2.5 py-1 rounded-full font-mono font-medium">
@@ -420,105 +598,130 @@ export default function App() {
         )}
 
         <AnimatePresence mode="wait">
-          
-          {/* PHASE 1: Configuration Landing */}
-          {phase === 'config' && !isJlptQuizActive && (
-            <MainConfig
-              kanjiCount={kanjiCount}
-              setKanjiCount={setKanjiCount}
-              vocabCount={vocabCount}
-              setVocabCount={setVocabCount}
-              difficulty={difficulty}
-              setDifficulty={setDifficulty}
-              jlptCount={jlptCount}
-              setJlptCount={setJlptCount}
-              selectedJlptLevel={selectedJlptLevel}
-              setSelectedJlptLevel={setSelectedJlptLevel}
-              masteredKanji={masteredKanji}
-              masteredVocab={masteredVocab}
-              isLoading={isLoading}
-              isJlptLoading={isJlptLoading}
-              errorMsg={errorMsg}
-              startKanjiStudy={startKanjiStudy}
-              startVocabStudy={startVocabStudy}
-              startJlptQuiz={startJlptQuiz}
-              handleResetMastery={handleResetMastery}
-              handleResetVocabMastery={handleResetVocabMastery}
-              studyMode={studyMode}
-              setStudyMode={setStudyMode}
-            />
-          )}
-
-          {/* PHASE 2: Step-by-Step Interactive Studying Screen */}
-          {phase === 'studying' && !isJlptQuizActive && (
-            studyMode === 'vocab' ? (
-              vocabList.length > 0 && (
-                <VocabStudy
-                  vocabList={vocabList}
-                  currentVocabIndex={currentVocabIndex}
-                  handlePrevStudy={handlePrevStudy}
-                  handleNextStudy={handleNextStudy}
-                  speakJapanese={speakJapanese}
+          {!currentUser ? (
+            <motion.div
+              key="auth-card-container"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              className="w-full flex justify-center"
+            >
+              <AuthCard
+                onAuthSuccess={(user) => {
+                  setCurrentUser(user);
+                  localStorage.setItem("user", JSON.stringify(user));
+                }}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="authenticated-content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full flex flex-col justify-center"
+            >
+              {/* PHASE 1: Configuration Landing */}
+              {phase === 'config' && !isJlptQuizActive && (
+                <MainConfig
+                  kanjiCount={kanjiCount}
+                  setKanjiCount={setKanjiCount}
+                  vocabCount={vocabCount}
+                  setVocabCount={setVocabCount}
+                  difficulty={difficulty}
+                  setDifficulty={setDifficulty}
+                  jlptCount={jlptCount}
+                  setJlptCount={setJlptCount}
+                  selectedJlptLevel={selectedJlptLevel}
+                  setSelectedJlptLevel={setSelectedJlptLevel}
+                  masteredKanji={masteredKanji}
+                  masteredVocab={masteredVocab}
+                  isLoading={isLoading}
+                  isJlptLoading={isJlptLoading}
+                  errorMsg={errorMsg}
+                  startKanjiStudy={startKanjiStudy}
+                  startVocabStudy={startVocabStudy}
+                  startJlptQuiz={startJlptQuiz}
+                  handleResetMastery={handleResetMastery}
+                  handleResetVocabMastery={handleResetVocabMastery}
+                  studyMode={studyMode}
+                  setStudyMode={setStudyMode}
+                  isReviewMode={isReviewMode}
+                  setIsReviewMode={setIsReviewMode}
                 />
-              )
-            ) : (
-              kanjiList.length > 0 && (
-                <KanjiStudy
-                  kanjiList={kanjiList}
-                  currentKanjiIndex={currentKanjiIndex}
-                  handlePrevStudy={handlePrevStudy}
-                  handleNextStudy={handleNextStudy}
-                  speakJapanese={speakJapanese}
+              )}
+
+              {/* PHASE 2: Step-by-Step Interactive Studying Screen */}
+              {phase === 'studying' && !isJlptQuizActive && (
+                studyMode === 'vocab' ? (
+                  vocabList.length > 0 && (
+                    <VocabStudy
+                      vocabList={vocabList}
+                      currentVocabIndex={currentVocabIndex}
+                      handlePrevStudy={handlePrevStudy}
+                      handleNextStudy={handleNextStudy}
+                      speakJapanese={speakJapanese}
+                    />
+                  )
+                ) : (
+                  kanjiList.length > 0 && (
+                    <KanjiStudy
+                      kanjiList={kanjiList}
+                      currentKanjiIndex={currentKanjiIndex}
+                      handlePrevStudy={handlePrevStudy}
+                      handleNextStudy={handleNextStudy}
+                      speakJapanese={speakJapanese}
+                    />
+                  )
+                )
+              )}
+
+              {/* PHASE 3: Objective Challenge Quiz Testing Screen */}
+              {phase === 'testing' && !isJlptQuizActive && questions.length > 0 && (
+                <QuizTest
+                  questions={questions}
+                  currentQuestionIndex={currentQuestionIndex}
+                  userAnswers={userAnswers}
+                  isGraded={isGraded}
+                  handleSelectAnswer={handleSelectAnswer}
+                  handlePrevQuestion={handlePrevQuestion}
+                  handleNextQuestion={handleNextQuestion}
+                  handleGradeQuiz={handleGradeQuiz}
                 />
-              )
-            )
-          )}
+              )}
 
-          {/* PHASE 3: Objective Challenge Quiz Testing Screen */}
-          {phase === 'testing' && !isJlptQuizActive && questions.length > 0 && (
-            <QuizTest
-              questions={questions}
-              currentQuestionIndex={currentQuestionIndex}
-              userAnswers={userAnswers}
-              isGraded={isGraded}
-              handleSelectAnswer={handleSelectAnswer}
-              handlePrevQuestion={handlePrevQuestion}
-              handleNextQuestion={handleNextQuestion}
-              handleGradeQuiz={handleGradeQuiz}
-            />
-          )}
+              {/* PHASE 4: Score report and Explaining Incorrect mnemonics */}
+              {phase === 'result' && !isJlptQuizActive && questions.length > 0 && (
+                <ResultReport
+                  questions={questions}
+                  userAnswers={userAnswers}
+                  isLoading={isLoading}
+                  startKanjiStudy={startKanjiStudy}
+                  startVocabStudy={startVocabStudy}
+                  handleGoHome={handleGoHome}
+                  studyMode={studyMode}
+                />
+              )}
 
-          {/* PHASE 4: Score report and Explaining Incorrect mnemonics */}
-          {phase === 'result' && !isJlptQuizActive && questions.length > 0 && (
-            <ResultReport
-              questions={questions}
-              userAnswers={userAnswers}
-              isLoading={isLoading}
-              startKanjiStudy={startKanjiStudy}
-              startVocabStudy={startVocabStudy}
-              handleGoHome={handleGoHome}
-              studyMode={studyMode}
-            />
+              {/* JLPT Quiz Mode: Solving & Results Screens */}
+              {isJlptQuizActive && jlptQuestions.length > 0 && (
+                <JlptTest
+                  selectedJlptLevel={selectedJlptLevel}
+                  jlptQuestions={jlptQuestions}
+                  currentJlptIndex={currentJlptIndex}
+                  jlptAnswers={jlptAnswers}
+                  isJlptGraded={isJlptGraded}
+                  isJlptLoading={isJlptLoading}
+                  handleSelectJlptAnswer={handleSelectJlptAnswer}
+                  handlePrevJlptQuestion={handlePrevJlptQuestion}
+                  handleNextJlptQuestion={handleNextJlptQuestion}
+                  handleGradeJlptQuiz={handleGradeJlptQuiz}
+                  handleGoHomeJlpt={handleGoHomeJlpt}
+                  startJlptQuiz={startJlptQuiz}
+                />
+              )}
+            </motion.div>
           )}
-
-          {/* JLPT Quiz Mode: Solving & Results Screens */}
-          {isJlptQuizActive && jlptQuestions.length > 0 && (
-            <JlptTest
-              selectedJlptLevel={selectedJlptLevel}
-              jlptQuestions={jlptQuestions}
-              currentJlptIndex={currentJlptIndex}
-              jlptAnswers={jlptAnswers}
-              isJlptGraded={isJlptGraded}
-              isJlptLoading={isJlptLoading}
-              handleSelectJlptAnswer={handleSelectJlptAnswer}
-              handlePrevJlptQuestion={handlePrevJlptQuestion}
-              handleNextJlptQuestion={handleNextJlptQuestion}
-              handleGradeJlptQuiz={handleGradeJlptQuiz}
-              handleGoHomeJlpt={handleGoHomeJlpt}
-              startJlptQuiz={startJlptQuiz}
-            />
-          )}
-
         </AnimatePresence>
       </main>
 
