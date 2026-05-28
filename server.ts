@@ -64,6 +64,11 @@ app.post("/api/kanji/generate", async (req, res) => {
         - Strictly ensure all generated Kanji are globally unique.
         - ABSOLUTELY EXCLUDE the following list of Kanji characters (which the user has already mastered): ${JSON.stringify(excludedList)}. Do not include any of these characters in the response.
         
+        CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
+        - **Radical Breakdown Accuracy**: Deconstruct the Kanji into its actual visual components. If a part is not a standard Kanji, do NOT map it to an incorrect character (e.g., do NOT map the right side of '拝' to '未'). Describe it directly as a shape (e.g., component: "丰", meaning: "양손을 맞잡은 모양").
+        - **Mnemonic Consistency**: The mnemonic story must be strictly consistent with the components in \`radicalsBreakdown\`. Do not mention unrelated characters or meanings (e.g., for '換', use '扌' and '奐'; do NOT mention '황새 황').
+        - **Pictorial Explanations**: Describe ancient pictographs or non-standard symbols as visual shapes representing objects or actions rather than forcing a modern character match.
+
         The prompt matches the book design style:
         - "mnemonic" (외우는 방법): Create extremely intuitive, vivid, and memorable visual association explanations in Korean, but KEEP IT VERY CONCISE (maximum 1-2 short sentences). Describe the components, like "눈(目)으로 사람(儿)이 하는 것은 보는 것이니 볼 견".
         - "meaning": The Korean Hanja definition, format: "뜻 음" (e.g. "볼 견", "날 일", "말할 왈", "보일 시").
@@ -219,6 +224,10 @@ app.post("/api/vocab/generate", async (req, res) => {
         
         Focus hint for this specific small batch of ${size} words (which MUST be followed to ensure word diversity): ${focusHint}
         
+        CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
+        - **Mnemonic & Component Consistency**: For each Kanji in \`kanjiBreakdown\`, ensure the mnemonic story matches its actual components. Do not mention unrelated characters (e.g., for '換', do NOT mention '황새 황').
+        - **No Inaccurate Mappings**: If a Kanji contains non-standard components (e.g., the right side of '拝'), describe the component's shape/meaning (e.g., "양손을 맞잡은 모양") instead of mapping it to an incorrect standard character (e.g., '未').
+
         CRITICAL CONSTRAINTS:
         1. Strictly ensure all generated words contain at least one Kanji (한자) character (e.g., 食べる, 勉強, 銀行). Words containing only Hiragana or Katakana (e.g., 하는, くる, 카메라) are strictly forbidden.
         2. Ensure all generated words are globally unique.

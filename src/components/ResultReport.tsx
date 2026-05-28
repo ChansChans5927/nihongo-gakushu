@@ -268,12 +268,46 @@ export function ResultReport({
                 )}
 
                 {isCorrect && (
-                  <div className="text-[11px] text-slate-400 font-mono italic">
+                  <div className="bg-emerald-50/50 border-l-4 border-emerald-500 rounded-r-xl p-4.5 space-y-2 text-xs">
+                    <div className="flex items-center gap-1 text-emerald-950 font-bold">
+                      <Sparkles className="w-4 h-4 text-emerald-500" />
+                      <span>연상 기억 비법: 정답을 맞춘 당신을 위한 암기 공식!</span>
+                    </div>
                     {q.vocabItem ? (
-                      `* 단어연상팁: ${q.vocabItem.word} (${q.vocabItem.meaning})`
+                      <div className="space-y-2.5 bg-white/75 p-3 rounded-lg border border-emerald-200/50">
+                        <p className="text-slate-800 font-bold">
+                          📌 단어: {q.vocabItem.word} ({q.vocabItem.hiragana}) - {q.vocabItem.meaning}
+                        </p>
+                        <div className="space-y-2.5 pt-1.5 border-t border-slate-200/50">
+                          {q.vocabItem.kanjiBreakdown && q.vocabItem.kanjiBreakdown.map((kj, kjIdx) => (
+                            <div key={kjIdx} className="space-y-0.5">
+                              <span className="font-bold text-emerald-850 text-[11px] block">
+                                한자 [{kj.kanji}] - {kj.meaning}
+                              </span>
+                              <p className="text-slate-600 leading-relaxed font-sans">
+                                {kj.mnemonic}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     ) : q.kanjiItem ? (
-                      `* 한자연상팁: ${q.kanjiItem.meaning} (${q.kanjiItem.onyomiKorean}/${q.kanjiItem.hunyomiKorean}) - ${q.kanjiItem.mnemonic.slice(0, 40)}...`
-                    ) : ''}
+                      <p className="text-slate-700 leading-relaxed bg-white/75 p-3 rounded-lg border border-emerald-200/50 font-sans">
+                        📌 한자 <strong className="text-sm font-serif text-emerald-900 underline underline-offset-3 decoration-emerald-500 font-extrabold">{q.kanjiItem.kanji}</strong>의 본래 명칭 : <strong className="text-slate-800 font-bold">{q.kanjiItem.meaning}</strong>
+                        <br />
+                        <span className="text-slate-600 mt-1 block">
+                          {q.kanjiItem.mnemonic}
+                        </span>
+                      </p>
+                    ) : null}
+
+                    {!q.vocabItem && q.kanjiItem && (
+                      <div className="flex flex-wrap gap-2 text-[10px] text-emerald-800 pt-1 font-mono font-medium">
+                        <span>중요 음독: {q.kanjiItem.onyomi} ({q.kanjiItem.onyomiKorean})</span>
+                        <span>•</span>
+                        <span>중요 훈독: {q.kanjiItem.hunyomi} ({q.kanjiItem.hunyomiKorean})</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
