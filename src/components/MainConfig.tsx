@@ -59,6 +59,8 @@ export function MainConfig({
   studyMode,
   setStudyMode
 }: MainConfigProps) {
+  const isAnyLoading = isLoading || isJlptLoading;
+
   return (
     <motion.div
       key="config-screen"
@@ -100,7 +102,8 @@ export function MainConfig({
               <button
                 type="button"
                 onClick={() => setStudyMode('kanji')}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                disabled={isAnyLoading}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${
                   studyMode === 'kanji'
                     ? "bg-white text-slate-950 shadow-xs"
                     : "text-slate-500 hover:text-slate-800"
@@ -111,7 +114,8 @@ export function MainConfig({
               <button
                 type="button"
                 onClick={() => setStudyMode('vocab')}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                disabled={isAnyLoading}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${
                   studyMode === 'vocab'
                     ? "bg-white text-slate-950 shadow-xs"
                     : "text-slate-500 hover:text-slate-800"
@@ -137,7 +141,8 @@ export function MainConfig({
                       key={num}
                       type="button"
                       onClick={handleSelectCount}
-                      className={`py-3 px-2 rounded-xl border text-sm font-semibold transition-all cursor-pointer ${currentCount === num
+                      disabled={isAnyLoading}
+                      className={`py-3 px-2 rounded-xl border text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${currentCount === num
                         ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10"
                         : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
                         }`}
@@ -167,7 +172,8 @@ export function MainConfig({
                     key={lvl.val}
                     type="button"
                     onClick={() => setDifficulty(lvl.val)}
-                    className={`py-2 px-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${difficulty === lvl.val
+                    disabled={isAnyLoading}
+                    className={`py-2 px-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${difficulty === lvl.val
                       ? (studyMode === 'vocab' ? "bg-emerald-600 border-emerald-600 text-white shadow-sm" : "bg-amber-600 border-amber-600 text-white shadow-sm")
                       : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
                       }`}
@@ -191,7 +197,8 @@ export function MainConfig({
                 <button
                   type="button"
                   onClick={handleResetMastery}
-                  className="text-[10px] text-red-500 hover:text-red-600 font-bold underline bg-white px-2.5 py-1 border border-slate-200 rounded-md shadow-xs shrink-0 cursor-pointer"
+                  disabled={isAnyLoading}
+                  className="text-[10px] text-red-500 hover:text-red-600 font-bold underline bg-white px-2.5 py-1 border border-slate-200 rounded-md shadow-xs shrink-0 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                 >
                   전체 초기화
                 </button>
@@ -207,7 +214,8 @@ export function MainConfig({
                 <button
                   type="button"
                   onClick={handleResetVocabMastery}
-                  className="text-[10px] text-red-500 hover:text-red-600 font-bold underline bg-white px-2.5 py-1 border border-slate-200 rounded-md shadow-xs shrink-0 cursor-pointer"
+                  disabled={isAnyLoading}
+                  className="text-[10px] text-red-500 hover:text-red-600 font-bold underline bg-white px-2.5 py-1 border border-slate-200 rounded-md shadow-xs shrink-0 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                 >
                   전체 초기화
                 </button>
@@ -225,7 +233,7 @@ export function MainConfig({
           {/* Submit Button */}
           <button
             onClick={studyMode === 'vocab' ? startVocabStudy : startKanjiStudy}
-            disabled={isLoading}
+            disabled={isAnyLoading}
             className={`w-full py-4 px-6 bg-gradient-to-r text-white font-medium rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-55 active:scale-[0.98] ${
               studyMode === 'vocab'
                 ? "from-slate-900 to-slate-800 hover:from-emerald-600 hover:to-teal-500"
@@ -236,6 +244,11 @@ export function MainConfig({
               <>
                 <RefreshCw className="w-5 h-5 animate-spin" />
                 <span>AI가 {studyMode === 'vocab' ? '단어 및 한자' : '한자 및 단어'} 구성하는 중...</span>
+              </>
+            ) : isJlptLoading ? (
+              <>
+                <RefreshCw className="w-5 h-5 animate-spin" />
+                <span>JLPT 기출 준비 대기 중...</span>
               </>
             ) : (
               <>
@@ -277,7 +290,8 @@ export function MainConfig({
                   <button
                     key={lvl}
                     onClick={() => setSelectedJlptLevel(lvl)}
-                    className={`py-2 px-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${selectedJlptLevel === lvl
+                    disabled={isAnyLoading}
+                    className={`py-2 px-1 text-xs font-bold rounded-lg border transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${selectedJlptLevel === lvl
                       ? "bg-amber-500 border-amber-500 text-slate-950 font-black shadow"
                       : "bg-slate-800 border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-750"
                       }`}
@@ -298,7 +312,8 @@ export function MainConfig({
                   <button
                     key={num}
                     onClick={() => setJlptCount(num)}
-                    className={`py-1.5 px-0.5 rounded-lg border text-xs font-bold transition-all cursor-pointer ${jlptCount === num
+                    disabled={isAnyLoading}
+                    className={`py-1.5 px-0.5 rounded-lg border text-xs font-bold transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${jlptCount === num
                       ? "bg-amber-500 border-amber-500 text-slate-950 font-black shadow"
                       : "bg-slate-800 border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-750"
                       }`}
@@ -313,13 +328,18 @@ export function MainConfig({
           <div className="pt-5 border-t border-slate-800 mt-5 space-y-3">
             <button
               onClick={startJlptQuiz}
-              disabled={isJlptLoading}
+              disabled={isAnyLoading}
               className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-400 hover:to-orange-500 text-slate-950 hover:text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-45"
             >
               {isJlptLoading ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
                   <span>기출 자료 받는 중...</span>
+                </>
+              ) : isLoading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
+                  <span>한자/단어 준비 대기 중...</span>
                 </>
               ) : (
                 <>
