@@ -686,7 +686,6 @@ export default function App() {
                   questions={questions}
                   currentQuestionIndex={currentQuestionIndex}
                   userAnswers={userAnswers}
-                  isGraded={isGraded}
                   handleSelectAnswer={handleSelectAnswer}
                   handlePrevQuestion={handlePrevQuestion}
                   handleNextQuestion={handleNextQuestion}

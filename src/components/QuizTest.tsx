@@ -6,7 +6,6 @@ interface QuizTestProps {
   questions: Question[];
   currentQuestionIndex: number;
   userAnswers: { [questionId: number]: number };
-  isGraded: boolean;
   handleSelectAnswer: (choiceIndex: number) => void;
   handlePrevQuestion: () => void;
   handleNextQuestion: () => void;
@@ -17,7 +16,6 @@ export function QuizTest({
   questions,
   currentQuestionIndex,
   userAnswers,
-  isGraded,
   handleSelectAnswer,
   handlePrevQuestion,
   handleNextQuestion,

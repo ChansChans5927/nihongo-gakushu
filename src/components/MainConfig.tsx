@@ -107,7 +107,7 @@ export function MainConfig({
           }}
           disabled={isAnyLoading}
           className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none ${activeTab === 'kanji'
-              ? "bg-white text-amber-600 shadow-sm border border-slate-250/20"
+              ? "bg-white text-amber-600 shadow-sm border border-slate-200/20"
               : "text-slate-500 hover:text-slate-800"
             }`}
         >
@@ -122,7 +122,7 @@ export function MainConfig({
           }}
           disabled={isAnyLoading}
           className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none ${activeTab === 'vocab'
-              ? "bg-white text-emerald-600 shadow-sm border border-slate-250/20"
+              ? "bg-white text-emerald-600 shadow-sm border border-slate-200/20"
               : "text-slate-500 hover:text-slate-800"
             }`}
         >
@@ -136,7 +136,7 @@ export function MainConfig({
           }}
           disabled={isAnyLoading}
           className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none ${activeTab === 'jlpt'
-              ? "bg-white text-rose-600 shadow-sm border border-slate-250/20"
+              ? "bg-white text-rose-600 shadow-sm border border-slate-200/20"
               : "text-slate-500 hover:text-slate-800"
             }`}
         >
@@ -476,7 +476,7 @@ export function MainConfig({
                 disabled={isAnyLoading || masteredVocab.length === 0}
                 className={`w-full py-3.5 px-5 text-sm font-bold rounded-xl border transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.98] disabled:opacity-45 disabled:cursor-not-allowed ${isReviewMode && studyMode === 'vocab' && isLoading
                     ? "bg-slate-900 border-slate-900 text-white"
-                    : "bg-white border-slate-200 hover:border-slate-350 text-slate-700 hover:bg-slate-50"
+                    : "bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50"
                   }`}
               >
                 {isReviewMode && studyMode === 'vocab' && isLoading ? (
@@ -531,7 +531,7 @@ export function MainConfig({
                       disabled={isAnyLoading}
                       className={`py-1.5 px-0.5 text-xs font-bold rounded-lg border transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${selectedJlptLevel === lvl
                         ? "bg-amber-500 border-amber-500 text-slate-950 font-black shadow"
-                        : "bg-slate-800 border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-750"
+                        : "bg-slate-800 border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-700"
                         }`}
                     >
                       {lvl}
@@ -554,7 +554,7 @@ export function MainConfig({
                       disabled={isAnyLoading}
                       className={`py-1.5 px-0.5 rounded-lg border text-xs font-bold transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${jlptCount === num
                         ? "bg-amber-500 border-amber-500 text-slate-950 font-black shadow"
-                        : "bg-slate-800 border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-750"
+                        : "bg-slate-800 border-slate-700/60 hover:border-slate-600 text-slate-300 hover:bg-slate-700"
                         }`}
                     >
                       {num}개

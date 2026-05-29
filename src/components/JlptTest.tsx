@@ -79,7 +79,7 @@ export function JlptTest({
               </span>
               <button
                 onClick={handleGoHomeJlpt}
-                className="text-xs text-slate-550 text-slate-500 hover:text-slate-800 font-bold cursor-pointer hover:underline"
+                className="text-xs text-slate-500 hover:text-slate-800 font-bold cursor-pointer hover:underline"
               >
                 시험 포기하고 홈으로
               </button>
@@ -245,7 +245,7 @@ export function JlptTest({
 
           {/* List of answers */}
           <div className="space-y-4">
-            <h4 className="text-sm font-bold text-slate-505 text-slate-500 uppercase tracking-widest flex items-center gap-1.5 px-1">
+            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 px-1">
               <HelpCircle className="w-4 h-4 text-amber-500" />
               <span>기출전문가 심층 오답 및 구체적 문법해설 리포트</span>
             </h4>

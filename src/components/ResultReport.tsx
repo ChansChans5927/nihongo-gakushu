@@ -219,7 +219,7 @@ export function ResultReport({
                     <span className={`font-semibold ${isCorrect ? "text-slate-800" : "text-red-700 font-bold"}`}>
                       {selectedIdx !== undefined
                         ? q.choices[selectedIdx]
-                        : "선택하지 않음 (시간 초과)"}
+                        : "선택하지 않음"}
                     </span>
                   </div>
                 </div>

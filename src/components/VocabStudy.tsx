@@ -104,7 +104,7 @@ export function VocabStudy({
                 </div>
               </div>
 
-              <div className="w-full text-center border-t border-slate-200/50 pt-2 text-[10px] text-slate-450 font-medium">
+              <div className="w-full text-center border-t border-slate-200/50 pt-2 text-[10px] text-slate-400 font-medium">
                 구성 한자 정보 포함 단어
               </div>
             </div>
@@ -136,7 +136,7 @@ export function VocabStudy({
                         </div>
                         <div className="flex-1 space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-slate-850">
+                            <span className="text-xs font-bold text-slate-800">
                               {kj.meaning}
                             </span>
                           </div>
