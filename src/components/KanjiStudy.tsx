@@ -212,12 +212,12 @@ export function KanjiStudy({
                   </div>
                   <div className="col-span-9 p-2.5 bg-white space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-900 font-mono">{currentKanji.hunyomi}</span>
+                      <span className="text-sm font-bold text-slate-900 font-mono">{currentKanji.hunyomi?.replace(/\./g, "")}</span>
                       <span className="text-[10px] bg-rose-100 text-rose-900 px-1.5 py-0.5 rounded font-bold font-mono">
                         {currentKanji.hunyomiKorean}
                       </span>
                       <button
-                        onClick={() => speakJapanese(currentKanji.hunyomi)}
+                        onClick={() => speakJapanese(currentKanji.hunyomi?.replace(/\./g, ""))}
                         className="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-500 hover:text-slate-700 transition-all cursor-pointer flex items-center justify-center shrink-0"
                         title="훈독 발음 듣기"
                       >

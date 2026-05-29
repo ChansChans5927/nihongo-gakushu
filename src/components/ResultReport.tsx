@@ -261,7 +261,7 @@ export function ResultReport({
                       <div className="flex flex-wrap gap-2 text-[10px] text-amber-800 pt-1 font-mono font-medium">
                         <span>중요 음독: {q.kanjiItem.onyomi} ({q.kanjiItem.onyomiKorean})</span>
                         <span>•</span>
-                        <span>중요 훈독: {q.kanjiItem.hunyomi} ({q.kanjiItem.hunyomiKorean})</span>
+                        <span>중요 훈독: {q.kanjiItem.hunyomi?.replace(/\./g, "")} ({q.kanjiItem.hunyomiKorean})</span>
                       </div>
                     )}
                   </div>
@@ -305,7 +305,7 @@ export function ResultReport({
                       <div className="flex flex-wrap gap-2 text-[10px] text-emerald-800 pt-1 font-mono font-medium">
                         <span>중요 음독: {q.kanjiItem.onyomi} ({q.kanjiItem.onyomiKorean})</span>
                         <span>•</span>
-                        <span>중요 훈독: {q.kanjiItem.hunyomi} ({q.kanjiItem.hunyomiKorean})</span>
+                        <span>중요 훈독: {q.kanjiItem.hunyomi?.replace(/\./g, "")} ({q.kanjiItem.hunyomiKorean})</span>
                       </div>
                     )}
                   </div>

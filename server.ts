@@ -38,10 +38,44 @@ app.post("/api/kanji/generate", async (req, res) => {
   }
 
   try {
-    const fullExcludedList = Array.from(new Set(excludedList));
+    let cachedKanjis: any[] = [];
+    if (db) {
+      const query: any = {};
+      if (targetLevel !== "all") {
+        query.jlptLevel = targetLevel;
+      }
+      if (excludedList.length > 0) {
+        query.kanji = { $nin: excludedList };
+      }
+      try {
+        cachedKanjis = await db.collection("kanjis").find(query).toArray();
+      } catch (err) {
+        console.error("Failed to fetch cached kanjis from MongoDB:", err);
+      }
+    }
+
+    if (cachedKanjis.length >= numCount) {
+      const shuffled = cachedKanjis.sort(() => 0.5 - Math.random());
+      const selectedKanjis = shuffled.slice(0, numCount);
+      console.log(`[Kanji Gen] Served ${numCount} cards instantly from MongoDB cache.`);
+      return res.json({ success: true, source: "mongodb_cache", data: selectedKanjis });
+    }
+
+    const missingCount = numCount - cachedKanjis.length;
+
+    let allDbKanjis: string[] = [];
+    if (db) {
+      try {
+        const dbKanjis = await db.collection("kanjis").find({}, { projection: { kanji: 1 } }).toArray();
+        allDbKanjis = dbKanjis.map((item: any) => item.kanji);
+      } catch (err) {
+        console.error("Failed to fetch all DB kanjis for exclusion:", err);
+      }
+    }
+    const fullExcludedList = Array.from(new Set([...excludedList, ...allDbKanjis]));
 
     const batchSizes: number[] = [];
-    let remaining = numCount;
+    let remaining = missingCount;
     while (remaining > 0) {
       const size = Math.min(remaining, 5);
       batchSizes.push(size);
@@ -181,6 +215,9 @@ app.post("/api/kanji/generate", async (req, res) => {
       if (Array.isArray(batch)) {
         for (const item of batch) {
           if (item && item.kanji && !seenKanji.has(item.kanji) && !excludedList.includes(item.kanji)) {
+            if (item.hunyomi) {
+              item.hunyomi = item.hunyomi.replace(/\./g, "");
+            }
             seenKanji.add(item.kanji);
             newGeneratedCards.push(item);
           }
@@ -188,18 +225,10 @@ app.post("/api/kanji/generate", async (req, res) => {
       }
     }
 
-
-
-    const mergedData = newGeneratedCards;
-
-    if (mergedData.length === 0) {
-      return res.json({ success: false, errorMsg: "한자를 생성하지 못했습니다. 다시 시도해 주세요." });
-    }
-
     // Cache newly generated kanji cards to DB for future review lookups
-    if (db && mergedData.length > 0) {
+    if (db && newGeneratedCards.length > 0) {
       try {
-        const ops = mergedData.map((c: any) => ({
+        const ops = newGeneratedCards.map((c: any) => ({
           updateOne: {
             filter: { kanji: c.kanji },
             update: { $set: c },
@@ -207,13 +236,19 @@ app.post("/api/kanji/generate", async (req, res) => {
           }
         }));
         await db.collection("kanjis").bulkWrite(ops);
-        console.log(`[DB Sync] Cached ${mergedData.length} kanji cards to DB on generation.`);
+        console.log(`[DB Sync] Cached ${newGeneratedCards.length} kanji cards to DB on generation.`);
       } catch (cacheErr) {
         console.error("Failed to cache kanji cards to DB:", cacheErr);
       }
     }
 
-    res.json({ success: true, source: "gemini_parallel", data: mergedData });
+    const mergedData = [...cachedKanjis, ...newGeneratedCards];
+
+    if (mergedData.length === 0) {
+      return res.json({ success: false, errorMsg: "한자를 생성하지 못했습니다. 다시 시도해 주세요." });
+    }
+
+    res.json({ success: true, source: newGeneratedCards.length > 0 ? "gemini_parallel" : "mongodb_cache", data: mergedData });
   } catch (err) {
     console.error("Gemini API generation error:", err);
     res.json({ success: false, errorMsg: `한자 생성 중 오류가 발생했습니다: ${err.message}` });
@@ -974,13 +1009,16 @@ app.post("/api/progress/review", async (req, res) => {
             generatedCards = JSON.parse(bodyText.trim());
             // Cache newly generated kanji cards to DB
             if (generatedCards.length > 0) {
-              const ops = generatedCards.map((c: any) => ({
-                updateOne: {
-                  filter: { kanji: c.kanji },
-                  update: { $set: c },
-                  upsert: true
-                }
-              }));
+              const ops = generatedCards.map((c: any) => {
+                if (c.hunyomi) c.hunyomi = c.hunyomi.replace(/\./g, "");
+                return {
+                  updateOne: {
+                    filter: { kanji: c.kanji },
+                    update: { $set: c },
+                    upsert: true
+                  }
+                };
+              });
               await db.collection("kanjis").bulkWrite(ops);
               console.log(`[DB Sync] Cached ${generatedCards.length} review kanji cards to DB.`);
             }

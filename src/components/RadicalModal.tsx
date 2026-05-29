@@ -91,7 +91,7 @@ export function RadicalModal({ activeRadical, onClose }: RadicalModalProps) {
                 <div className="flex flex-col items-center justify-center gap-0.5 px-2">
                   <span className="text-[10px] text-slate-400 font-sans">훈독</span>
                   <div className="flex items-center gap-1">
-                    <strong className="text-slate-700 font-bold">{activeRadical.hunyomi}</strong>
+                    <strong className="text-slate-700 font-bold">{activeRadical.hunyomi?.replace(/\./g, "")}</strong>
                     {activeRadical.hunyomiKorean && (
                       <span className="text-amber-800 bg-amber-50 px-1 py-0.2 rounded font-black text-[9px]">
                         {activeRadical.hunyomiKorean}
