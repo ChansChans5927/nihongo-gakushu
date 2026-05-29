@@ -98,7 +98,7 @@ export function KanjiStudy({
                       e.stopPropagation();
                       speakJapanese(currentKanji.kanji);
                     }}
-                    className="absolute -top-2 -right-6 p-1.5 rounded-full bg-white shadow-sm border border-slate-200/50 hover:bg-slate-50 text-slate-500 hover:text-amber-600 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 cursor-pointer flex items-center justify-center"
+                    className="absolute -top-2 -right-10 p-1.5 rounded-full bg-white shadow-sm border border-slate-200/50 hover:bg-slate-50 text-slate-500 hover:text-amber-600 transition-all opacity-100 cursor-pointer flex items-center justify-center"
                     title="한자 발음 듣기"
                   >
                     <Volume2 className="w-4 h-4" />

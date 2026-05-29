@@ -79,24 +79,23 @@ export function VocabStudy({
               <div className="my-auto py-3 space-y-2">
                 <div 
                   onClick={() => speakJapanese(currentVocab.word)}
-                  className="text-4xl sm:text-6xl font-serif font-semibold text-slate-900 leading-none select-none select-all relative group cursor-pointer hover:text-emerald-600 transition-colors"
+                  className="text-4xl sm:text-6xl font-serif font-semibold text-slate-900 leading-none select-none select-all cursor-pointer hover:text-emerald-600 transition-colors"
                   title="클릭하여 발음 듣기"
                 >
                   {currentVocab.word}
+                </div>
+
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xs text-slate-400 font-mono">
+                    {currentVocab.hiragana} ({currentVocab.pronunciation})
+                  </span>
                   <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      speakJapanese(currentVocab.word);
-                    }}
-                    className="absolute -top-4 -right-6 p-1.5 rounded-full bg-white shadow-sm border border-slate-200/50 hover:bg-slate-50 text-slate-500 hover:text-emerald-600 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 cursor-pointer flex items-center justify-center"
+                    onClick={() => speakJapanese(currentVocab.word)}
+                    className="p-1.5 rounded-full bg-white shadow-sm border border-slate-200/50 hover:bg-slate-50 text-slate-500 hover:text-emerald-600 transition-all cursor-pointer flex items-center justify-center"
                     title="단어 발음 듣기"
                   >
-                    <Volume2 className="w-4 h-4" />
+                    <Volume2 className="w-3.5 h-3.5" />
                   </button>
-                </div>
-                
-                <div className="text-xs text-slate-400 font-mono">
-                  {currentVocab.hiragana} ({currentVocab.pronunciation})
                 </div>
 
                 <div className="inline-block mt-2 px-3.5 py-1.5 bg-slate-900 text-white rounded-full text-base font-bold">

@@ -23,6 +23,45 @@ const ai = new GoogleGenAI({
 
 let db: any = null;
 
+// GET Endpoint for TTS proxy — fetches Google Translate TTS audio server-side
+// to bypass browser referrer/CORS blocking that causes silent audio.
+app.get("/api/tts", async (req, res) => {
+  const text = req.query.q as string;
+  const lang = (req.query.lang as string) || "ja";
+
+  if (!text) {
+    return res.status(400).json({ error: "Missing q parameter" });
+  }
+
+  try {
+    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${encodeURIComponent(lang)}&client=tw-ob&q=${encodeURIComponent(text)}`;
+
+    const response = await fetch(ttsUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://translate.google.com/",
+      },
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: "Google TTS request failed" });
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    res.set({
+      "Content-Type": "audio/mpeg",
+      "Content-Length": buffer.length.toString(),
+      "Cache-Control": "public, max-age=86400", // Cache for 24h
+    });
+    res.send(buffer);
+  } catch (e) {
+    console.error("TTS proxy error:", e);
+    res.status(500).json({ error: "TTS proxy failed" });
+  }
+});
+
 // POST Endpoint to generate Kanji List
 app.post("/api/kanji/generate", async (req, res) => {
   const { count, level, excludeKanji } = req.body;
@@ -365,10 +404,9 @@ app.post("/api/vocab/generate", async (req, res) => {
         2. Ensure all generated words are globally unique.
         3. ABSOLUTELY EXCLUDE the following list of Japanese words (which the user has already mastered): ${JSON.stringify(fullExcludedList)}. Do not include any of these words in the response.
         4. CRITICAL QUESTION QUALITY CONSTRAINT:
-           - In the "quiz" array, NEVER include the target Japanese Kanji character or Japanese word directly inside the "questionText" for 'kanji_match' or 'blank_fill' types!
-           - For example, if the target word is "広い" containing Kanji "広", do NOT ask "다음 한자 '광'이 포함된 단어는 무엇일까요?". This is too easy and exposes the answer.
-           - Instead, ask for the Korean meaning/definition/reading in Korean: "한국어 뜻이 '넓다'인 알맞은 일본어 단어 표기(한자)는 무엇일까요?" or "훈음이 '넓을 광'인 한자가 포함된 일본어 단어는 무엇일까요?".
-           - Ensure the questionText only describes the target in terms of its Korean meaning, Hiragana/pronunciation pronunciation, or grammar, without showing the actual Japanese Kanji/word character in the question itself.
+           - In the "quiz" array, NEVER include the target Japanese Kanji character, its constituent Kanji characters, or the Japanese word anywhere inside the "questionText" or "questionSentence"!
+           - For 'kanji_match' type: The questionText MUST follow this exact format: '한국어 뜻이 "[meaning]"인 알맞은 일본어 단어 표기(한자)는 무엇일까요?'. For example, if the word is "教室" (meaning "교실"), the questionText MUST be: '한국어 뜻이 "교실"인 알맞은 일본어 단어 표기(한자)는 무엇일까요?'. Do NOT ask about its constituent kanjis (e.g. '가르칠 교', '집 실') or show their characters, as this exposes the spelling of the answer.
+           - Ensure the questionText only describes the target in terms of its Korean meaning, Hiragana/pronunciation, or grammar, without showing the actual Japanese Kanji/word character in the question itself.
         
         For the "data" array:
         - Generate exactly ${size} vocabulary cards (with id, word, hiragana, pronunciation, meaning, jlptLevel, kanjiBreakdown, exampleSentence).
@@ -1074,8 +1112,9 @@ app.post("/api/progress/review", async (req, res) => {
             1. All generated words must contain at least one Kanji character.
             2. Each word in the response must match one of the requested words.
             3. CRITICAL QUESTION QUALITY CONSTRAINT:
-               - In the "quiz" array, NEVER include the target Japanese Kanji character directly inside the "questionText".
-               - Instead, ask for the Korean meaning/definition/reading in Korean.
+               - In the "quiz" array, NEVER include the target Japanese Kanji character, its constituent Kanji characters, or the Japanese word anywhere inside the "questionText" or "questionSentence"!
+               - For 'kanji_match' type: The questionText MUST follow this exact format: '한국어 뜻이 "[meaning]"인 알맞은 일본어 단어 표기(한자)는 무엇일까요?'. Do NOT ask about its constituent kanjis or show their characters, as this exposes the spelling of the answer.
+               - Instead, ask for the Korean meaning/definition/reading in Korean without showing any Japanese characters.
             
             For the "data" array:
             - Generate vocabulary cards (with id, word, hiragana, pronunciation, meaning, jlptLevel, kanjiBreakdown, exampleSentence).
