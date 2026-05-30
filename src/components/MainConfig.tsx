@@ -640,8 +640,8 @@ export function MainConfig({
                 유튜브 뉴스 자막과 어휘 퀴즈
               </h4>
               <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed bg-black/20 p-4 rounded-2xl backdrop-blur-sm border border-white/5">
-                TBS NEWS DIG 채널의 전체 영상 중 <strong className="text-rose-300 font-bold">시청 가능한 뉴스가 무작위로</strong> 선정됩니다. 
-                실제 원어민 아나운서의 발음을 들으며 시사 어휘 연상 학습과 사지선다 객관식 퀴즈를 즐겨 보세요!
+                일본 주요 뉴스 채널(TBS, ANN, FNN, 니혼TV, 요미우리TV)의 쇼츠 영상 중 <strong className="text-rose-300 font-bold">시청 가능한 뉴스가 무작위로</strong> 선정됩니다. 
+                실제 원어민 아나운서의 명확한 발음을 들으며 시사 어휘 연상 학습과 사지선다 객관식 퀴즈를 즐겨 보세요!
               </p>
             </div>
 

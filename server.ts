@@ -1174,7 +1174,14 @@ app.post("/api/progress/review", async (req, res) => {
 // ==========================================
 
 const getRandomNewsQuery = () => {
-  return "TBS NEWS DIG shorts";
+  const queries = [
+    "TBS NEWS DIG shorts",
+    "ANNnewsCH shorts",
+    "FNNプライムオンライン shorts",
+    "日テレNEWS shorts",
+    "読売テレビニュース shorts"
+  ];
+  return queries[Math.floor(Math.random() * queries.length)];
 };
 
 app.get("/api/news/random", async (req, res) => {
