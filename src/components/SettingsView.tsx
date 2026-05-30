@@ -140,7 +140,10 @@ export function SettingsView({ username, onGoBack }: SettingsViewProps) {
       if (!data.success) {
         throw new Error(data.errorMsg);
       }
-      setMessage({ text: "테스트 알림이 발송되었습니다. PC 우측 하단(또는 우측 상단)을 확인해주세요!", type: 'success' });
+      const successMsg = NativeBridge.isMobileApp() 
+        ? "테스트 알림이 발송되었습니다. 상단 알림창을 확인해주세요!" 
+        : "테스트 알림이 발송되었습니다. PC 우측 하단(또는 우측 상단)을 확인해주세요!";
+      setMessage({ text: successMsg, type: 'success' });
     } catch (error: any) {
       console.error(error);
       setMessage({ text: error.message || "테스트 알림 발송에 실패했습니다.", type: 'error' });
