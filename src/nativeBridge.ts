@@ -68,4 +68,15 @@ export const NativeBridge = {
       );
     });
   },
+
+  /**
+   * 모바일 앱을 종료하도록 요청합니다. (뒤로가기 처리용)
+   */
+  exitApp: () => {
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(
+        JSON.stringify({ type: "EXIT_APP" })
+      );
+    }
+  },
 };

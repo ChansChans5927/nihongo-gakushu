@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { NativeBridge } from "./nativeBridge";
 import { AnimatePresence, motion } from "motion/react";
 import { BookMarked, BookOpen, CheckCircle2, User, LogOut } from "lucide-react";
 import { KanjiItem, Question, JlptQuestion, VocabItem, UserSession, NewsLesson } from "./types";
@@ -73,6 +74,30 @@ export default function App() {
 
   // Hook for speech synthesis
   const { textToSpeechSupported, speakJapanese } = useSpeech();
+
+  // Handle Back Button natively via WebView bridge
+  useEffect(() => {
+    const handleHardwareBack = () => {
+      if (phase === 'studying' || phase === 'testing' || phase === 'news-study') {
+        const confirmExit = window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?");
+        if (confirmExit) {
+          setPhase('config');
+        }
+      } else if (phase !== 'config') {
+        setPhase('config');
+      } else {
+        // 홈 화면(config)일 경우 네이티브 앱 종료 요청
+        if (NativeBridge.isMobileApp()) {
+          NativeBridge.exitApp();
+        } else {
+          console.log("웹 브라우저에서는 홈 화면입니다.");
+        }
+      }
+    };
+
+    window.addEventListener('hardwareBackPress', handleHardwareBack as EventListener);
+    return () => window.removeEventListener('hardwareBackPress', handleHardwareBack as EventListener);
+  }, [phase]);
 
   // Load session from localStorage on mount
   useEffect(() => {
