@@ -1205,8 +1205,8 @@ app.get("/api/news/random", async (req, res) => {
         const videos = r.videos;
 
         if (videos.length > 0) {
-          // Shuffle videos to pick a random one from the search results
-          const shuffled = videos.sort(() => 0.5 - Math.random());
+          // Shuffle videos and check a maximum of 5 to prevent long loading times (fail fast)
+          const shuffled = videos.sort(() => 0.5 - Math.random()).slice(0, 5);
           for (let v of shuffled) {
             try {
               const t = await YoutubeTranscript.fetchTranscript(v.videoId, { lang: 'ja' });
