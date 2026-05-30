@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Bell, BellOff, User, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { NativeBridge } from "../NativeBridge";
+import { NativeBridge } from "../nativeBridge";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
