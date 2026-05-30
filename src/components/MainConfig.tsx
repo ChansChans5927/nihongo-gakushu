@@ -95,12 +95,12 @@ export function MainConfig({
           <Sparkles className="w-3.5 h-3.5" />
           지루한 암기 없는 스토리텔링 학습법
         </div>
-        <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-slate-950 tracking-tight leading-tight">
-          한 번 보면 평생 기억하는 일본어 한자 연상 암기
+        <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-slate-950 tracking-tight leading-tight break-keep">
+          한 번 보면 평생 기억하는<br className="block sm:hidden" /> 일본어 한자 연상 암기
         </h2>
         <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto px-4">
-          <span className="block">무작정 쓰면서 외우지 마세요. 가장 친숙한 스토리텔링 연상법과</span>
-          <span className="block">JLPT 기출 풀이로 일본어 실력을 확실하게 완성합니다.</span>
+          <span className="block">무작정 쓰면서 외우지 마세요. <br className="block sm:hidden" />가장 친숙한 스토리텔링 연상법과</span>
+          <span className="block">JLPT 기출 풀이로 <br className="block sm:hidden" />일본어 실력을 확실하게 완성합니다.</span>
         </p>
       </div>
 
@@ -114,8 +114,8 @@ export function MainConfig({
           }}
           disabled={isAnyLoading}
           className={`py-2 px-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50 disabled:pointer-events-none ${activeTab === 'kanji'
-              ? "bg-white text-amber-600 shadow-sm border border-slate-200/20"
-              : "text-slate-500 hover:text-slate-800"
+            ? "bg-white text-amber-600 shadow-sm border border-slate-200/20"
+            : "text-slate-500 hover:text-slate-800"
             }`}
         >
           <BookOpen className="w-3.5 h-3.5 shrink-0" />
@@ -130,8 +130,8 @@ export function MainConfig({
           }}
           disabled={isAnyLoading}
           className={`py-2 px-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50 disabled:pointer-events-none ${activeTab === 'vocab'
-              ? "bg-white text-emerald-600 shadow-sm border border-slate-200/20"
-              : "text-slate-500 hover:text-slate-800"
+            ? "bg-white text-emerald-600 shadow-sm border border-slate-200/20"
+            : "text-slate-500 hover:text-slate-800"
             }`}
         >
           <Zap className="w-3.5 h-3.5 shrink-0" />
@@ -145,8 +145,8 @@ export function MainConfig({
           }}
           disabled={isAnyLoading}
           className={`py-2 px-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50 disabled:pointer-events-none ${activeTab === 'jlpt'
-              ? "bg-white text-rose-600 shadow-sm border border-slate-200/20"
-              : "text-slate-500 hover:text-slate-800"
+            ? "bg-white text-rose-600 shadow-sm border border-slate-200/20"
+            : "text-slate-500 hover:text-slate-800"
             }`}
         >
           <Award className="w-3.5 h-3.5 shrink-0" />
@@ -160,8 +160,8 @@ export function MainConfig({
           }}
           disabled={isAnyLoading}
           className={`py-2 px-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50 disabled:pointer-events-none ${activeTab === 'news'
-              ? "bg-white text-rose-600 shadow-sm border border-slate-200/20"
-              : "text-slate-500 hover:text-slate-800"
+            ? "bg-white text-rose-600 shadow-sm border border-slate-200/20"
+            : "text-slate-500 hover:text-slate-800"
             }`}
         >
           <Tv className="w-3.5 h-3.5 shrink-0" />
@@ -194,8 +194,8 @@ export function MainConfig({
                       onClick={() => setKanjiCount(num)}
                       disabled={isAnyLoading}
                       className={`py-2 px-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${kanjiCount === num
-                          ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10"
-                          : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
+                        ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10"
+                        : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
                         }`}
                     >
                       {num}개
@@ -224,8 +224,8 @@ export function MainConfig({
                       onClick={() => setDifficulty(lvl.val)}
                       disabled={isAnyLoading}
                       className={`py-1.5 px-0.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${difficulty === lvl.val
-                          ? "bg-amber-600 border-amber-600 text-white shadow-sm"
-                          : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
+                        ? "bg-amber-600 border-amber-600 text-white shadow-sm"
+                        : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
                         }`}
                     >
                       {lvl.label}
@@ -325,8 +325,8 @@ export function MainConfig({
                 onClick={() => startKanjiStudy(true)}
                 disabled={isAnyLoading || masteredKanji.length === 0}
                 className={`w-full py-3.5 px-5 text-sm font-bold rounded-xl border transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.98] disabled:opacity-45 disabled:cursor-not-allowed ${isReviewMode && studyMode === 'kanji' && isLoading
-                    ? "bg-slate-900 border-slate-900 text-white"
-                    : "bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50"
+                  ? "bg-slate-900 border-slate-900 text-white"
+                  : "bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50"
                   }`}
               >
                 {isReviewMode && studyMode === 'kanji' && isLoading ? (
@@ -369,8 +369,8 @@ export function MainConfig({
                       onClick={() => setVocabCount(num)}
                       disabled={isAnyLoading}
                       className={`py-2 px-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${vocabCount === num
-                          ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10"
-                          : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
+                        ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-900/10"
+                        : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
                         }`}
                     >
                       {num}개
@@ -399,8 +399,8 @@ export function MainConfig({
                       onClick={() => setDifficulty(lvl.val)}
                       disabled={isAnyLoading}
                       className={`py-1.5 px-0.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none ${difficulty === lvl.val
-                          ? "bg-emerald-600 border-emerald-600 text-white shadow-sm"
-                          : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
+                        ? "bg-emerald-600 border-emerald-600 text-white shadow-sm"
+                        : "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-100"
                         }`}
                     >
                       {lvl.label}
@@ -500,8 +500,8 @@ export function MainConfig({
                 onClick={() => startVocabStudy(true)}
                 disabled={isAnyLoading || masteredVocab.length === 0}
                 className={`w-full py-3.5 px-5 text-sm font-bold rounded-xl border transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-[0.98] disabled:opacity-45 disabled:cursor-not-allowed ${isReviewMode && studyMode === 'vocab' && isLoading
-                    ? "bg-slate-900 border-slate-900 text-white"
-                    : "bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50"
+                  ? "bg-slate-900 border-slate-900 text-white"
+                  : "bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50"
                   }`}
               >
                 {isReviewMode && studyMode === 'vocab' && isLoading ? (
@@ -627,7 +627,7 @@ export function MainConfig({
           <div className="absolute top-0 right-0 p-5 opacity-[0.03] group-hover:opacity-10 transition-opacity duration-700 pointer-events-none select-none">
             <Tv className="w-56 h-56 text-white transform rotate-12" />
           </div>
-          
+
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
 
           <div className="space-y-8 relative z-10">
@@ -640,7 +640,7 @@ export function MainConfig({
                 유튜브 뉴스 자막과 어휘 퀴즈
               </h4>
               <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed bg-black/20 p-4 rounded-2xl backdrop-blur-sm border border-white/5">
-                일본 주요 뉴스 채널(TBS, ANN, FNN, 니혼TV, 요미우리TV)의 쇼츠 영상 중 <strong className="text-rose-300 font-bold">시청 가능한 뉴스가 무작위로</strong> 선정됩니다. 
+                일본 주요 뉴스 채널(TBS, ANN, FNN, 니혼TV, 요미우리TV)의 쇼츠 영상 중 <strong className="text-rose-300 font-bold">시청 가능한 뉴스가 무작위로</strong> 선정됩니다.
                 실제 원어민 아나운서의 명확한 발음을 들으며 시사 어휘 연상 학습과 사지선다 객관식 퀴즈를 즐겨 보세요!
               </p>
             </div>
