@@ -17,8 +17,8 @@ import { UserDropdown } from "./components/UserDropdown";
 import { SettingsView } from "./components/SettingsView";
 
 export default function App() {
-  // App Phase States: 'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings'
-  const [phase, setPhase] = useState<'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings'>('config');
+  // App Phase States: 'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt'
+  const [phase, setPhase] = useState<'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt'>('config');
 
   // Configuration Settings
   const [kanjiCount, setKanjiCount] = useState<number>(5);
@@ -53,7 +53,6 @@ export default function App() {
   const [jlptQuestions, setJlptQuestions] = useState<JlptQuestion[]>([]);
   const [currentJlptIndex, setCurrentJlptIndex] = useState<number>(0);
   const [jlptAnswers, setJlptAnswers] = useState<{ [questionId: string]: number }>({});
-  const [isJlptQuizActive, setIsJlptQuizActive] = useState<boolean>(false);
   const [isJlptGraded, setIsJlptGraded] = useState<boolean>(false);
   const [isJlptLoading, setIsJlptLoading] = useState<boolean>(false);
   const [jlptErrorMsg, setJlptErrorMsg] = useState<string | null>(null);
@@ -78,12 +77,24 @@ export default function App() {
   // Handle Back Button natively via WebView bridge
   useEffect(() => {
     const handleHardwareBack = () => {
-      if (phase === 'studying' || phase === 'testing' || phase === 'news-study') {
+      if (phase === 'studying' || phase === 'testing' || phase === 'news-study' || (phase === 'jlpt' && !isJlptGraded)) {
         const confirmExit = window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?");
         if (confirmExit) {
+          if (phase === 'jlpt') {
+            setIsJlptGraded(false);
+            setJlptQuestions([]);
+            setJlptAnswers({});
+            setJlptErrorMsg(null);
+          }
           setPhase('config');
         }
       } else if (phase !== 'config') {
+        if (phase === 'jlpt') {
+          setIsJlptGraded(false);
+          setJlptQuestions([]);
+          setJlptAnswers({});
+          setJlptErrorMsg(null);
+        }
         setPhase('config');
       } else {
         // 홈 화면(config)일 경우 네이티브 앱 종료 요청
@@ -97,7 +108,7 @@ export default function App() {
 
     window.addEventListener('hardwareBackPress', handleHardwareBack as EventListener);
     return () => window.removeEventListener('hardwareBackPress', handleHardwareBack as EventListener);
-  }, [phase]);
+  }, [phase, isJlptGraded]);
 
   // Load session from localStorage on mount
   useEffect(() => {
@@ -260,7 +271,6 @@ export default function App() {
     setCurrentQuestionIndex(0);
     setUserAnswers({});
     setIsGraded(false);
-    setIsJlptQuizActive(false); // make sure JLPT mode is closed
     setIsReviewMode(isReview);
     setStudyMode('kanji');
 
@@ -316,7 +326,6 @@ export default function App() {
     setCurrentQuestionIndex(0);
     setUserAnswers({});
     setIsGraded(false);
-    setIsJlptQuizActive(false);
     setIsReviewMode(isReview);
     setStudyMode('vocab');
 
@@ -371,7 +380,6 @@ export default function App() {
     setCurrentJlptIndex(0);
     setJlptAnswers({});
     setIsJlptGraded(false);
-    setIsJlptQuizActive(false);
 
     try {
       const response = await fetch("/api/jlpt/generate", {
@@ -383,7 +391,7 @@ export default function App() {
 
       if (resData.success && resData.data && resData.data.length > 0) {
         setJlptQuestions(resData.data);
-        setIsJlptQuizActive(true);
+        setPhase('jlpt');
       } else {
         throw new Error(resData.errorMsg || "JLPT 기출문제를 불러오는 데 실패했습니다.");
       }
@@ -399,7 +407,6 @@ export default function App() {
   const startNewsStudy = async () => {
     setIsNewsLoading(true);
     setNewsErrorMsg(null);
-    setIsJlptQuizActive(false);
 
     try {
       const response = await fetch("/api/news/random");
@@ -545,7 +552,12 @@ export default function App() {
   };
 
   const handleGoHomeJlpt = () => {
-    setIsJlptQuizActive(false);
+    if (!isJlptGraded && phase === 'jlpt') {
+      if (!window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?")) {
+        return;
+      }
+    }
+    setPhase('config');
     setIsJlptGraded(false);
     setJlptQuestions([]);
     setJlptAnswers({});
@@ -554,12 +566,28 @@ export default function App() {
 
   // Reset progress and go to main landing
   const handleGoHome = () => {
+    if (phase === 'studying' || phase === 'testing' || phase === 'news-study') {
+      if (!window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?")) {
+        return;
+      }
+    }
+    if (!isJlptGraded && phase === 'jlpt') {
+      if (!window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?")) {
+        return;
+      }
+    }
+
     setPhase('config');
     setKanjiList([]);
     setVocabList([]);
     setQuestions([]);
     setNewsLesson(null);
     setNewsErrorMsg(null);
+    
+    setIsJlptGraded(false);
+    setJlptQuestions([]);
+    setJlptAnswers({});
+    setJlptErrorMsg(null);
   };
 
   const handleLogout = () => {
@@ -601,17 +629,17 @@ export default function App() {
                 />
               </div>
             )}
-            {(phase === 'studying' || isJlptQuizActive) && (
+            {(phase === 'studying' || phase === 'jlpt') && (
               <>
                 <span className="hidden sm:inline text-xs bg-amber-50 border border-amber-200 text-amber-800 px-2.5 py-1 rounded-full font-mono font-medium">
-                  {isJlptQuizActive
+                  {phase === 'jlpt'
                     ? `JLPT ${selectedJlptLevel} 테스트: ${currentJlptIndex + 1} / ${jlptQuestions.length}`
                     : studyMode === 'vocab'
                       ? `공부 단계: ${currentVocabIndex + 1} / ${vocabList.length}`
                       : `공부 단계: ${currentKanjiIndex + 1} / ${kanjiList.length}`}
                 </span>
                 <span className="inline sm:hidden text-[10px] bg-amber-50 border border-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-mono font-semibold">
-                  {isJlptQuizActive
+                  {phase === 'jlpt'
                     ? `JLPT ${selectedJlptLevel}: ${currentJlptIndex + 1}/${jlptQuestions.length}`
                     : studyMode === 'vocab'
                       ? `공부: ${currentVocabIndex + 1}/${vocabList.length}`
@@ -619,7 +647,7 @@ export default function App() {
                 </span>
               </>
             )}
-            {phase === 'testing' && !isJlptQuizActive && (
+            {phase === 'testing' && (
               <>
                 <span className="hidden sm:inline text-xs bg-blue-50 border border-blue-200 text-blue-800 px-2.5 py-1 rounded-full font-mono font-medium">
                   테스트 단계: {currentQuestionIndex + 1} / {questions.length}
@@ -629,7 +657,7 @@ export default function App() {
                 </span>
               </>
             )}
-            {phase === 'result' && !isJlptQuizActive && (
+            {phase === 'result' && (
               <span className="text-[10px] sm:text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-mono font-medium">
                 결과 리포트
               </span>
@@ -646,7 +674,7 @@ export default function App() {
       {/* Main Interactive Work Area */}
       <main className="flex-1 max-w-4xl w-full mx-auto p-3 sm:p-6 flex flex-col justify-center">
         {/* Loading error messages for JLPT */}
-        {jlptErrorMsg && !isJlptQuizActive && (
+        {jlptErrorMsg && phase !== 'jlpt' && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-800 text-sm rounded-2xl flex items-start gap-2">
             <CheckCircle2 className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
             <div>{jlptErrorMsg}</div>
@@ -678,7 +706,7 @@ export default function App() {
               className="w-full flex flex-col justify-center"
             >
               {/* PHASE 1: Configuration Landing */}
-              {phase === 'config' && !isJlptQuizActive && (
+              {phase === 'config' && (
                 <MainConfig
                   kanjiCount={kanjiCount}
                   setKanjiCount={setKanjiCount}
@@ -711,7 +739,7 @@ export default function App() {
               )}
 
               {/* PHASE 2: Step-by-Step Interactive Studying Screen */}
-              {phase === 'studying' && !isJlptQuizActive && (
+              {phase === 'studying' && (
                 studyMode === 'vocab' ? (
                   vocabList.length > 0 && (
                      <VocabStudy
@@ -736,7 +764,7 @@ export default function App() {
               )}
 
               {/* PHASE 3: Objective Challenge Quiz Testing Screen */}
-              {phase === 'testing' && !isJlptQuizActive && questions.length > 0 && (
+              {phase === 'testing' && questions.length > 0 && (
                 <QuizTest
                   questions={questions}
                   currentQuestionIndex={currentQuestionIndex}
@@ -749,7 +777,7 @@ export default function App() {
               )}
 
               {/* PHASE 4: Score report and Explaining Incorrect mnemonics */}
-              {phase === 'result' && !isJlptQuizActive && questions.length > 0 && (
+              {phase === 'result' && questions.length > 0 && (
                 <ResultReport
                   questions={questions}
                   userAnswers={userAnswers}
@@ -778,7 +806,7 @@ export default function App() {
               )}
 
               {/* JLPT Quiz Mode: Solving & Results Screens */}
-              {isJlptQuizActive && jlptQuestions.length > 0 && (
+              {phase === 'jlpt' && jlptQuestions.length > 0 && (
                 <JlptTest
                   selectedJlptLevel={selectedJlptLevel}
                   jlptQuestions={jlptQuestions}
