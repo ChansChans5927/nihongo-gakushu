@@ -12,10 +12,12 @@ import { ResultReport } from "./components/ResultReport";
 import { JlptTest } from "./components/JlptTest";
 import { AuthCard } from "./components/AuthCard";
 import { NewsStudy } from "./components/NewsStudy";
+import { UserDropdown } from "./components/UserDropdown";
+import { SettingsView } from "./components/SettingsView";
 
 export default function App() {
-  // App Phase States: 'config' | 'studying' | 'testing' | 'result' | 'news-study'
-  const [phase, setPhase] = useState<'config' | 'studying' | 'testing' | 'result' | 'news-study'>('config');
+  // App Phase States: 'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings'
+  const [phase, setPhase] = useState<'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings'>('config');
 
   // Configuration Settings
   const [kanjiCount, setKanjiCount] = useState<number>(5);
@@ -567,17 +569,11 @@ export default function App() {
           <div className="flex items-center gap-1.5 sm:gap-2">
             {currentUser && (
               <div className="flex items-center gap-2 mr-2 border-r border-slate-200 pr-2">
-                <span className="hidden sm:inline-flex whitespace-nowrap text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full items-center gap-1">
-                  <User className="w-3.5 h-3.5 text-slate-500" />
-                  <strong>{currentUser.username}</strong>님
-                </span>
-                <button
-                  onClick={handleLogout}
-                  title="로그아웃"
-                  className="p-1.5 text-slate-500 hover:text-red-500 hover:bg-slate-100 rounded-lg transition-all cursor-pointer flex items-center justify-center"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
+                <UserDropdown
+                  username={currentUser.username}
+                  onNavigateSettings={() => setPhase('settings')}
+                  onLogout={handleLogout}
+                />
               </div>
             )}
             {(phase === 'studying' || isJlptQuizActive) && (
@@ -745,6 +741,14 @@ export default function App() {
                 <NewsStudy
                   lesson={newsLesson}
                   handleGoHome={handleGoHome}
+                />
+              )}
+
+              {/* PHASE 6: Settings View */}
+              {phase === 'settings' && currentUser && (
+                <SettingsView
+                  username={currentUser.username}
+                  onGoBack={handleGoHome}
                 />
               )}
 

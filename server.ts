@@ -7,6 +7,12 @@ import { createServer as createViteServer } from "vite";
 import { MongoClient } from "mongodb";
 import yts from "yt-search";
 import { YoutubeTranscript } from "youtube-transcript";
+import webpush from "web-push";
+import cron from "node-cron";
+import { Expo } from "expo-server-sdk";
+
+// Initialize Expo SDK client
+const expo = new Expo({ accessToken: process.env.EXPO_ACCESS_TOKEN });
 
 // Load environment variables
 dotenv.config();
@@ -24,6 +30,15 @@ const ai = new GoogleGenAI({
 });
 
 let db: any = null;
+
+// ==========================================
+// WEB PUSH CONFIGURATION
+// ==========================================
+webpush.setVapidDetails(
+  "mailto:contact@nihongo-gakushu.com",
+  process.env.VAPID_PUBLIC_KEY || "",
+  process.env.VAPID_PRIVATE_KEY || ""
+);
 
 // ==========================================
 // COMMON SCHEMAS & UTILITIES
@@ -823,6 +838,132 @@ app.get("/api/progress/get", async (req, res) => {
   }
 });
 
+// GET Endpoint to fetch user settings
+app.get("/api/user/settings", async (req, res) => {
+  const { username } = req.query;
+  if (!username) {
+    return res.json({ success: false, errorMsg: "사용자 정보가 필요합니다." });
+  }
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+  try {
+    const normalizedUsername = String(username).trim().toLowerCase();
+    const user = await db.collection("users").findOne({ username: normalizedUsername });
+    res.json({
+      success: true,
+      data: {
+        notificationsEnabled: user?.notificationsEnabled || false
+      }
+    });
+  } catch (err: any) {
+    res.json({ success: false, errorMsg: `설정을 가져오는 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint to save user settings
+app.post("/api/user/settings", async (req, res) => {
+  const { username, notificationsEnabled } = req.body;
+  if (!username) {
+    return res.json({ success: false, errorMsg: "사용자 정보가 필요합니다." });
+  }
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+  try {
+    const normalizedUsername = String(username).trim().toLowerCase();
+    await db.collection("users").updateOne(
+      { username: normalizedUsername },
+      { $set: { notificationsEnabled } },
+      { upsert: true }
+    );
+    res.json({ success: true });
+  } catch (err: any) {
+    res.json({ success: false, errorMsg: `설정 저장 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint for Push Subscription
+app.post("/api/notifications/subscribe", async (req, res) => {
+  const { username, subscription, expoPushToken } = req.body;
+  if (!username) {
+    return res.json({ success: false, errorMsg: "잘못된 요청입니다." });
+  }
+  if (!subscription && !expoPushToken) {
+    return res.json({ success: false, errorMsg: "구독 정보 또는 엑스포 토큰이 필요합니다." });
+  }
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+  try {
+    const normalizedUsername = String(username).trim().toLowerCase();
+    const updateData: any = { notificationsEnabled: true };
+    if (subscription) updateData.pushSubscription = subscription;
+    if (expoPushToken) updateData.expoPushToken = expoPushToken;
+
+    await db.collection("users").updateOne(
+      { username: normalizedUsername },
+      { $set: updateData }
+    );
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Push subscription error:", err);
+    res.json({ success: false, errorMsg: `구독 저장 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// GET Endpoint to fetch VAPID Public Key
+app.get("/api/notifications/vapidPublicKey", (req, res) => {
+  res.send(process.env.VAPID_PUBLIC_KEY || "");
+});
+
+// POST Endpoint to test Push Notification
+app.post("/api/notifications/test", async (req, res) => {
+  const { username } = req.body;
+  if (!username) {
+    return res.json({ success: false, errorMsg: "사용자 정보가 필요합니다." });
+  }
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+  try {
+    const normalizedUsername = String(username).trim().toLowerCase();
+    const user = await db.collection("users").findOne({ username: normalizedUsername });
+    
+    if (!user || (!user.pushSubscription && !user.expoPushToken)) {
+      return res.json({ success: false, errorMsg: "알림 설정이 되어있지 않거나 구독 정보가 없습니다." });
+    }
+
+    const payload = JSON.stringify({
+      title: "✅ 알림 테스트 성공!",
+      body: "알림이 정상적으로 수신되었습니다. 앞으로 정기 학습 알림을 받아보세요!",
+    });
+
+    if (user.expoPushToken) {
+      if (!Expo.isExpoPushToken(user.expoPushToken)) {
+        console.error("Invalid Expo push token");
+      } else {
+        await expo.sendPushNotificationsAsync([{
+          to: user.expoPushToken,
+          sound: "default",
+          title: "✅ 알림 테스트 성공!",
+          body: "알림이 정상적으로 수신되었습니다. 앞으로 정기 학습 알림을 받아보세요!",
+          data: { test: true },
+        }]);
+      }
+    }
+
+    if (user.pushSubscription) {
+      await webpush.sendNotification(user.pushSubscription, payload);
+    }
+    
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Test push error:", err);
+    res.json({ success: false, errorMsg: `테스트 알림 발송 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
 // POST Endpoint to save user progress
 app.post("/api/progress/save", async (req, res) => {
   const { username, type, items, cardDetails, quizDetails } = req.body;
@@ -1421,6 +1562,86 @@ async function startServer() {
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
   });
+
+  // ==========================================
+  // BACKGROUND CRON JOBS
+  // ==========================================
+  // 매일 아침 7시(0 7 * * *), 저녁 7시(0 19 * * *)에 알림 발송
+  const sendPushNotifications = async () => {
+    if (!db) return;
+    try {
+      const users = await db.collection("users").find({
+        notificationsEnabled: true,
+        $or: [
+          { pushSubscription: { $exists: true } },
+          { expoPushToken: { $exists: true } }
+        ]
+      }).toArray();
+      const messages = [
+        { title: "📚 일본어 복습", body: "학습한 단어와 한자를 다시 확인해 보세요." },
+        { title: "📚 일본어 복습", body: "복습할 단어와 한자가 준비되어 있습니다." },
+        { title: "📚 일본어 복습", body: "복습을 통해 기억을 더 오래 유지해 보세요." }
+      ];
+      const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+      const payload = JSON.stringify(randomMessage);
+      
+      const expoMessages = [];
+
+      for (const user of users) {
+        if (user.expoPushToken && Expo.isExpoPushToken(user.expoPushToken)) {
+          expoMessages.push({
+            to: user.expoPushToken,
+            sound: "default",
+            title: randomMessage.title,
+            body: randomMessage.body,
+            data: { type: "routine_study" }
+          });
+        }
+        
+        if (user.pushSubscription) {
+          try {
+            await webpush.sendNotification(user.pushSubscription, payload);
+            console.log(`[Push] Sent Web Push to ${user.username}`);
+          } catch (error: any) {
+            if (error.statusCode === 410 || error.statusCode === 404) {
+              await db.collection("users").updateOne(
+                { username: user.username },
+                { $unset: { pushSubscription: "" } }
+              );
+              console.log(`[Push] Removed expired subscription for ${user.username}`);
+            } else {
+              console.error(`[Push] Failed to send to ${user.username}:`, error);
+            }
+          }
+        }
+      }
+
+      if (expoMessages.length > 0) {
+        let chunks = expo.chunkPushNotifications(expoMessages as any);
+        for (let chunk of chunks) {
+          try {
+            await expo.sendPushNotificationsAsync(chunk);
+            console.log(`[Push] Sent Expo Push chunk of size ${chunk.length}`);
+          } catch (error) {
+            console.error("Expo push notification chunk failed:", error);
+          }
+        }
+      }
+
+    } catch (err) {
+      console.error("[Push] Cron job error:", err);
+    }
+  };
+
+  cron.schedule("0 7 * * *", () => {
+    console.log("[Cron] Running 7 AM push notifications");
+    sendPushNotifications();
+  }, { timezone: "Asia/Seoul" });
+
+  cron.schedule("0 19 * * *", () => {
+    console.log("[Cron] Running 7 PM push notifications");
+    sendPushNotifications();
+  }, { timezone: "Asia/Seoul" });
 }
 
 startServer();
