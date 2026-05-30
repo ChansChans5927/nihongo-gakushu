@@ -94,3 +94,22 @@ export interface UserSession {
   username: string;
 }
 
+export interface SubtitleLine {
+  start: number;         // 시작 시간 (초 단위)
+  duration: number;      // 지속 시간 (초 단위)
+  japanese: string;      // 일본어 자막
+  hiragana?: string;     // 히라가나 자막 (독음 지원)
+  pronunciation?: string; // 한국어 독음 (한글 발음 지원)
+  korean: string;        // 한국어 번역 자막
+}
+
+export interface NewsLesson {
+  id: string;            // 유튜브 비디오 ID
+  title: string;         // 뉴스 영상 제목
+  videoUrl: string;      // 유튜브 비디오 URL
+  subtitles: SubtitleLine[]; // 전체 자막 목록
+  vocabItems: VocabItem[];   // 뉴스 분석을 통해 추출한 중요 어휘들 (기존 VocabItem 재사용)
+  quizzes: Question[];   // 중요 어휘 학습 이후 풀이할 객관식 퀴즈들 (기존 Question 재사용)
+}
+
+

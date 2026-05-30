@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { BookMarked, BookOpen, CheckCircle2, User, LogOut } from "lucide-react";
-import { KanjiItem, Question, JlptQuestion, VocabItem, UserSession } from "./types";
+import { KanjiItem, Question, JlptQuestion, VocabItem, UserSession, NewsLesson } from "./types";
 import { generateQuiz, generateVocabQuiz } from "./utils";
 import { useSpeech } from "./hooks/useSpeech";
 import { MainConfig } from "./components/MainConfig";
@@ -11,10 +11,11 @@ import { QuizTest } from "./components/QuizTest";
 import { ResultReport } from "./components/ResultReport";
 import { JlptTest } from "./components/JlptTest";
 import { AuthCard } from "./components/AuthCard";
+import { NewsStudy } from "./components/NewsStudy";
 
 export default function App() {
-  // App Phase States: 'config' | 'studying' | 'testing' | 'result'
-  const [phase, setPhase] = useState<'config' | 'studying' | 'testing' | 'result'>('config');
+  // App Phase States: 'config' | 'studying' | 'testing' | 'result' | 'news-study'
+  const [phase, setPhase] = useState<'config' | 'studying' | 'testing' | 'result' | 'news-study'>('config');
 
   // Configuration Settings
   const [kanjiCount, setKanjiCount] = useState<number>(5);
@@ -54,6 +55,10 @@ export default function App() {
   const [isJlptLoading, setIsJlptLoading] = useState<boolean>(false);
   const [jlptErrorMsg, setJlptErrorMsg] = useState<string | null>(null);
 
+  // News Study States
+  const [newsLesson, setNewsLesson] = useState<NewsLesson | null>(null);
+  const [isNewsLoading, setIsNewsLoading] = useState<boolean>(false);
+  const [newsErrorMsg, setNewsErrorMsg] = useState<string | null>(null);
 
   // Loading & Error boundary states
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -363,6 +368,30 @@ export default function App() {
     }
   };
 
+  // News Study Initializer
+  const startNewsStudy = async () => {
+    setIsNewsLoading(true);
+    setNewsErrorMsg(null);
+    setIsJlptQuizActive(false);
+
+    try {
+      const response = await fetch("/api/news/random");
+      const resData = await response.json();
+
+      if (resData.success && resData.data) {
+        setNewsLesson(resData.data);
+        setPhase('news-study');
+      } else {
+        throw new Error(resData.errorMsg || "뉴스 정보를 불러오지 못했습니다.");
+      }
+    } catch (err: any) {
+      console.error("Failed to load news lesson:", err);
+      setNewsErrorMsg(err.message || "서버 통신에 오류가 발생했거나 뉴스 데이터를 받아오지 못했습니다.");
+    } finally {
+      setIsNewsLoading(false);
+    }
+  };
+
   // Navigates study slides
   const handleNextStudy = () => {
     if (studyMode === 'vocab') {
@@ -502,6 +531,8 @@ export default function App() {
     setKanjiList([]);
     setVocabList([]);
     setQuestions([]);
+    setNewsLesson(null);
+    setNewsErrorMsg(null);
   };
 
   const handleLogout = () => {
@@ -652,6 +683,9 @@ export default function App() {
                   setStudyMode={setStudyMode}
                   isReviewMode={isReviewMode}
                   setIsReviewMode={setIsReviewMode}
+                  startNewsStudy={startNewsStudy}
+                  isNewsLoading={isNewsLoading}
+                  newsErrorMsg={newsErrorMsg}
                 />
               )}
 
@@ -659,13 +693,13 @@ export default function App() {
               {phase === 'studying' && !isJlptQuizActive && (
                 studyMode === 'vocab' ? (
                   vocabList.length > 0 && (
-                    <VocabStudy
-                      vocabList={vocabList}
-                      currentVocabIndex={currentVocabIndex}
-                      handlePrevStudy={handlePrevStudy}
-                      handleNextStudy={handleNextStudy}
-                      speakJapanese={speakJapanese}
-                    />
+                     <VocabStudy
+                       vocabList={vocabList}
+                       currentVocabIndex={currentVocabIndex}
+                       handlePrevStudy={handlePrevStudy}
+                       handleNextStudy={handleNextStudy}
+                       speakJapanese={speakJapanese}
+                     />
                   )
                 ) : (
                   kanjiList.length > 0 && (
@@ -703,6 +737,14 @@ export default function App() {
                   startVocabStudy={startVocabStudy}
                   handleGoHome={handleGoHome}
                   studyMode={studyMode}
+                />
+              )}
+
+              {/* PHASE 5: YouTube News Study & Mnemonic Vocabulary */}
+              {phase === 'news-study' && newsLesson && (
+                <NewsStudy
+                  lesson={newsLesson}
+                  handleGoHome={handleGoHome}
                 />
               )}
 

@@ -5,6 +5,8 @@ import crypto from "crypto";
 import { GoogleGenAI, Type } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 import { MongoClient } from "mongodb";
+import yts from "yt-search";
+import { YoutubeTranscript } from "youtube-transcript";
 
 // Load environment variables
 dotenv.config();
@@ -17,11 +19,113 @@ app.use(express.json());
 // Initialize Gemini Client (Vertex AI mode to utilize Google Cloud Credits)
 const ai = new GoogleGenAI({
   project: process.env.GCP_PROJECT_ID,
-  location: process.env.GCP_LOCATION || "us-central1",
+  location: process.env.GCP_LOCATION,
   vertexai: true,
 });
 
 let db: any = null;
+
+// ==========================================
+// COMMON SCHEMAS & UTILITIES
+// ==========================================
+
+const KANJI_BREAKDOWN_SCHEMA = {
+  type: Type.ARRAY,
+  description: "Array of sub-parts or radicals comprising this Kanji character",
+  items: {
+    type: Type.OBJECT,
+    properties: {
+      component: { type: Type.STRING, description: "The component or radical, e.g. '目' or '儿'" },
+      meaning: { type: Type.STRING, description: "Korean explanation or meaning of this component, e.g. '눈 목'" },
+      mnemonic: { type: Type.STRING, description: "Highly concise Korean mnemonic visual association storyline, under 1 sentence (maximum 15 words)" }
+    },
+    required: ["component", "meaning", "mnemonic"]
+  }
+};
+
+const RELATED_WORDS_SCHEMA = {
+  type: Type.ARRAY,
+  description: "Array of exactly 3 relevant study words using this Kanji",
+  items: {
+    type: Type.OBJECT,
+    properties: {
+      word: { type: Type.STRING, description: "The Japanese word" },
+      hiragana: { type: Type.STRING, description: "Hiragana writing" },
+      pronunciation: { type: Type.STRING, description: "Korean pronunciation" },
+      meaning: { type: Type.STRING, description: "Korean translation" }
+    },
+    required: ["word", "hiragana", "pronunciation", "meaning"]
+  }
+};
+
+const EXAMPLE_SENTENCE_SCHEMA = {
+  type: Type.OBJECT,
+  description: "One natural educational Japanese sentence",
+  properties: {
+    japanese: { type: Type.STRING, description: "Japanese sentence" },
+    hiragana: { type: Type.STRING, description: "Hiragana layout" },
+    pronunciation: { type: Type.STRING, description: "Korean pronunciation" },
+    meaning: { type: Type.STRING, description: "Korean translation" }
+  },
+  required: ["japanese", "hiragana", "pronunciation", "meaning"]
+};
+
+const VOCAB_KANJI_BREAKDOWN_SCHEMA = {
+  type: Type.ARRAY,
+  description: "Array breakdown of Kanjis contained in this word",
+  items: {
+    type: Type.OBJECT,
+    properties: {
+      kanji: { type: Type.STRING, description: "Single Kanji character" },
+      meaning: { type: Type.STRING, description: "Korean Hanja name, e.g. 통할 통" },
+      mnemonic: { type: Type.STRING, description: "Vivid visual association explanation in Korean (under 2 sentences) deconstructing the components. E.g. '눈(目)으로 사람(儿)이 하는 것은 보는 것이니 볼 견'." }
+    },
+    required: ["kanji", "meaning", "mnemonic"]
+  }
+};
+
+const QUIZ_SCHEMA = {
+  type: Type.ARRAY,
+  description: "List of multiple choice questions matching the generated vocabulary cards.",
+  items: {
+    type: Type.OBJECT,
+    properties: {
+      id: { type: Type.INTEGER, description: "Question ID" },
+      type: { type: Type.STRING, description: "One of: meaning, reading, kanji_match, blank_fill" },
+      targetWord: { type: Type.STRING, description: "The target word from study cards" },
+      questionText: { type: Type.STRING, description: "Question instruction text in Korean" },
+      questionSentence: { type: Type.STRING, description: "Sentence with '__blank__' replacing target word (e.g., '本을__blank__。'). For other types, empty string." },
+      choices: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description: "Exactly 4 choices. Conjugated to match blank context if blank_fill."
+      },
+      correctIndex: { type: Type.INTEGER, description: "Correct choice index" },
+      explanation: { type: Type.STRING, description: "Korean answer explanation" }
+    },
+    required: ["id", "type", "targetWord", "questionText", "questionSentence", "choices", "correctIndex", "explanation"]
+  }
+};
+
+// Unified helper for Gemini calls expecting JSON
+async function callGeminiJSON(prompt: string, systemInstruction: string, schema: any) {
+  const startTime = Date.now();
+  const response = await ai.models.generateContent({
+    model: "gemini-3.5-flash",
+    contents: prompt,
+    config: {
+      systemInstruction,
+      responseMimeType: "application/json",
+      responseSchema: schema
+    }
+  });
+
+  const durationMs = Date.now() - startTime;
+  console.log(`[Gemini API] Call took ${durationMs}ms`);
+
+  const bodyText = response.text || "[]";
+  return JSON.parse(bodyText.trim());
+}
 
 // GET Endpoint for TTS proxy — fetches Google Translate TTS audio server-side
 // to bypass browser referrer/CORS blocking that causes silent audio.
@@ -160,86 +264,39 @@ app.post("/api/kanji/generate", async (req, res) => {
         Make sure to return absolutely valid JSON following the provided responseSchema precisely.
       `;
 
-      const startTime = Date.now();
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          systemInstruction: "You are an expert Japanese and Kanji language professor who specializes in visual mnemonics, associations, and helping Korean learners master Japanese characters with minimal effort.",
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            description: "List of Kanji learning cards",
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING, description: "Unique alphabetic id" },
-                kanji: { type: Type.STRING, description: "The single Kanji character" },
-                strokeCount: { type: Type.INTEGER, description: "Stroke count as an integer" },
-                jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
-                grade: { type: Type.STRING, description: "School grade or level (e.g., 초등 1학년, 상용 한자)" },
-                mnemonic: { type: Type.STRING, description: "An intuitive visual association storyboard in Korean (strictly maximum 2 brief sentences, under 40 Korean words)" },
-                meaning: { type: Type.STRING, description: "Korean meaning and Hanja reading Name (e.g., 볼 견)" },
-                onyomi: { type: Type.STRING, description: "Main Onyomi readings in Hiragana split by comma" },
-                onyomiKorean: { type: Type.STRING, description: "Main Onyomi Korean pronunciations split by comma" },
-                hunyomi: { type: Type.STRING, description: "Main Hunyomi readings in Hiragana split by comma" },
-                hunyomiKorean: { type: Type.STRING, description: "Main Hunyomi Korean pronunciations split by comma" },
-                radicalsBreakdown: {
-                  type: Type.ARRAY,
-                  description: "Array of sub-parts or radicals comprising this Kanji character",
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      component: { type: Type.STRING, description: "The component or radical, e.g. '目' or '儿'" },
-                      meaning: { type: Type.STRING, description: "Korean explanation or meaning of this component, e.g. '눈 목'" },
-                      mnemonic: { type: Type.STRING, description: "Highly concise Korean mnemonic visual association storyline, under 1 sentence (maximum 15 words)" }
-                    },
-                    required: ["component", "meaning", "mnemonic"]
-                  }
-                },
-                relatedWords: {
-                  type: Type.ARRAY,
-                  description: "Array of exactly 3 relevant study words using this Kanji",
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      word: { type: Type.STRING, description: "The Japanese word" },
-                      hiragana: { type: Type.STRING, description: "Hiragana writing" },
-                      pronunciation: { type: Type.STRING, description: "Korean pronunciation" },
-                      meaning: { type: Type.STRING, description: "Korean translation" }
-                    },
-                    required: ["word", "hiragana", "pronunciation", "meaning"]
-                  }
-                },
-                exampleSentence: {
-                  type: Type.OBJECT,
-                  description: "One natural educational Japanese sentence",
-                  properties: {
-                    japanese: { type: Type.STRING, description: "Japanese sentence" },
-                    hiragana: { type: Type.STRING, description: "Hiragana layout" },
-                    pronunciation: { type: Type.STRING, description: "Korean pronunciation" },
-                    meaning: { type: Type.STRING, description: "Korean translation" }
-                  },
-                  required: ["japanese", "hiragana", "pronunciation", "meaning"]
-                }
-              },
-              required: [
-                "id", "kanji", "strokeCount", "jlptLevel", "grade", "mnemonic", "meaning",
-                "onyomi", "onyomiKorean", "hunyomi", "hunyomiKorean", "relatedWords", "exampleSentence", "radicalsBreakdown"
-              ]
-            }
-          }
+      const systemInstruction = "You are an expert Japanese and Kanji language professor who specializes in visual mnemonics, associations, and helping Korean learners master Japanese characters with minimal effort.";
+      const schema = {
+        type: Type.ARRAY,
+        description: "List of Kanji learning cards",
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            id: { type: Type.STRING, description: "Unique alphabetic id" },
+            kanji: { type: Type.STRING, description: "The single Kanji character" },
+            strokeCount: { type: Type.INTEGER, description: "Stroke count as an integer" },
+            jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
+            grade: { type: Type.STRING, description: "School grade or level (e.g., 초등 1학년, 상용 한자)" },
+            mnemonic: { type: Type.STRING, description: "An intuitive visual association storyboard in Korean (strictly maximum 2 brief sentences, under 40 Korean words)" },
+            meaning: { type: Type.STRING, description: "Korean meaning and Hanja reading Name (e.g., 볼 견)" },
+            onyomi: { type: Type.STRING, description: "Main Onyomi readings in Hiragana split by comma" },
+            onyomiKorean: { type: Type.STRING, description: "Main Onyomi Korean pronunciations split by comma" },
+            hunyomi: { type: Type.STRING, description: "Main Hunyomi readings in Hiragana split by comma" },
+            hunyomiKorean: { type: Type.STRING, description: "Main Hunyomi Korean pronunciations split by comma" },
+            radicalsBreakdown: KANJI_BREAKDOWN_SCHEMA,
+            relatedWords: RELATED_WORDS_SCHEMA,
+            exampleSentence: EXAMPLE_SENTENCE_SCHEMA
+          },
+          required: [
+            "id", "kanji", "strokeCount", "jlptLevel", "grade", "mnemonic", "meaning",
+            "onyomi", "onyomiKorean", "hunyomi", "hunyomiKorean", "relatedWords", "exampleSentence", "radicalsBreakdown"
+          ]
         }
-      });
-      const endTime = Date.now();
-      const elapsed = ((endTime - startTime) / 1000).toFixed(2);
-      const usage = response.usageMetadata;
-      const bodyText = response.text || "[]";
-      console.log(`[Kanji Gen] Batch size ${size} took ${elapsed}s. Prompt: ${usage?.promptTokenCount}t, Output: ${usage?.candidatesTokenCount}t (${usage?.candidatesTokenCount ? (usage.candidatesTokenCount / Number(elapsed)).toFixed(1) : 0} t/s)`);
+      };
+
       try {
-        return JSON.parse(bodyText.trim());
+        return await callGeminiJSON(prompt, systemInstruction, schema);
       } catch (parseErr) {
-        console.error("Failed to parse single batch JSON response. Body text:", bodyText);
+        console.error("Failed to fetch or parse single batch JSON response.", parseErr);
         return [];
       }
     });
@@ -427,95 +484,40 @@ app.post("/api/vocab/generate", async (req, res) => {
         Make sure to return absolutely valid JSON following the provided responseSchema precisely.
       `;
 
-      const startTime = Date.now();
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          systemInstruction: "You are an expert Japanese and Kanji professor specializing in visual mnemonics, associations, and helping Korean learners master Japanese words and characters.",
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              data: {
-                type: Type.ARRAY,
-                description: "List of Japanese vocabulary study cards",
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    id: { type: Type.STRING, description: "Unique alphabetic id" },
-                    word: { type: Type.STRING, description: "The Japanese word containing Kanji" },
-                    hiragana: { type: Type.STRING, description: "Hiragana reading of the word" },
-                    pronunciation: { type: Type.STRING, description: "Korean pronunciation phonetics of the word" },
-                    meaning: { type: Type.STRING, description: "Korean meaning" },
-                    jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
-                    kanjiBreakdown: {
-                      type: Type.ARRAY,
-                      description: "Array breakdown of Kanjis contained in this word",
-                      items: {
-                        type: Type.OBJECT,
-                        properties: {
-                          kanji: { type: Type.STRING, description: "Single Kanji character" },
-                          meaning: { type: Type.STRING, description: "Korean Hanja name, e.g. 통할 통" },
-                          mnemonic: { type: Type.STRING, description: "Vivid visual association explanation in Korean (under 2 sentences) deconstructing the components. E.g. '눈(目)으로 사람(儿)이 하는 것은 보는 것이니 볼 견'." }
-                        },
-                        required: ["kanji", "meaning", "mnemonic"]
-                      }
-                    },
-                    exampleSentence: {
-                      type: Type.OBJECT,
-                      description: "One natural educational Japanese sentence",
-                      properties: {
-                        japanese: { type: Type.STRING, description: "Japanese sentence" },
-                        hiragana: { type: Type.STRING, description: "Hiragana layout" },
-                        pronunciation: { type: Type.STRING, description: "Korean pronunciation" },
-                        meaning: { type: Type.STRING, description: "Korean translation" }
-                      },
-                      required: ["japanese", "hiragana", "pronunciation", "meaning"]
-                    }
-                  },
-                  required: [
-                    "id", "word", "hiragana", "pronunciation", "meaning", "jlptLevel",
-                    "kanjiBreakdown", "exampleSentence"
-                  ]
-                }
+      const systemInstruction = "You are an expert Japanese and Kanji professor specializing in visual mnemonics, associations, and helping Korean learners master Japanese words and characters.";
+      const schema = {
+        type: Type.OBJECT,
+        properties: {
+          data: {
+            type: Type.ARRAY,
+            description: "List of Japanese vocabulary study cards",
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING, description: "Unique alphabetic id" },
+                word: { type: Type.STRING, description: "The Japanese word containing Kanji" },
+                hiragana: { type: Type.STRING, description: "Hiragana reading of the word" },
+                pronunciation: { type: Type.STRING, description: "Korean pronunciation phonetics of the word" },
+                meaning: { type: Type.STRING, description: "Korean meaning" },
+                jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
+                kanjiBreakdown: VOCAB_KANJI_BREAKDOWN_SCHEMA,
+                exampleSentence: EXAMPLE_SENTENCE_SCHEMA
               },
-              quiz: {
-                type: Type.ARRAY,
-                description: "List of multiple choice questions matching the generated vocabulary cards.",
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    id: { type: Type.INTEGER, description: "Question ID" },
-                    type: { type: Type.STRING, description: "One of: meaning, reading, kanji_match, blank_fill" },
-                    targetWord: { type: Type.STRING, description: "The target word from study cards" },
-                    questionText: { type: Type.STRING, description: "Question instruction text in Korean" },
-                    questionSentence: { type: Type.STRING, description: "Sentence with '__blank__' replacing target word (e.g., '本을__blank__。'). For other types, empty string." },
-                    choices: {
-                      type: Type.ARRAY,
-                      items: { type: Type.STRING },
-                      description: "Exactly 4 choices. Conjugated to match blank context if blank_fill."
-                    },
-                    correctIndex: { type: Type.INTEGER, description: "Correct choice index" },
-                    explanation: { type: Type.STRING, description: "Korean answer explanation" }
-                  },
-                  required: ["id", "type", "targetWord", "questionText", "questionSentence", "choices", "correctIndex", "explanation"]
-                }
-              }
-            },
-            required: ["data", "quiz"]
-          }
-        }
-      });
-      const endTime = Date.now();
-      const elapsed = ((endTime - startTime) / 1000).toFixed(2);
-      const usage = response.usageMetadata;
-      const bodyText = response.text || "{}";
-      console.log(`[Vocab Gen] Batch size ${size} took ${elapsed}s. Prompt: ${usage?.promptTokenCount}t, Output: ${usage?.candidatesTokenCount}t (${usage?.candidatesTokenCount ? (usage.candidatesTokenCount / Number(elapsed)).toFixed(1) : 0} t/s)`);
+              required: [
+                "id", "word", "hiragana", "pronunciation", "meaning", "jlptLevel",
+                "kanjiBreakdown", "exampleSentence"
+              ]
+            }
+          },
+          quiz: QUIZ_SCHEMA
+        },
+        required: ["data", "quiz"]
+      };
+
       try {
-        return JSON.parse(bodyText.trim());
+        return await callGeminiJSON(prompt, systemInstruction, schema);
       } catch (parseErr) {
-        console.error("Failed to parse single vocab batch JSON response. Body text:", bodyText);
+        console.error("Failed to fetch or parse single vocab batch JSON response.", parseErr);
         return { data: [], quiz: [] };
       }
     });
@@ -657,47 +659,39 @@ app.post("/api/jlpt/generate", async (req, res) => {
         Make sure to return absolutely valid JSON following the provided responseSchema precisely.
       `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-          systemInstruction: "You are an expert Japanese professor specializing in creating highly accurate JLPT mock exam questions tailored for Korean learners.",
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            description: "List of JLPT exam questions",
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING, description: "Unique string id" },
-                type: { type: Type.STRING, description: "One of: reading, writing, meaning, context_fit" },
-                level: { type: Type.STRING, description: "JLPT Level (N5, N4, N3, N2, N1)" },
-                questionSentence: { type: Type.STRING, description: "Japanese sentence containing the bolded __target__ word or __blank__" },
-                targetWord: { type: Type.STRING, description: "The target word tested" },
-                questionText: { type: Type.STRING, description: "Exam question text in Korean" },
-                choices: {
-                  type: Type.ARRAY,
-                  items: { type: Type.STRING },
-                  description: "Array of exactly 4 choices"
-                },
-                correctIndex: { type: Type.INTEGER, description: "0-based correct answer index" },
-                translation: { type: Type.STRING, description: "Korean translation" },
-                explanation: { type: Type.STRING, description: "Highly concise Korean explanation (strictly maximum 2 brief sentences, under 40 Korean words)" }
-              },
-              required: [
-                "id", "type", "level", "questionSentence", "targetWord", "questionText",
-                "choices", "correctIndex", "translation", "explanation"
-              ]
-            }
-          }
+      const systemInstruction = "You are an expert Japanese professor specializing in creating highly accurate JLPT mock exam questions tailored for Korean learners.";
+      const schema = {
+        type: Type.ARRAY,
+        description: "List of JLPT exam questions",
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            id: { type: Type.STRING, description: "Unique string id" },
+            type: { type: Type.STRING, description: "One of: reading, writing, meaning, context_fit" },
+            level: { type: Type.STRING, description: "JLPT Level (N5, N4, N3, N2, N1)" },
+            questionSentence: { type: Type.STRING, description: "Japanese sentence containing the bolded __target__ word or __blank__" },
+            targetWord: { type: Type.STRING, description: "The target word tested" },
+            questionText: { type: Type.STRING, description: "Exam question text in Korean" },
+            choices: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "Array of exactly 4 choices"
+            },
+            correctIndex: { type: Type.INTEGER, description: "0-based correct answer index" },
+            translation: { type: Type.STRING, description: "Korean translation" },
+            explanation: { type: Type.STRING, description: "Highly concise Korean explanation (strictly maximum 2 brief sentences, under 40 Korean words)" }
+          },
+          required: [
+            "id", "type", "level", "questionSentence", "targetWord", "questionText",
+            "choices", "correctIndex", "translation", "explanation"
+          ]
         }
-      });
+      };
 
-      const bodyText = response.text || "[]";
       try {
-        return JSON.parse(bodyText.trim());
+        return await callGeminiJSON(prompt, systemInstruction, schema);
       } catch (parseErr) {
-        console.error("Failed to parse single batch JLPT question JSON response. Body text:", bodyText);
+        console.error("Failed to fetch or parse single batch JLPT question JSON response.", parseErr);
         return [];
       }
     });
@@ -971,80 +965,37 @@ app.post("/api/progress/review", async (req, res) => {
         `;
 
         try {
-          const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-              systemInstruction: "You are an expert Japanese and Kanji language professor who specializes in visual mnemonics, associations, and helping Korean learners master Japanese characters with minimal effort.",
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: Type.ARRAY,
-                description: "List of Kanji learning cards",
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    id: { type: Type.STRING, description: "Unique alphabetic id" },
-                    kanji: { type: Type.STRING, description: "The single Kanji character" },
-                    strokeCount: { type: Type.INTEGER, description: "Stroke count as an integer" },
-                    jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
-                    grade: { type: Type.STRING, description: "School grade or level (e.g., 초등 1학년, 상용 한자)" },
-                    mnemonic: { type: Type.STRING, description: "An intuitive visual association storyboard in Korean (strictly maximum 2 brief sentences, under 40 Korean words)" },
-                    meaning: { type: Type.STRING, description: "Korean meaning and Hanja reading Name (e.g., 볼 견)" },
-                    onyomi: { type: Type.STRING, description: "Main Onyomi readings in Hiragana split by comma" },
-                    onyomiKorean: { type: Type.STRING, description: "Main Onyomi Korean pronunciations split by comma" },
-                    hunyomi: { type: Type.STRING, description: "Main Hunyomi readings in Hiragana split by comma" },
-                    hunyomiKorean: { type: Type.STRING, description: "Main Hunyomi Korean pronunciations split by comma" },
-                    radicalsBreakdown: {
-                      type: Type.ARRAY,
-                      description: "Array of sub-parts or radicals comprising this Kanji character",
-                      items: {
-                        type: Type.OBJECT,
-                        properties: {
-                          component: { type: Type.STRING, description: "The component or radical, e.g. '目' or '儿'" },
-                          meaning: { type: Type.STRING, description: "Korean explanation or meaning of this component, e.g. '눈 목'" },
-                          mnemonic: { type: Type.STRING, description: "Highly concise Korean mnemonic visual association storyline, under 1 sentence (maximum 15 words)" }
-                        },
-                        required: ["component", "meaning", "mnemonic"]
-                      }
-                    },
-                    relatedWords: {
-                      type: Type.ARRAY,
-                      description: "Array of exactly 3 relevant study words using this Kanji",
-                      items: {
-                        type: Type.OBJECT,
-                        properties: {
-                          word: { type: Type.STRING, description: "The Japanese word" },
-                          hiragana: { type: Type.STRING, description: "Hiragana writing" },
-                          pronunciation: { type: Type.STRING, description: "Korean pronunciation" },
-                          meaning: { type: Type.STRING, description: "Korean translation" }
-                        },
-                        required: ["word", "hiragana", "pronunciation", "meaning"]
-                      }
-                    },
-                    exampleSentence: {
-                      type: Type.OBJECT,
-                      description: "One natural educational Japanese sentence",
-                      properties: {
-                        japanese: { type: Type.STRING, description: "Japanese sentence" },
-                        hiragana: { type: Type.STRING, description: "Hiragana layout" },
-                        pronunciation: { type: Type.STRING, description: "Korean pronunciation" },
-                        meaning: { type: Type.STRING, description: "Korean translation" }
-                      },
-                      required: ["japanese", "hiragana", "pronunciation", "meaning"]
-                    }
-                  },
-                  required: [
-                    "id", "kanji", "strokeCount", "jlptLevel", "grade", "mnemonic", "meaning",
-                    "onyomi", "onyomiKorean", "hunyomi", "hunyomiKorean", "relatedWords", "exampleSentence", "radicalsBreakdown"
-                  ]
-                }
-              }
+          const systemInstruction = "You are an expert Japanese and Kanji language professor who specializes in visual mnemonics, associations, and helping Korean learners master Japanese characters with minimal effort.";
+          const schema = {
+            type: Type.ARRAY,
+            description: "List of Kanji learning cards",
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING, description: "Unique alphabetic id" },
+                kanji: { type: Type.STRING, description: "The single Kanji character" },
+                strokeCount: { type: Type.INTEGER, description: "Stroke count as an integer" },
+                jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
+                grade: { type: Type.STRING, description: "School grade or level (e.g., 초등 1학년, 상용 한자)" },
+                mnemonic: { type: Type.STRING, description: "An intuitive visual association storyboard in Korean (strictly maximum 2 brief sentences, under 40 Korean words)" },
+                meaning: { type: Type.STRING, description: "Korean meaning and Hanja reading Name (e.g., 볼 견)" },
+                onyomi: { type: Type.STRING, description: "Main Onyomi readings in Hiragana split by comma" },
+                onyomiKorean: { type: Type.STRING, description: "Main Onyomi Korean pronunciations split by comma" },
+                hunyomi: { type: Type.STRING, description: "Main Hunyomi readings in Hiragana split by comma" },
+                hunyomiKorean: { type: Type.STRING, description: "Main Hunyomi Korean pronunciations split by comma" },
+                radicalsBreakdown: KANJI_BREAKDOWN_SCHEMA,
+                relatedWords: RELATED_WORDS_SCHEMA,
+                exampleSentence: EXAMPLE_SENTENCE_SCHEMA
+              },
+              required: [
+                "id", "kanji", "strokeCount", "jlptLevel", "grade", "mnemonic", "meaning",
+                "onyomi", "onyomiKorean", "hunyomi", "hunyomiKorean", "relatedWords", "exampleSentence", "radicalsBreakdown"
+              ]
             }
-          });
+          };
 
-          const bodyText = response.text || "[]";
           try {
-            generatedCards = JSON.parse(bodyText.trim());
+            generatedCards = await callGeminiJSON(prompt, systemInstruction, schema);
             // Cache newly generated kanji cards to DB
             if (generatedCards.length > 0) {
               const ops = generatedCards.map((c: any) => {
@@ -1129,82 +1080,35 @@ app.post("/api/progress/review", async (req, res) => {
             Make sure to return absolutely valid JSON following the provided responseSchema precisely.
           `;
 
-          const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-              systemInstruction: "You are an expert Japanese and Kanji professor specializing in visual mnemonics, associations, and helping Korean learners master Japanese words and characters.",
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                  data: {
-                    type: Type.ARRAY,
-                    description: "List of Japanese vocabulary study cards",
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        id: { type: Type.STRING, description: "Unique alphabetic id" },
-                        word: { type: Type.STRING, description: "The Japanese word containing Kanji" },
-                        hiragana: { type: Type.STRING, description: "Hiragana reading of the word" },
-                        pronunciation: { type: Type.STRING, description: "Korean pronunciation phonetics" },
-                        meaning: { type: Type.STRING, description: "Korean meaning" },
-                        jlptLevel: { type: Type.STRING, description: "The JLPT level" },
-                        kanjiBreakdown: {
-                          type: Type.ARRAY,
-                          description: "Array breakdown of Kanjis contained in this word",
-                          items: {
-                            type: Type.OBJECT,
-                            properties: {
-                              kanji: { type: Type.STRING, description: "Single Kanji character" },
-                              meaning: { type: Type.STRING, description: "Korean Hanja name" },
-                              mnemonic: { type: Type.STRING, description: "Vivid visual association in Korean (under 2 sentences)" }
-                            },
-                            required: ["kanji", "meaning", "mnemonic"]
-                          }
-                        },
-                        exampleSentence: {
-                          type: Type.OBJECT,
-                          description: "One natural educational Japanese sentence",
-                          properties: {
-                            japanese: { type: Type.STRING, description: "Japanese sentence" },
-                            hiragana: { type: Type.STRING, description: "Hiragana layout" },
-                            pronunciation: { type: Type.STRING, description: "Korean pronunciation" },
-                            meaning: { type: Type.STRING, description: "Korean translation" }
-                          },
-                          required: ["japanese", "hiragana", "pronunciation", "meaning"]
-                        }
-                      },
-                      required: ["id", "word", "hiragana", "pronunciation", "meaning", "jlptLevel", "kanjiBreakdown", "exampleSentence"]
-                    }
+          const systemInstruction = "You are an expert Japanese and Kanji professor specializing in visual mnemonics, associations, and helping Korean learners master Japanese words and characters.";
+          const schema = {
+            type: Type.OBJECT,
+            properties: {
+              data: {
+                type: Type.ARRAY,
+                description: "List of Japanese vocabulary study cards",
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING, description: "Unique alphabetic id" },
+                    word: { type: Type.STRING, description: "The Japanese word containing Kanji" },
+                    hiragana: { type: Type.STRING, description: "Hiragana reading of the word" },
+                    pronunciation: { type: Type.STRING, description: "Korean pronunciation phonetics" },
+                    meaning: { type: Type.STRING, description: "Korean meaning" },
+                    jlptLevel: { type: Type.STRING, description: "The JLPT level" },
+                    kanjiBreakdown: VOCAB_KANJI_BREAKDOWN_SCHEMA,
+                    exampleSentence: EXAMPLE_SENTENCE_SCHEMA
                   },
-                  quiz: {
-                    type: Type.ARRAY,
-                    description: "List of multiple choice questions",
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        id: { type: Type.INTEGER, description: "Question ID" },
-                        type: { type: Type.STRING, description: "One of: meaning, reading, kanji_match, blank_fill" },
-                        targetWord: { type: Type.STRING, description: "The target word" },
-                        questionText: { type: Type.STRING, description: "Question instruction in Korean" },
-                        questionSentence: { type: Type.STRING, description: "Sentence with __blank__ for blank_fill, empty for others" },
-                        choices: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Exactly 4 choices" },
-                        correctIndex: { type: Type.INTEGER, description: "Correct choice index" },
-                        explanation: { type: Type.STRING, description: "Korean answer explanation" }
-                      },
-                      required: ["id", "type", "targetWord", "questionText", "questionSentence", "choices", "correctIndex", "explanation"]
-                    }
-                  }
-                },
-                required: ["data", "quiz"]
-              }
-            }
-          });
+                  required: ["id", "word", "hiragana", "pronunciation", "meaning", "jlptLevel", "kanjiBreakdown", "exampleSentence"]
+                }
+              },
+              quiz: QUIZ_SCHEMA
+            },
+            required: ["data", "quiz"]
+          };
 
-          const bodyText = response.text || "{}";
           try {
-            const parsed = JSON.parse(bodyText.trim());
+            const parsed = await callGeminiJSON(prompt, systemInstruction, schema);
             generatedVocabs = parsed.data || [];
             generatedQuizzes = parsed.quiz || [];
 
@@ -1264,6 +1168,216 @@ app.post("/api/progress/review", async (req, res) => {
     res.json({ success: false, errorMsg: `복습 단어를 가져오는 중 오류가 발생했습니다: ${err.message}` });
   }
 });
+
+// ==========================================
+// YOUTUBE NEWS STUDY ENDPOINTS (DYNAMIC)
+// ==========================================
+
+const getRandomNewsQuery = () => {
+  return "TBS NEWS DIG shorts";
+};
+
+app.get("/api/news/random", async (req, res) => {
+  const hasProject = !process.env.GCP_PROJECT_ID || process.env.GCP_PROJECT_ID === "YOUR_GCP_PROJECT_ID" ? false : true;
+  if (!hasProject) {
+    return res.json({ success: false, errorMsg: "구글 클라우드 프로젝트 ID가 구성되지 않았습니다. .env 파일에 GCP_PROJECT_ID를 설정해 주세요." });
+  }
+
+  try {
+    let selectedVideo = null;
+    let transcriptData = null;
+    let subtitles = [];
+
+    // 1. YouTube 검색을 통해 무작위 비디오 선정 및 자막 추출
+    let retryCount = 0;
+    while (retryCount < 5) {
+      try {
+        const query = getRandomNewsQuery();
+        console.log(`[News Gen] Searching YouTube for: ${query}`);
+        const r = await yts(query);
+        const videos = r.videos;
+
+        if (videos.length > 0) {
+          // Shuffle videos to pick a random one from the search results
+          const shuffled = videos.sort(() => 0.5 - Math.random());
+          for (let v of shuffled) {
+            try {
+              const t = await YoutubeTranscript.fetchTranscript(v.videoId, { lang: 'ja' });
+              if (t && t.length > 0) {
+                selectedVideo = v;
+                transcriptData = t;
+                console.log(`[News Gen] Selected video ${v.videoId} with transcript.`);
+                break;
+              }
+            } catch (transcriptErr) {
+              // No transcript or video is blocked, try next video
+            }
+          }
+        }
+        if (selectedVideo) break;
+      } catch (searchErr) {
+        console.error("YouTube search error:", searchErr);
+      }
+      retryCount++;
+    }
+
+    if (!selectedVideo || !transcriptData) {
+      return res.json({ success: false, errorMsg: "시청 가능한 유튜브 뉴스 영상을 찾는 데 실패했습니다. 잠시 후 다시 시도해 주세요." });
+    }
+
+    // 2. 자막 데이터 변환 (NewsStudy.tsx 규격)
+    subtitles = transcriptData.map((t: any) => ({
+      start: t.offset / 1000,
+      duration: t.duration / 1000,
+      japanese: t.text,
+      hiragana: "", // 동적 로드 시번역 생략 (성능 최적화)
+      korean: ""
+    }));
+
+    // 3. MongoDB 캐시가 있는 경우 조회
+    if (db) {
+      try {
+        const cached = await db.collection("news_lessons").findOne({ id: selectedVideo.videoId });
+        if (cached) {
+          console.log(`[News Gen] Served news lesson ${selectedVideo.videoId} from MongoDB cache.`);
+          return res.json({ success: true, source: "mongodb_cache", data: cached });
+        }
+      } catch (err) {
+        console.error("Failed to fetch cached news lesson from MongoDB:", err);
+      }
+    }
+
+    // 4. Gemini API를 이용해 대본으로부터 중요 어휘 카드 및 연계 퀴즈 생성
+    const transcriptText = subtitles.map((s: any) => `[${s.start.toFixed(1)}s - ${parseFloat((s.start + s.duration).toFixed(1))}s] ${s.japanese}`).join("\n");
+    const prompt = `
+      You are processing a raw YouTube auto-generated transcript for a Japanese news video. The transcript is broken into unnatural, very short chunks.
+      Your tasks:
+      1. Merge the raw transcript lines into natural, complete Japanese sentences.
+      2. For each merged sentence, calculate the 'start' time (the start time of the first chunk in the sentence) and 'duration' (the difference between the end time of the last chunk and the start time).
+      3. For each merged sentence, break it into meaningful word/phrase chunks separated by " / ". Then provide MATCHING Korean Hangul pronunciation and Korean translation for each chunk, also separated by " / ".
+         Example:
+         japanese: "過去最大規模で / 行われましたが、"
+         pronunciation: "카코사이다이키보데 / 오코나와레마시타가,"
+         korean: "과거 최대 규모로 / 실시되었으나,"
+         The number of " / " segments in japanese, pronunciation, and korean MUST be identical.
+      4. Create a list of exactly 5 Japanese vocabulary (단어) study cards for a Korean speaker studying Japanese, based on the provided news transcript.
+      5. Create exactly 5 corresponding multiple-choice quiz questions to test the learner on these specific 5 vocabulary words.
+
+      News Title: ${selectedVideo.title}
+      Raw Transcript:
+      ${transcriptText}
+
+      CRITICAL CONSTRAINTS:
+      - 'processedSubtitles': MUST contain the entire video transcript merged into natural sentence units. Provide 'start' and 'duration' as numbers (seconds). Use " / " to delimit word/phrase chunks within each field (japanese, pronunciation, korean). The chunk count MUST match across all three fields.
+      - 'vocabItems': Extract exactly 5 words from the transcript. Each word MUST contain at least one Kanji. Keep definitions/mnemonics concise (max 2 sentences in Korean).
+      - ALL pronunciation fields MUST be Korean Hangul (e.g. "카코", "니혼"). NEVER use English/Romaji.
+      - 'vocabItems.exampleSentence.japanese': MUST be an ACTUAL sentence copied verbatim from the merged processedSubtitles (without the / delimiters). Wrap the vocabulary word with '__' on both sides.
+      - 'quizzes': Create exactly 5 questions of type 'reading' or 'meaning'.
+        * 'meaning' type: questionText MUST include the target word, e.g. "다음 단어 '韓国軍'의 올바른 뜻은 무엇입니까?". Choices are 4 Korean meanings.
+        * 'reading' type: questionText MUST include the target word, e.g. "다음 단어 '緊張'의 올바른 한국어 발음은 무엇입니까?". Choices are 4 Korean Hangul pronunciations (NOT hiragana).
+      - TRANSLATION ACCURACY IS CRITICAL: Ensure natural Korean translations and correct pronunciation transcriptions.
+      
+      Make sure to return absolutely valid JSON following the provided responseSchema precisely.
+    `;
+
+    console.log(`[News Gen] Calling Gemini API for video ${selectedVideo.videoId}...`);
+    const systemInstruction = "You are an expert Japanese professor specializing in creating high-quality language learning cards (with Korean mnemonics and Kanji breakdowns) and contextual multiple-choice questions from news articles.";
+    const schema = {
+      type: Type.OBJECT,
+      properties: {
+        processedSubtitles: {
+          type: Type.ARRAY,
+          description: "The merged and translated transcript sentences.",
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              start: { type: Type.NUMBER },
+              duration: { type: Type.NUMBER },
+              japanese: { type: Type.STRING },
+              hiragana: { type: Type.STRING },
+              pronunciation: { type: Type.STRING },
+              korean: { type: Type.STRING }
+            },
+            required: ["start", "duration", "japanese", "hiragana", "pronunciation", "korean"]
+          }
+        },
+        vocabItems: {
+          type: Type.ARRAY,
+          description: "Array of exactly 5 vocabulary items extracted from the news",
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              id: { type: Type.STRING },
+              word: { type: Type.STRING },
+              hiragana: { type: Type.STRING },
+              pronunciation: { type: Type.STRING },
+              meaning: { type: Type.STRING },
+              jlptLevel: { type: Type.STRING },
+              kanjiBreakdown: VOCAB_KANJI_BREAKDOWN_SCHEMA,
+              exampleSentence: EXAMPLE_SENTENCE_SCHEMA
+            },
+            required: ["id", "word", "hiragana", "pronunciation", "meaning", "jlptLevel", "kanjiBreakdown", "exampleSentence"]
+          }
+        },
+        quizzes: {
+          type: Type.ARRAY,
+          description: "Array of exactly 5 direct vocabulary quiz questions (reading or meaning)",
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              id: { type: Type.INTEGER },
+              type: { type: Type.STRING }, // meaning or reading only
+              targetWord: { type: Type.STRING },
+              questionText: { type: Type.STRING },
+              choices: { type: Type.ARRAY, items: { type: Type.STRING } },
+              correctIndex: { type: Type.INTEGER },
+              explanation: { type: Type.STRING }
+            },
+            required: ["id", "type", "targetWord", "questionText", "choices", "correctIndex", "explanation"]
+          }
+        }
+      },
+      required: ["processedSubtitles", "vocabItems", "quizzes"]
+    };
+
+    let parsed: any = {};
+    try {
+      parsed = await callGeminiJSON(prompt, systemInstruction, schema);
+    } catch (parseErr) {
+      console.error("Failed to fetch or parse news JSON response.", parseErr);
+    }
+
+    // 5. 결과 구조화
+    const newsLessonData = {
+      id: selectedVideo.videoId,
+      title: selectedVideo.title,
+      videoUrl: selectedVideo.url,
+      subtitles: parsed.processedSubtitles || subtitles,
+      vocabItems: parsed.vocabItems || [],
+      quizzes: parsed.quizzes || []
+    };
+
+    // 6. MongoDB에 저장 (캐시)
+    if (db && newsLessonData.vocabItems.length > 0) {
+      try {
+        await db.collection("news_lessons").updateOne(
+          { id: selectedVideo.videoId },
+          { $set: newsLessonData },
+          { upsert: true }
+        );
+        console.log(`[News Gen] Saved news lesson ${selectedVideo.videoId} to MongoDB.`);
+      } catch (cacheErr) {
+        console.error("Failed to cache news lesson to DB:", cacheErr);
+      }
+    }
+
+    res.json({ success: true, source: "gemini_generation", data: newsLessonData });
+  } catch (err: any) {
+    console.error("News lesson generation error:", err);
+    res.json({ success: false, errorMsg: `뉴스 학습 자료 생성 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
 
 
 // Configure Vite or Serve static built content
