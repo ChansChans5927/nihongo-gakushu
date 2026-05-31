@@ -122,6 +122,53 @@ export default function App() {
     }
   }, []);
 
+  // Sync push token if notifications are enabled
+  useEffect(() => {
+    if (currentUser) {
+      fetch(`/api/user/settings?username=${encodeURIComponent(currentUser.username)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data?.notificationsEnabled) {
+            syncPushToken(currentUser.username);
+          }
+        })
+        .catch(err => console.error("Failed to fetch settings on login", err));
+    }
+  }, [currentUser]);
+
+  // Function to silently sync the push token on app start
+  const syncPushToken = async (username: string) => {
+    try {
+      if (NativeBridge.isMobileApp()) {
+        const expoPushToken = await NativeBridge.requestExpoToken();
+        if (expoPushToken) {
+          await fetch('/api/notifications/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, expoPushToken })
+          });
+          console.log("[Token Sync] Successfully synced Expo push token.");
+        }
+      } else {
+        // PC Browser Web Push
+        if ('serviceWorker' in navigator) {
+          const swRegistration = await navigator.serviceWorker.ready;
+          const subscription = await swRegistration.pushManager.getSubscription();
+          if (subscription) {
+            await fetch('/api/notifications/subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username, subscription })
+            });
+            console.log("[Token Sync] Successfully synced Web Push subscription.");
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[Token Sync] Failed to sync push token silently:", error);
+    }
+  };
+
   // Fetch progress from MongoDB and sync with localStorage data if any
   const fetchUserProgress = async (username: string) => {
     try {
