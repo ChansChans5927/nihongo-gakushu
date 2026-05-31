@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Bell, BellOff, User, Loader2 } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, User, Loader2, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { NativeBridge } from "../nativeBridge";
 
@@ -21,13 +21,15 @@ function urlBase64ToUint8Array(base64String: string) {
 interface SettingsViewProps {
   username: string;
   onGoBack: () => void;
+  onLogout: () => void;
 }
 
-export function SettingsView({ username, onGoBack }: SettingsViewProps) {
+export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
@@ -152,6 +154,33 @@ export function SettingsView({ username, onGoBack }: SettingsViewProps) {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("정말로 계정을 삭제하시겠습니까? 지금까지 학습한 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.")) {
+      return;
+    }
+    
+    setIsDeleting(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/user', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.errorMsg);
+      }
+      
+      alert("계정이 성공적으로 삭제되었습니다.");
+      onLogout(); // Call App.tsx to log out the user
+    } catch (error: any) {
+      console.error(error);
+      setMessage({ text: error.message || "계정 삭제 중 오류가 발생했습니다.", type: 'error' });
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -259,6 +288,30 @@ export function SettingsView({ username, onGoBack }: SettingsViewProps) {
                   {message.text}
                 </div>
               )}
+            </div>
+          </section>
+
+          {/* Account Management: Delete Account */}
+          <section className="pt-4 border-t border-slate-100">
+            <h3 className="text-sm font-bold text-slate-500 mb-4 flex items-center gap-2 uppercase tracking-wider">
+              <User className="w-4 h-4" />
+              계정 관리
+            </h3>
+            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h4 className="text-base font-bold text-red-800 mb-1">계정 삭제</h4>
+                <p className="text-sm text-red-600/80 leading-relaxed max-w-[280px]">
+                  지금까지 학습한 모든 진도와 설정 데이터가 영구적으로 삭제됩니다.
+                </p>
+              </div>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="px-4 py-2.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-xl text-sm font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap"
+              >
+                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                {isDeleting ? "삭제 중..." : "계정 영구 삭제"}
+              </button>
             </div>
           </section>
         </div>

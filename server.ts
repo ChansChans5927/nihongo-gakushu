@@ -879,7 +879,32 @@ app.post("/api/user/settings", async (req, res) => {
     );
     res.json({ success: true });
   } catch (err: any) {
-    res.json({ success: false, errorMsg: `설정 저장 중 오류가 발생했습니다: ${err.message}` });
+    res.json({ success: false, errorMsg: `설정을 저장하는 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// DELETE Endpoint to delete user account
+app.delete("/api/user", async (req, res) => {
+  const { username } = req.body;
+  if (!username) {
+    return res.json({ success: false, errorMsg: "사용자 정보가 필요합니다." });
+  }
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+  try {
+    const normalizedUsername = String(username).trim().toLowerCase();
+    
+    // Delete user
+    await db.collection("users").deleteOne({ username: normalizedUsername });
+    
+    // Delete associated data (progress, subscriptions)
+    await db.collection("progress").deleteMany({ username: normalizedUsername });
+    await db.collection("subscriptions").deleteMany({ username: normalizedUsername });
+    
+    res.json({ success: true });
+  } catch (err: any) {
+    res.json({ success: false, errorMsg: `계정 삭제 중 오류가 발생했습니다: ${err.message}` });
   }
 });
 

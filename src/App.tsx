@@ -802,6 +802,12 @@ export default function App() {
                 <SettingsView
                   username={currentUser.username}
                   onGoBack={handleGoHome}
+                  onLogout={() => {
+                    setCurrentUser(null);
+                    localStorage.removeItem("user");
+                    setIsReviewMode(false);
+                    setPhase('config');
+                  }}
                 />
               )}
 
