@@ -40,6 +40,9 @@ npm run dev
 
 ## 📸 서비스 화면 (Screenshots)
 
+### 페이지 URL
+https://nihongo-gakushu.onrender.com
+
 ### 🏠 메인 페이지
 ![메인 페이지](image.png)
 
