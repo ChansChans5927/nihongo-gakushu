@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Bell, BellOff, User, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, User, Loader2, Trash2, Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { NativeBridge } from "../nativeBridge";
 
@@ -26,6 +26,8 @@ interface SettingsViewProps {
 
 export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [ttsSpeed, setTtsSpeed] = useState<'slow' | 'normal' | 'fast'>('normal');
+  const [ttsGender, setTtsGender] = useState<'female' | 'male'>('female');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -42,6 +44,11 @@ export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps
       const data = await res.json();
       if (data.success) {
         setNotificationsEnabled(data.data.notificationsEnabled);
+        setTtsSpeed(data.data.ttsSpeed || "normal");
+        setTtsGender(data.data.ttsGender || "female");
+        // Also update localstorage so useSpeech is synced
+        localStorage.setItem(`${username}_ttsSpeed`, data.data.ttsSpeed || "normal");
+        localStorage.setItem(`${username}_ttsGender`, data.data.ttsGender || "female");
       }
     } catch (error) {
       console.error("Failed to fetch settings", error);
@@ -124,6 +131,56 @@ export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps
       console.error(error);
       setMessage({ text: error.message || "설정 변경에 실패했습니다.", type: 'error' });
       setNotificationsEnabled(notificationsEnabled); // Revert UI on failure
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdateTtsSpeed = async (newSpeed: 'slow' | 'normal' | 'fast') => {
+    setIsSaving(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/user/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, ttsSpeed: newSpeed })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTtsSpeed(newSpeed);
+        localStorage.setItem(`${username}_ttsSpeed`, newSpeed);
+        setMessage({ text: "음성 속도가 변경되었습니다.", type: 'success' });
+      } else {
+        throw new Error(data.errorMsg);
+      }
+    } catch (error: any) {
+      console.error(error);
+      setMessage({ text: error.message || "설정 변경에 실패했습니다.", type: 'error' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdateTtsGender = async (newGender: 'female' | 'male') => {
+    setIsSaving(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/user/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, ttsGender: newGender })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTtsGender(newGender);
+        localStorage.setItem(`${username}_ttsGender`, newGender);
+        setMessage({ text: "음성 성별이 변경되었습니다.", type: 'success' });
+      } else {
+        throw new Error(data.errorMsg);
+      }
+    } catch (error: any) {
+      console.error(error);
+      setMessage({ text: error.message || "설정 변경에 실패했습니다.", type: 'error' });
     } finally {
       setIsSaving(false);
     }
@@ -288,6 +345,78 @@ export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps
                   {message.text}
                 </div>
               )}
+            </div>
+          </section>
+
+          {/* TTS Settings Section */}
+          <section>
+            <h3 className="text-sm font-bold text-slate-500 mb-4 flex items-center gap-2 uppercase tracking-wider">
+              <Volume2 className="w-4 h-4" />
+              음성 설정 (TTS)
+            </h3>
+            
+            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-6">
+              {/* Voice Gender Setting */}
+              <div>
+                <h4 className="text-base font-bold text-slate-800 mb-2">음성 성별</h4>
+                <p className="text-sm text-slate-500 mb-3 leading-relaxed">
+                  단어 및 문장 학습 시 재생되는 일본어 발음의 성별을 선택합니다.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateTtsGender('female')}
+                    disabled={isSaving}
+                    className={`py-3 px-4 rounded-xl border text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      ttsGender === 'female'
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    여성 목소리 (기본)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateTtsGender('male')}
+                    disabled={isSaving}
+                    className={`py-3 px-4 rounded-xl border text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      ttsGender === 'male'
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    남성 목소리
+                  </button>
+                </div>
+              </div>
+
+              {/* Voice Speed Setting */}
+              <div className="pt-4 border-t border-slate-200/60">
+                <h4 className="text-base font-bold text-slate-800 mb-2">음성 속도</h4>
+                <p className="text-sm text-slate-500 mb-3 leading-relaxed">
+                  일본어 발음이 재생되는 스피드를 조절합니다.
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['slow', 'normal', 'fast'] as const).map((speed) => {
+                    const label = speed === 'slow' ? '느림 (0.8x)' : speed === 'fast' ? '빠름 (1.25x)' : '보통 (1.0x)';
+                    return (
+                      <button
+                        key={speed}
+                        type="button"
+                        onClick={() => handleUpdateTtsSpeed(speed)}
+                        disabled={isSaving}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
+                          ttsSpeed === speed
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </section>
 

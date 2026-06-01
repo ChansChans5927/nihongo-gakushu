@@ -14,9 +14,10 @@ declare global {
 interface NewsStudyProps {
   lesson: NewsLesson;
   handleGoHome: () => void;
+  username?: string;
 }
 
-export function NewsStudy({ lesson, handleGoHome }: NewsStudyProps) {
+export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
   const [activeTab, setActiveTab] = useState<"subtitles" | "vocab" | "quiz">("subtitles");
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [playerState, setPlayerState] = useState<number>(-1); // -1: 미시작, 1: 재생중, 2: 일시정지
@@ -195,7 +196,11 @@ export function NewsStudy({ lesson, handleGoHome }: NewsStudyProps) {
   const handleTTS = async (text: string) => {
     setSpeechActive(text);
     try {
-      const audio = new Audio(`/api/tts?q=${encodeURIComponent(text)}&lang=ja`);
+      const speedKey = username ? `${username}_ttsSpeed` : "ttsSpeed";
+      const genderKey = username ? `${username}_ttsGender` : "ttsGender";
+      const ttsSpeed = localStorage.getItem(speedKey) || "normal";
+      const ttsGender = localStorage.getItem(genderKey) || "female";
+      const audio = new Audio(`/api/tts?q=${encodeURIComponent(text)}&lang=ja&speed=${ttsSpeed}&gender=${ttsGender}`);
       await audio.play();
     } catch (err) {
       console.error("TTS playback failed", err);

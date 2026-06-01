@@ -72,7 +72,7 @@ export default function App() {
   const [isReviewMode, setIsReviewMode] = useState<boolean>(false);
 
   // Hook for speech synthesis
-  const { textToSpeechSupported, speakJapanese } = useSpeech();
+  const { textToSpeechSupported, speakJapanese } = useSpeech(currentUser?.username);
 
   // Handle Back Button natively via WebView bridge
   useEffect(() => {
@@ -128,8 +128,13 @@ export default function App() {
       fetch(`/api/user/settings?username=${encodeURIComponent(currentUser.username)}`)
         .then(res => res.json())
         .then(data => {
-          if (data.success && data.data?.notificationsEnabled) {
-            syncPushToken(currentUser.username);
+          if (data.success) {
+            if (data.data?.notificationsEnabled) {
+              syncPushToken(currentUser.username);
+            }
+            // Save TTS settings to localStorage for useSpeech hook
+            localStorage.setItem(`${currentUser.username}_ttsSpeed`, data.data?.ttsSpeed || "normal");
+            localStorage.setItem(`${currentUser.username}_ttsGender`, data.data?.ttsGender || "female");
           }
         })
         .catch(err => console.error("Failed to fetch settings on login", err));
@@ -841,6 +846,7 @@ export default function App() {
                 <NewsStudy
                   lesson={newsLesson}
                   handleGoHome={handleGoHome}
+                  username={currentUser?.username}
                 />
               )}
 

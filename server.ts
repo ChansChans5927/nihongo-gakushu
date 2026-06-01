@@ -10,6 +10,7 @@ import { YoutubeTranscript } from "youtube-transcript";
 import webpush from "web-push";
 import cron from "node-cron";
 import { Expo } from "expo-server-sdk";
+import { google } from "googleapis";
 
 // Initialize Expo SDK client
 const expo = new Expo({ accessToken: process.env.EXPO_ACCESS_TOKEN });
@@ -27,6 +28,15 @@ const ai = new GoogleGenAI({
   project: process.env.GCP_PROJECT_ID,
   location: process.env.GCP_LOCATION,
   vertexai: true,
+});
+
+// Initialize Google Cloud Text-to-Speech Client
+const ttsAuth = new google.auth.GoogleAuth({
+  scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+});
+const tts = google.texttospeech({
+  version: "v1",
+  auth: ttsAuth,
 });
 
 let db: any = null;
@@ -142,32 +152,54 @@ async function callGeminiJSON(prompt: string, systemInstruction: string, schema:
   return JSON.parse(bodyText.trim());
 }
 
-// GET Endpoint for TTS proxy — fetches Google Translate TTS audio server-side
+// GET Endpoint for TTS proxy — fetches Google Cloud TTS or Google Translate TTS audio server-side
 // to bypass browser referrer/CORS blocking that causes silent audio.
 app.get("/api/tts", async (req, res) => {
   const text = req.query.q as string;
   const lang = (req.query.lang as string) || "ja";
+  const speed = (req.query.speed as string) || "normal";
+  const gender = (req.query.gender as string) || "female";
 
   if (!text) {
     return res.status(400).json({ error: "Missing q parameter" });
   }
 
   try {
-    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${encodeURIComponent(lang)}&client=tw-ob&q=${encodeURIComponent(text)}`;
+    let voiceName = "ja-JP-Wavenet-B"; // default female WaveNet
+    let ssmlGender = "FEMALE";
 
-    const response = await fetch(ttsUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Referer": "https://translate.google.com/",
+    if (gender === "male") {
+      voiceName = "ja-JP-Wavenet-C";
+      ssmlGender = "MALE";
+    }
+
+    let speakingRate = 1.0;
+    if (speed === "slow") {
+      speakingRate = 0.8;
+    } else if (speed === "fast") {
+      speakingRate = 1.25;
+    }
+
+    const response = await tts.text.synthesize({
+      requestBody: {
+        input: { text },
+        voice: {
+          languageCode: "ja-JP",
+          name: voiceName,
+          ssmlGender: ssmlGender,
+        },
+        audioConfig: {
+          audioEncoding: "MP3",
+          speakingRate: speakingRate,
+        },
       },
     });
 
-    if (!response.ok) {
-      return res.status(response.status).json({ error: "Google TTS request failed" });
+    if (!response.data.audioContent) {
+      throw new Error("No audio content returned from Google TTS");
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const buffer = Buffer.from(response.data.audioContent, "base64");
 
     res.set({
       "Content-Type": "audio/mpeg",
@@ -176,8 +208,34 @@ app.get("/api/tts", async (req, res) => {
     });
     res.send(buffer);
   } catch (e) {
-    console.error("TTS proxy error:", e);
-    res.status(500).json({ error: "TTS proxy failed" });
+    console.error("Google Cloud TTS error, falling back to unofficial Translate TTS:", e);
+    try {
+      const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${encodeURIComponent(lang)}&client=tw-ob&q=${encodeURIComponent(text)}`;
+
+      const response = await fetch(ttsUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Referer": "https://translate.google.com/",
+        },
+      });
+
+      if (!response.ok) {
+        return res.status(response.status).json({ error: "Google Translate TTS fallback failed" });
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      res.set({
+        "Content-Type": "audio/mpeg",
+        "Content-Length": buffer.length.toString(),
+        "Cache-Control": "public, max-age=86400",
+      });
+      res.send(buffer);
+    } catch (fallbackError) {
+      console.error("TTS proxy fallback failed:", fallbackError);
+      res.status(500).json({ error: "TTS proxy failed" });
+    }
   }
 });
 
@@ -853,7 +911,9 @@ app.get("/api/user/settings", async (req, res) => {
     res.json({
       success: true,
       data: {
-        notificationsEnabled: user?.notificationsEnabled || false
+        notificationsEnabled: user?.notificationsEnabled || false,
+        ttsSpeed: user?.ttsSpeed || "normal",
+        ttsGender: user?.ttsGender || "female"
       }
     });
   } catch (err: any) {
@@ -863,7 +923,7 @@ app.get("/api/user/settings", async (req, res) => {
 
 // POST Endpoint to save user settings
 app.post("/api/user/settings", async (req, res) => {
-  const { username, notificationsEnabled } = req.body;
+  const { username, notificationsEnabled, ttsSpeed, ttsGender } = req.body;
   if (!username) {
     return res.json({ success: false, errorMsg: "사용자 정보가 필요합니다." });
   }
@@ -872,9 +932,14 @@ app.post("/api/user/settings", async (req, res) => {
   }
   try {
     const normalizedUsername = String(username).trim().toLowerCase();
+    const updateDoc: any = {};
+    if (notificationsEnabled !== undefined) updateDoc.notificationsEnabled = notificationsEnabled;
+    if (ttsSpeed !== undefined) updateDoc.ttsSpeed = ttsSpeed;
+    if (ttsGender !== undefined) updateDoc.ttsGender = ttsGender;
+
     await db.collection("users").updateOne(
       { username: normalizedUsername },
-      { $set: { notificationsEnabled } },
+      { $set: updateDoc },
       { upsert: true }
     );
     res.json({ success: true });
