@@ -551,7 +551,7 @@ app.post("/api/vocab/generate", async (req, res) => {
           - The correctIndex is the 0-based index of the correct conjugated choice.
           - The questionText should be: "제시된 일본어 예문의 빈칸에 들어갈 알맞은 단어는 무엇일까요?"
         - For 'meaning' type: The questionText asks for the Korean meaning of the Japanese word. Choices are Korean meanings.
-        - For 'reading' type: The questionText asks for the pronunciation/reading of the Japanese word. Choices are readings in Hiragana with pronunciation.
+        - For 'reading' type: The questionText asks for the pronunciation/reading of the Japanese word. Choices MUST be strictly ONLY Hiragana (e.g., 'かんしゃ'). NEVER include English Romaji or Korean pronunciation in parentheses.
         - For 'kanji_match' type: The questionText asks for the correct Japanese word spelling based on its Korean meaning. Choices are base Japanese words.
         
         Make sure to return absolutely valid JSON following the provided responseSchema precisely.
@@ -723,7 +723,7 @@ app.post("/api/jlpt/generate", async (req, res) => {
         - "questionSentence": A complete, natural Japanese sentence containing the target word under study, e.g. "昨日はいい__天気__でした。" format (wrap target tests with double underscores like '__target__') or "お酒를 飲んで__blank__はいけません。" (for context_fit, use '__blank__').
         - "targetWord": The specific target word being tested (e.g., "天気" or "暴れて").
         - "questionText": The question instruction in Korean, e.g. "빈칸의 __targetWord__의 올바른 뜻/독음/표기를 고르세요." or "문맥상 빈칸에 들어갈 가장 알맞은 단어를 고르세요."
-        - "choices": Exactly 4 plausible Japanese options (with reading in parenthesis, e.g., 'てん기 (텐키)').
+        - "choices": Exactly 4 plausible Japanese options. STRICTLY Japanese characters only (e.g., 'てんき' or '天気'). NEVER include English Romaji or Korean pronunciation in parentheses.
         - "correctIndex": The 0-based index of the correct answer (from 0 to 3).
         - "translation": High-quality Korean translation of the questionSentence.
         - "explanation": Brief, clear explanation in Korean (strictly maximum 2 concise sentences, under 40 Korean words), explaining why the correct answer is right and why other options are wrong.
@@ -959,14 +959,14 @@ app.delete("/api/user", async (req, res) => {
   }
   try {
     const normalizedUsername = String(username).trim().toLowerCase();
-    
+
     // Delete user
     await db.collection("users").deleteOne({ username: normalizedUsername });
-    
+
     // Delete associated data (progress, subscriptions)
     await db.collection("progress").deleteMany({ username: normalizedUsername });
     await db.collection("subscriptions").deleteMany({ username: normalizedUsername });
-    
+
     res.json({ success: true });
   } catch (err: any) {
     res.json({ success: false, errorMsg: `계정 삭제 중 오류가 발생했습니다: ${err.message}` });
@@ -1019,7 +1019,7 @@ app.post("/api/notifications/test", async (req, res) => {
   try {
     const normalizedUsername = String(username).trim().toLowerCase();
     const user = await db.collection("users").findOne({ username: normalizedUsername });
-    
+
     if (!user || (!user.pushSubscription && !user.expoPushToken)) {
       return res.json({ success: false, errorMsg: "알림 설정이 되어있지 않거나 구독 정보가 없습니다." });
     }
@@ -1046,7 +1046,7 @@ app.post("/api/notifications/test", async (req, res) => {
     if (user.pushSubscription) {
       await webpush.sendNotification(user.pushSubscription, payload);
     }
-    
+
     res.json({ success: true });
   } catch (err: any) {
     console.error("Test push error:", err);
@@ -1674,7 +1674,7 @@ async function startServer() {
       ];
       const randomMessage = messages[Math.floor(Math.random() * messages.length)];
       const payload = JSON.stringify(randomMessage);
-      
+
       const expoMessages = [];
 
       for (const user of users) {
@@ -1687,7 +1687,7 @@ async function startServer() {
             data: { type: "routine_study" }
           });
         }
-        
+
         if (user.pushSubscription) {
           try {
             await webpush.sendNotification(user.pushSubscription, payload);
