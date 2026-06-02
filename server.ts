@@ -620,8 +620,30 @@ app.post("/api/vocab/generate", async (req, res) => {
     // Filter new quizzes to only keep those whose target words were actually kept
     const keptQuizzes = newGeneratedQuizzes.filter(q => seenWords.has(q.targetWord));
 
+    // Cache newly generated vocab cards and quizzes to DB for future caching and review lookups
+    if (db && newGeneratedVocabs.length > 0) {
+      try {
+        const ops = newGeneratedVocabs.map((c: any) => ({
+          updateOne: { filter: { word: c.word }, update: { $set: c }, upsert: true }
+        }));
+        await db.collection("vocabs").bulkWrite(ops);
+        console.log(`[DB Sync] Cached ${newGeneratedVocabs.length} vocab cards to DB on generation.`);
+      } catch (cacheErr) {
+        console.error("Failed to cache vocab cards to DB:", cacheErr);
+      }
+    }
 
-
+    if (db && keptQuizzes.length > 0) {
+      try {
+        const quizOps = keptQuizzes.map((q: any) => ({
+          updateOne: { filter: { targetWord: q.targetWord, type: q.type }, update: { $set: q }, upsert: true }
+        }));
+        await db.collection("vocab_quizzes").bulkWrite(quizOps);
+        console.log(`[DB Sync] Cached ${keptQuizzes.length} vocab quizzes to DB on generation.`);
+      } catch (cacheErr) {
+        console.error("Failed to cache vocab quizzes to DB:", cacheErr);
+      }
+    }
     const mergedData = [...selectedVocabs, ...newGeneratedVocabs];
     let mergedQuiz = [...selectedQuizzes, ...keptQuizzes];
 
@@ -1076,30 +1098,7 @@ app.post("/api/progress/save", async (req, res) => {
       { upsert: true }
     );
 
-    // 2. Save full card details to global collection only when user successfully masters them (only for vocab cards, as kanji cards don't use global DB cache)
-    if (Array.isArray(cardDetails) && cardDetails.length > 0 && type === "vocab") {
-      const ops = cardDetails.map((c: any) => ({
-        updateOne: {
-          filter: { word: c.word },
-          update: { $set: c },
-          upsert: true
-        }
-      }));
-      await db.collection("vocabs").bulkWrite(ops);
-      console.log(`[DB Sync] Upserted ${cardDetails.length} vocab details to DB on master.`);
 
-      if (Array.isArray(quizDetails) && quizDetails.length > 0) {
-        const quizOps = quizDetails.map((q: any) => ({
-          updateOne: {
-            filter: { targetWord: q.targetWord, type: q.type },
-            update: { $set: q },
-            upsert: true
-          }
-        }));
-        await db.collection("vocab_quizzes").bulkWrite(quizOps);
-        console.log(`[DB Sync] Upserted ${quizDetails.length} quiz details to DB on master.`);
-      }
-    }
 
     res.json({ success: true });
   } catch (err: any) {
@@ -1163,7 +1162,7 @@ app.post("/api/progress/review", async (req, res) => {
     const selectedKeys = [...list].sort(() => 0.5 - Math.random());
 
     if (type === "kanji") {
-      // Try DB cache first for kanji review
+      // Kanji review: DB-only
       let cachedCards: any[] = [];
       try {
         cachedCards = await db.collection("kanjis").find({ kanji: { $in: selectedKeys } }).toArray();
@@ -1171,97 +1170,14 @@ app.post("/api/progress/review", async (req, res) => {
         console.error("Failed to fetch cached kanjis from DB:", err);
       }
 
-      const cachedKanjiSet = new Set(cachedCards.map((c: any) => c.kanji));
-      const missingKeys = selectedKeys.filter(k => !cachedKanjiSet.has(k));
-
-      let generatedCards: any[] = [];
-      if (missingKeys.length > 0) {
-        console.log(`[Kanji Review] ${cachedCards.length} from DB cache, ${missingKeys.length} need Gemini generation.`);
-        const prompt = `
-          Create exactly ${missingKeys.length} Japanese Kanji (한자) learning cards for a Korean speaker studying Japanese.
-          Specifically, generate cards for the following characters: ${JSON.stringify(missingKeys)}.
-          
-          For each Kanji character, provide concise, creative, and easy-to-remember Korean mnemonics/association stories ("mnemonic" - 외우는 방법).
-          To prevent truncation and ensure snappy responses, keep all mnemonics and explanations very brief (maximum 2 concise sentences each).
-          
-          The properties for each card:
-          - "id", "kanji" (must match one of the requested characters), "strokeCount", "jlptLevel", "grade", "mnemonic", "meaning", "onyomi", "onyomiKorean", "hunyomi", "hunyomiKorean", "radicalsBreakdown", "relatedWords" (exactly 3), "exampleSentence".
-          
-          CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
-          - **Radical Breakdown Accuracy**: Deconstruct the Kanji into its actual visual components. If a part is not a standard Kanji, do NOT map it to an incorrect character (e.g., do NOT map the right side of '拝' to '未'). Describe it directly as a shape (e.g., component: "丰", meaning: "양손을 맞잡은 모양").
-          - **Mnemonic Consistency**: The mnemonic story must be strictly consistent with the components in \`radicalsBreakdown\`. Do not mention unrelated characters or meanings (e.g., for '換', use '扌' and '奐'; do NOT mention '황새 황').
-          - **Pictorial Explanations**: Describe ancient pictographs or non-standard symbols as visual shapes representing objects or actions rather than forcing a modern character match.
-
-          Make sure to return absolutely valid JSON following the provided responseSchema precisely.
-        `;
-
-        try {
-          const systemInstruction = "You are an expert Japanese and Kanji language professor who specializes in visual mnemonics, associations, and helping Korean learners master Japanese characters with minimal effort.";
-          const schema = {
-            type: Type.ARRAY,
-            description: "List of Kanji learning cards",
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING, description: "Unique alphabetic id" },
-                kanji: { type: Type.STRING, description: "The single Kanji character" },
-                strokeCount: { type: Type.INTEGER, description: "Stroke count as an integer" },
-                jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
-                grade: { type: Type.STRING, description: "School grade or level (e.g., 초등 1학년, 상용 한자)" },
-                mnemonic: { type: Type.STRING, description: "An intuitive visual association storyboard in Korean (strictly maximum 2 brief sentences, under 40 Korean words)" },
-                meaning: { type: Type.STRING, description: "Korean meaning and Hanja reading Name (e.g., 볼 견)" },
-                onyomi: { type: Type.STRING, description: "Main Onyomi readings in Hiragana split by comma" },
-                onyomiKorean: { type: Type.STRING, description: "Main Onyomi Korean pronunciations split by comma" },
-                hunyomi: { type: Type.STRING, description: "Main Hunyomi readings in Hiragana split by comma" },
-                hunyomiKorean: { type: Type.STRING, description: "Main Hunyomi Korean pronunciations split by comma" },
-                radicalsBreakdown: KANJI_BREAKDOWN_SCHEMA,
-                relatedWords: RELATED_WORDS_SCHEMA,
-                exampleSentence: EXAMPLE_SENTENCE_SCHEMA
-              },
-              required: [
-                "id", "kanji", "strokeCount", "jlptLevel", "grade", "mnemonic", "meaning",
-                "onyomi", "onyomiKorean", "hunyomi", "hunyomiKorean", "relatedWords", "exampleSentence", "radicalsBreakdown"
-              ]
-            }
-          };
-
-          try {
-            generatedCards = await callGeminiJSON(prompt, systemInstruction, schema);
-            // Cache newly generated kanji cards to DB
-            if (generatedCards.length > 0) {
-              const ops = generatedCards.map((c: any) => {
-                if (c.hunyomi) c.hunyomi = c.hunyomi.replace(/\./g, "");
-                return {
-                  updateOne: {
-                    filter: { kanji: c.kanji },
-                    update: { $set: c },
-                    upsert: true
-                  }
-                };
-              });
-              await db.collection("kanjis").bulkWrite(ops);
-              console.log(`[DB Sync] Cached ${generatedCards.length} review kanji cards to DB.`);
-            }
-          } catch (parseErr) {
-            console.error("Failed to parse review kanjis:", parseErr);
-          }
-        } catch (geminiErr) {
-          console.error("Gemini API error during kanji review:", geminiErr);
-        }
-      } else {
-        console.log(`[Kanji Review] All ${selectedKeys.length} kanji served from DB cache.`);
-      }
-
-      // Merge cached + generated cards, ordered by selectedKeys
-      const allCards = [...cachedCards, ...generatedCards];
-      const orderedCards = selectedKeys.map(k => allCards.find((c: any) => c.kanji === k)).filter(Boolean);
+      const orderedCards = selectedKeys.map(k => cachedCards.find((c: any) => c.kanji === k)).filter(Boolean);
 
       if (orderedCards.length === 0) {
         return res.json({ success: false, errorMsg: "복습용 한자 카드를 불러오는 데 실패했습니다." });
       }
-      res.json({ success: true, source: missingKeys.length > 0 ? "gemini_with_cache" : "mongodb_cache", data: orderedCards });
+      res.json({ success: true, source: "mongodb_cache", data: orderedCards });
     } else {
-      // Vocab review: DB-first with Gemini fallback for missing items
+      // Vocab review: DB-only
       let cards: any[] = [];
       let quizzes: any[] = [];
       try {
@@ -1271,118 +1187,9 @@ app.post("/api/progress/review", async (req, res) => {
         console.error("Failed to fetch cached vocab review data:", err);
       }
 
-      const cachedWordSet = new Set(cards.map((c: any) => c.word));
-      const cachedQuizWordSet = new Set(quizzes.map((q: any) => q.targetWord));
-      const missingWords = selectedKeys.filter(w => !cachedWordSet.has(w) || !cachedQuizWordSet.has(w));
-
-      let generatedVocabs: any[] = [];
-      let generatedQuizzes: any[] = [];
-
-      if (missingWords.length > 0) {
-        console.log(`[Vocab Review] ${cards.length} cards from DB cache, ${missingWords.length} need Gemini generation.`);
-        try {
-          const prompt = `
-            Create a list of exactly ${missingWords.length} Japanese vocabulary (단어) learning cards for a Korean speaker studying Japanese, AND a corresponding set of exactly ${missingWords.length} multiple-choice quiz questions to test them.
-            Specifically, generate cards for the following words: ${JSON.stringify(missingWords)}.
-            
-            CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
-            - **Radical Breakdown Accuracy**: For each Kanji in \`kanjiBreakdown\`, deconstruct it into its actual visual components.
-            - **Mnemonic Consistency**: The mnemonic story for each Kanji must be strictly consistent with its components.
-            - **Pictorial Explanations**: Describe ancient pictographs or non-standard symbols as visual shapes.
-
-            CRITICAL CONSTRAINTS:
-            1. All generated words must contain at least one Kanji character.
-            2. Each word in the response must match one of the requested words.
-            3. CRITICAL QUESTION QUALITY CONSTRAINT:
-               - In the "quiz" array, NEVER include the target Japanese Kanji character, its constituent Kanji characters, or the Japanese word anywhere inside the "questionText" or "questionSentence"!
-               - For 'kanji_match' type: The questionText MUST follow this exact format: '한국어 뜻이 "[meaning]"인 알맞은 일본어 단어 표기(한자)는 무엇일까요?'. Do NOT ask about its constituent kanjis or show their characters, as this exposes the spelling of the answer.
-               - Instead, ask for the Korean meaning/definition/reading in Korean without showing any Japanese characters.
-            
-            For the "data" array:
-            - Generate vocabulary cards (with id, word, hiragana, pronunciation, meaning, jlptLevel, kanjiBreakdown, exampleSentence).
-            
-            For the "quiz" array:
-            - Generate multiple-choice questions (one per vocabulary card).
-            - Distribute different question types: 'meaning', 'reading', 'kanji_match', and 'blank_fill'.
-            - CRITICAL RULE FOR "blank_fill" TYPE:
-              - Use the generated exampleSentence but replace the target word with "__blank__".
-              - The 4 choices MUST be conjugated in the exact same grammatical form.
-            
-            Make sure to return absolutely valid JSON following the provided responseSchema precisely.
-          `;
-
-          const systemInstruction = "You are an expert Japanese and Kanji professor specializing in visual mnemonics, associations, and helping Korean learners master Japanese words and characters.";
-          const schema = {
-            type: Type.OBJECT,
-            properties: {
-              data: {
-                type: Type.ARRAY,
-                description: "List of Japanese vocabulary study cards",
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    id: { type: Type.STRING, description: "Unique alphabetic id" },
-                    word: { type: Type.STRING, description: "The Japanese word containing Kanji" },
-                    hiragana: { type: Type.STRING, description: "Hiragana reading of the word" },
-                    pronunciation: { type: Type.STRING, description: "Korean pronunciation phonetics" },
-                    meaning: { type: Type.STRING, description: "Korean meaning" },
-                    jlptLevel: { type: Type.STRING, description: "The JLPT level" },
-                    kanjiBreakdown: VOCAB_KANJI_BREAKDOWN_SCHEMA,
-                    exampleSentence: EXAMPLE_SENTENCE_SCHEMA
-                  },
-                  required: ["id", "word", "hiragana", "pronunciation", "meaning", "jlptLevel", "kanjiBreakdown", "exampleSentence"]
-                }
-              },
-              quiz: QUIZ_SCHEMA
-            },
-            required: ["data", "quiz"]
-          };
-
-          try {
-            const parsed = await callGeminiJSON(prompt, systemInstruction, schema);
-            generatedVocabs = parsed.data || [];
-            generatedQuizzes = parsed.quiz || [];
-
-            // Cache newly generated vocab cards and quizzes to DB
-            if (generatedVocabs.length > 0) {
-              const vocabOps = generatedVocabs.map((c: any) => ({
-                updateOne: {
-                  filter: { word: c.word },
-                  update: { $set: c },
-                  upsert: true
-                }
-              }));
-              await db.collection("vocabs").bulkWrite(vocabOps);
-              console.log(`[DB Sync] Cached ${generatedVocabs.length} review vocab cards to DB.`);
-            }
-            if (generatedQuizzes.length > 0) {
-              const quizOps = generatedQuizzes.map((q: any) => ({
-                updateOne: {
-                  filter: { targetWord: q.targetWord, type: q.type },
-                  update: { $set: q },
-                  upsert: true
-                }
-              }));
-              await db.collection("vocab_quizzes").bulkWrite(quizOps);
-              console.log(`[DB Sync] Cached ${generatedQuizzes.length} review vocab quizzes to DB.`);
-            }
-          } catch (parseErr) {
-            console.error("Failed to parse review vocabs from Gemini:", parseErr);
-          }
-        } catch (geminiErr) {
-          console.error("Gemini API error during vocab review:", geminiErr);
-        }
-      } else {
-        console.log(`[Vocab Review] All ${selectedKeys.length} vocabs served from DB cache.`);
-      }
-
-      // Merge all cards and quizzes
-      const allCards = [...cards, ...generatedVocabs];
-      const allQuizzes = [...quizzes, ...generatedQuizzes];
-
-      const orderedCards = selectedKeys.map(w => allCards.find((c: any) => c.word === w)).filter(Boolean);
+      const orderedCards = selectedKeys.map(w => cards.find((c: any) => c.word === w)).filter(Boolean);
       const orderedQuizzes = selectedKeys.map((w, idx) => {
-        const q = allQuizzes.find((item: any) => item.targetWord === w);
+        const q = quizzes.find((item: any) => item.targetWord === w);
         if (!q) return null;
         const associatedItem = orderedCards.find((c: any) => c.word === w);
         return {
@@ -1392,7 +1199,7 @@ app.post("/api/progress/review", async (req, res) => {
         };
       }).filter(Boolean);
 
-      res.json({ success: true, source: missingWords.length > 0 ? "gemini_with_cache" : "mongodb_cache", data: orderedCards, quiz: orderedQuizzes });
+      res.json({ success: true, source: "mongodb_cache", data: orderedCards, quiz: orderedQuizzes });
     }
   } catch (err: any) {
     console.error("Review fetching error:", err);
