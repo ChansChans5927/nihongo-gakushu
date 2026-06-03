@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
-import { User, Settings, LogOut, ChevronDown } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface UserDropdownProps {
   username: string;
   onNavigateSettings: () => void;
+  onNavigateShop: () => void;
   onLogout: () => void;
 }
 
-export function UserDropdown({ username, onNavigateSettings, onLogout }: UserDropdownProps) {
+export function UserDropdown({ username, onNavigateSettings, onNavigateShop, onLogout }: UserDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -59,6 +60,18 @@ export function UserDropdown({ username, onNavigateSettings, onLogout }: UserDro
               >
                 <Settings className="w-4 h-4 text-slate-400" />
                 설정
+              </button>
+            </div>
+            <div className="py-1 border-t border-slate-100">
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  onNavigateShop();
+                }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-700 hover:bg-amber-50 transition-colors text-left"
+              >
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                테마 상점
               </button>
             </div>
             

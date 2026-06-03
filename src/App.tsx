@@ -713,6 +713,10 @@ export default function App() {
                 <UserDropdown
                   username={currentUser.username}
                   onNavigateSettings={() => setPhase('settings')}
+                  onNavigateShop={() => {
+                    setPhase('config');
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('open-shop')), 100);
+                  }}
                   onLogout={handleLogout}
                 />
               </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import {
   BookOpen,
@@ -88,6 +88,12 @@ export function MainConfig({
     studyMode === 'vocab' ? 'vocab' : 'kanji'
   );
 
+  useEffect(() => {
+    const handleOpenShop = () => setActiveTab('shop');
+    window.addEventListener('open-shop', handleOpenShop);
+    return () => window.removeEventListener('open-shop', handleOpenShop);
+  }, []);
+
   const [shopMsg, setShopMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   const buyTheme = async (themeId: string, cost: number) => {
@@ -140,27 +146,31 @@ export function MainConfig({
       className="space-y-6 w-full"
     >
       {/* Eye-catching textbook banner header */}
-      <div className="text-center py-6 sm:py-8 space-y-3 relative overflow-hidden rounded-3xl bg-radial from-amber-500/10 via-rose-500/5 to-transparent border border-slate-200/30">
-        <div className="absolute top-4 left-4 text-slate-200 text-6xl font-display font-extrabold select-none pointer-events-none opacity-20">日</div>
-        <div className="absolute bottom-4 right-4 text-slate-200 text-6xl font-display font-extrabold select-none pointer-events-none opacity-20 font-serif">見</div>
-        <div className="inline-flex items-center gap-1 bg-amber-100/80 text-amber-800 border border-amber-200/60 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm animate-pulse">
+      <div className="text-center pt-5 pb-6 sm:py-8 space-y-3 relative overflow-hidden rounded-3xl bg-radial from-amber-500/10 via-rose-500/5 to-transparent border border-slate-200/30">
+        <div className="absolute top-4 left-4 text-slate-200 text-6xl font-display font-extrabold select-none pointer-events-none opacity-20 hidden sm:block">日</div>
+        <div className="absolute bottom-4 right-4 text-slate-200 text-6xl font-display font-extrabold select-none pointer-events-none opacity-20 font-serif hidden sm:block">見</div>
+        
+        {currentUser && (
+          <div className="flex justify-center sm:absolute sm:top-4 sm:right-4 mb-3 sm:mb-0 z-10 relative">
+            <div className="inline-flex bg-white/90 backdrop-blur border border-amber-200 shadow-sm px-3 py-1.5 rounded-2xl items-center gap-2 cursor-pointer transition-transform hover:scale-105" onClick={() => setActiveTab('shop')}>
+              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Points</span>
+              <strong className="text-slate-800 font-mono font-black text-sm">{points.toLocaleString()} <span className="text-amber-500">P</span></strong>
+            </div>
+          </div>
+        )}
+
+        <div className="inline-flex items-center gap-1 bg-amber-100/80 text-amber-800 border border-amber-200/60 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm animate-pulse relative z-10">
           <Sparkles className="w-3.5 h-3.5" />
           지루한 암기 없는 스토리텔링 학습법
         </div>
-        <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-slate-950 tracking-tight leading-tight break-keep">
+        
+        <h2 className="text-2xl sm:text-4xl font-display font-extrabold text-slate-950 tracking-tight leading-tight break-keep relative z-10">
           한 번 보면 평생 기억하는<br className="block sm:hidden" /> 일본어 한자 연상 암기
         </h2>
-        <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto px-4">
+        <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto px-4 relative z-10">
           <span className="block">무작정 쓰면서 외우지 마세요. <br className="block sm:hidden" />가장 친숙한 스토리텔링 연상법과</span>
           <span className="block">JLPT 기출 풀이로 <br className="block sm:hidden" />일본어 실력을 확실하게 완성합니다.</span>
         </p>
-
-        {currentUser && (
-          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur border border-amber-200 shadow-sm px-3 py-1.5 rounded-2xl flex items-center gap-2 cursor-pointer transition-transform hover:scale-105" onClick={() => setActiveTab('shop')}>
-            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Points</span>
-            <strong className="text-slate-800 font-mono font-black text-sm">{points.toLocaleString()} <span className="text-amber-500">P</span></strong>
-          </div>
-        )}
       </div>
 
       {/* Tab Selector Pills */}
@@ -227,21 +237,6 @@ export function MainConfig({
           <span className="hidden sm:inline">뉴스 학습</span>
           <span className="inline sm:hidden">뉴스</span>
         </button>
-        {currentUser && (
-          <button
-            type="button"
-            onClick={() => setActiveTab('shop')}
-            disabled={isAnyLoading}
-            className={`py-2 px-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50 disabled:pointer-events-none ${activeTab === 'shop'
-              ? "bg-white text-purple-600 shadow-sm border border-slate-200/20"
-              : "text-slate-500 hover:text-slate-800"
-              }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden sm:inline">테마 상점</span>
-            <span className="inline sm:hidden">상점</span>
-          </button>
-        )}
       </div>
 
       {/* Tab Panels */}
