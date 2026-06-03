@@ -26,6 +26,7 @@ export function QuizTest({
 }: QuizTestProps) {
   const currentQuestion = questions[currentQuestionIndex];
   const [slashingChoice, setSlashingChoice] = useState<number | null>(null);
+  const [isShaking, setIsShaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initialize audio once
@@ -43,7 +44,11 @@ export function QuizTest({
         audioRef.current.play().catch(e => console.log("Audio play failed:", e));
       }
       setSlashingChoice(choiceIdx);
-      setTimeout(() => setSlashingChoice(null), 600);
+      setIsShaking(true);
+      setTimeout(() => {
+        setSlashingChoice(null);
+        setIsShaking(false);
+      }, 600);
     }
     handleSelectAnswer(choiceIdx);
   };
@@ -78,10 +83,11 @@ export function QuizTest({
       {/* Quiz Card View Component */}
       <div 
         className={isSamurai
-          ? "bg-[#f4e8d1] border-y-[12px] border-y-[#3e2723] border-x-2 border-x-amber-900/30 rounded-md shadow-[inset_0_0_50px_rgba(139,69,19,0.15),0_10px_20px_rgba(0,0,0,0.1)] overflow-hidden p-5 sm:p-6 space-y-6 relative font-serif text-amber-950"
-          : "bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden p-5 sm:p-6 space-y-6"
+          ? `bg-[#f4e8d1] border-y-[12px] border-y-[#3e2723] border-x-2 border-x-amber-900/30 rounded-md shadow-[inset_0_0_50px_rgba(139,69,19,0.15),0_10px_20px_rgba(0,0,0,0.1)] overflow-hidden p-5 sm:p-6 space-y-6 relative font-serif text-amber-950 ${isShaking ? "shake-effect" : ""}`
+          : "bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden p-5 sm:p-6 space-y-6 relative"
         }
       >
+        {isSamurai && <div className="samurai-embers"></div>}
         {/* Visual badge - Hanko style */}
         <span className={isSamurai 
           ? "inline-block px-3 py-1 bg-transparent text-red-800 border-2 border-red-800 text-[11px] font-bold uppercase tracking-widest rounded-sm transform -rotate-2 opacity-90 select-none"
@@ -211,7 +217,7 @@ export function QuizTest({
                 className={`w-full text-left font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${
                   isKanjiMatch ? "py-3.5 px-4 sm:py-5 sm:px-6" : "p-3 sm:p-4 text-sm"
                 } ${isSelected ? selectedStyles : baseStyles} ${
-                  isSamurai ? "border-2 rounded-none" : "rounded-xl border"
+                  isSamurai ? "border-2 rounded-none sword-glint" : "rounded-xl border"
                 } ${isSlashing ? "samurai-slash-effect scale-[0.98]" : ""}`}
               >
                 <div className="flex items-center gap-4">

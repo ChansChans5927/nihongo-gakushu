@@ -62,8 +62,9 @@ export function VocabStudy({
       {/* TEXTBOOK CORE CARD: Realizing Book-Aesthetic Page */}
       <div className={isSamurai
         ? "bg-[#f4e8d1] border-y-[12px] border-y-[#3e2723] border-x-2 border-x-amber-900/30 rounded-md shadow-[inset_0_0_50px_rgba(139,69,19,0.15),0_10px_20px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col shrink-0 relative font-serif text-amber-950"
-        : "bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col shrink-0"
+        : "bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col shrink-0 relative"
       }>
+        {isSamurai && <div className="samurai-embers"></div>}
         
         {/* Book style index header */}
         <div className={`px-5 py-3.5 flex items-center justify-between ${isSamurai ? "bg-[rgba(255,255,255,0.2)] border-b border-amber-900/20" : "bg-slate-50 border-b border-slate-100"}`}>
@@ -83,12 +84,13 @@ export function VocabStudy({
             
             {/* Left side card: Large Word Display */}
             <div 
-              className={`lg:col-span-4 rounded-2xl p-4 sm:p-5 flex flex-col justify-between items-center text-center relative overflow-hidden ${isSamurai ? "samurai-card-texture" : "bg-slate-50 border border-slate-100"}`}
+              className={`lg:col-span-4 rounded-2xl p-4 sm:p-5 flex flex-col justify-between items-center text-center relative overflow-hidden ${isSamurai ? "samurai-card-texture sword-glint" : "bg-slate-50 border border-slate-100"}`}
             >
               <div className="my-auto py-3 space-y-2">
                 <div 
+                  key={`vocab-${currentVocab.word}`}
+                  className={`text-4xl sm:text-6xl font-serif font-semibold leading-none select-none select-all relative group cursor-pointer transition-colors ${isSamurai ? "text-amber-950 hover:text-red-800 ink-reveal" : "text-slate-900 hover:text-emerald-600"}`}
                   onClick={() => speakJapanese(currentVocab.word)}
-                  className={`text-4xl sm:text-6xl font-serif font-semibold leading-none select-none select-all cursor-pointer transition-colors ${isSamurai ? "text-amber-950 hover:text-red-800" : "text-slate-900 hover:text-emerald-600"}`}
                   title="클릭하여 발음 듣기"
                 >
                   {currentVocab.word}

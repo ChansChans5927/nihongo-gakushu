@@ -64,8 +64,9 @@ export function KanjiStudy({
       {/* TEXTBOOK CORE CARD: Realizing Book-Aesthetic Page */}
       <div className={isSamurai
         ? "bg-[#f4e8d1] border-y-[12px] border-y-[#3e2723] border-x-2 border-x-amber-900/30 rounded-md shadow-[inset_0_0_50px_rgba(139,69,19,0.15),0_10px_20px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col shrink-0 relative font-serif text-amber-950"
-        : "bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col shrink-0"
+        : "bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col shrink-0 relative"
       }>
+        {isSamurai && <div className="samurai-embers"></div>}
 
         {/* Book style index header */}
         <div className={`px-5 py-3.5 flex items-center justify-between ${isSamurai ? "bg-[rgba(255,255,255,0.2)] border-b border-amber-900/20" : "bg-slate-50 border-b border-slate-100"}`}>
@@ -89,7 +90,7 @@ export function KanjiStudy({
 
             {/* Character Card Visual Panel (Left side in Book page) */}
             <div 
-              className={`md:col-span-4 rounded-2xl p-5 flex flex-col justify-between items-center text-center relative overflow-hidden ${isSamurai ? "samurai-card-texture" : "bg-slate-50 border border-slate-100"}`}
+              className={`md:col-span-4 rounded-2xl p-5 flex flex-col justify-between items-center text-center relative overflow-hidden ${isSamurai ? "samurai-card-texture sword-glint" : "bg-slate-50 border border-slate-100"}`}
             >
               <div className={`absolute top-2 left-2 text-[10px] font-mono font-bold ${isSamurai ? "text-amber-950/70" : "text-slate-400"}`}>
                 {currentKanji.strokeCount} 획
@@ -97,8 +98,9 @@ export function KanjiStudy({
 
               <div className="my-auto py-4">
                 <div
+                  key={`kanji-${currentKanji.kanji}`}
                   onClick={() => speakJapanese(currentKanji.kanji)}
-                  className={`text-7xl sm:text-8xl font-serif font-semibold leading-none select-none select-all relative group cursor-pointer transition-colors ${isSamurai ? "text-amber-950 hover:text-red-800" : "text-slate-900 hover:text-amber-600"}`}
+                  className={`text-7xl sm:text-8xl font-serif font-semibold leading-none select-none select-all relative group cursor-pointer transition-colors ${isSamurai ? "text-amber-950 hover:text-red-800 ink-reveal" : "text-slate-900 hover:text-amber-600"}`}
                   title="클릭하여 발음 듣기"
                 >
                   {currentKanji.kanji}

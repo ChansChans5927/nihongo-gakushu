@@ -81,3 +81,116 @@
   border: 1px solid rgba(139, 69, 19, 0.4);
   box-shadow: inset 0 0 50px rgba(139, 69, 19, 0.4);
 }
+
+/* 1. Embers Effect */
+.samurai-embers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.samurai-embers::before,
+.samurai-embers::after {
+  content: '';
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: transparent;
+  box-shadow: 
+    10vw 110vh 2px #ff4500, 25vw 120vh 1px #ff8c00, 40vw 105vh 2px #ff4500, 
+    55vw 130vh 1px #ff8c00, 70vw 115vh 3px #ff4500, 85vw 125vh 1px #ff8c00,
+    15vw 140vh 2px #ff4500, 30vw 110vh 1px #ff8c00, 50vw 150vh 2px #ff4500,
+    65vw 105vh 1px #ff8c00, 80vw 135vh 2px #ff4500, 95vw 115vh 1px #ff8c00,
+    5vw 120vh 2px #ff4500, 45vw 145vh 1px #ff8c00, 75vw 155vh 2px #ff4500;
+  animation: embers-float 15s linear infinite;
+  border-radius: 50%;
+  filter: blur(1px) drop-shadow(0 0 6px #ff4500);
+}
+
+.samurai-embers::after {
+  width: 4px;
+  height: 4px;
+  box-shadow: 
+    20vw 130vh 2px #ff8c00, 35vw 115vh 1px #ff4500, 50vw 125vh 2px #ff8c00,
+    60vw 140vh 1px #ff4500, 90vw 110vh 3px #ff8c00, 10vw 150vh 1px #ff4500,
+    45vw 120vh 2px #ff8c00, 75vw 135vh 1px #ff4500, 85vw 145vh 2px #ff8c00;
+  animation: embers-float 12s linear infinite;
+  animation-delay: -5s;
+  filter: blur(2px) drop-shadow(0 0 8px #ff4500);
+}
+
+@keyframes embers-float {
+  0% { transform: translateY(0) scale(1) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-150vh) scale(0.5) translateX(10vw); opacity: 0; }
+}
+
+/* 2. Ink Bleed Reveal */
+.ink-reveal {
+  animation: ink-bleed 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+  color: transparent;
+  background: linear-gradient(135deg, #1a0505, #3a0303);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@keyframes ink-bleed {
+  0% { text-shadow: 0 0 40px rgba(74, 4, 4, 1); opacity: 0; transform: scale(0.9); filter: blur(10px); }
+  50% { text-shadow: 0 0 10px rgba(42, 8, 8, 0.8); opacity: 1; filter: blur(2px); }
+  100% { text-shadow: 0 0 0px transparent; opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+/* 3. Sword Glint Hover */
+.sword-glint {
+  position: relative;
+  overflow: hidden;
+}
+
+.sword-glint::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  transform: skewX(-25deg);
+  transition: 0s;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.sword-glint:hover::before {
+  left: 150%;
+  transition: 0.6s ease-in-out;
+}
+
+/* 4. Camera Shake */
+@keyframes camera-shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(2px, -1px); }
+  60% { transform: translate(-1px, 1px); }
+  80% { transform: translate(1px, -1px); }
+}
+
+.shake-effect {
+  animation: camera-shake 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* 5. Ink Burst (Correct Answer) */
+.ink-burst {
+  animation: pulse-ink 0.6s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes pulse-ink {
+  0% { box-shadow: 0 0 0 0 rgba(74, 4, 4, 0.8), inset 0 0 20px rgba(74, 4, 4, 0.5); }
+  70% { box-shadow: 0 0 0 25px rgba(74, 4, 4, 0), inset 0 0 0px rgba(74, 4, 4, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(74, 4, 4, 0), inset 0 0 0px rgba(74, 4, 4, 0); }
+}
