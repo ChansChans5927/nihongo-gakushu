@@ -1,19 +1,53 @@
 import express from "express";
+import { getDB } from "../db.ts";
 import { callGeminiJSON } from "../services/gemini.ts";
 import { Type } from "@google/genai";
 
 const router = express.Router();
 
 router.post("/generate", async (req, res) => {
-  const { level: targetLevel, count: numQuestions } = req.body;
+  const { level, count, forceGenerate } = req.body;
+  const targetLevel = level || "N5";
+  const numQuestions = parseInt(count, 10) || 5;
   const hasProject = !process.env.GCP_PROJECT_ID || process.env.GCP_PROJECT_ID === "YOUR_GCP_PROJECT_ID" ? false : true;
   if (!hasProject) {
     return res.json({ success: false, errorMsg: "구글 클라우드 프로젝트 ID가 구성되지 않았습니다. .env 파일에 GCP_PROJECT_ID를 설정해 주세요." });
   }
 
+  const db = getDB();
+
   try {
+    let cachedQuestions: any[] = [];
+    if (db) {
+      const query: any = {};
+      if (targetLevel !== "all") {
+        query.level = targetLevel;
+      }
+      try {
+        cachedQuestions = await db.collection("jlpt_questions").find(query).toArray();
+      } catch (err) {
+        console.error("Failed to fetch cached jlpt questions from MongoDB:", err);
+      }
+    }
+
+    if (!forceGenerate && cachedQuestions.length >= numQuestions) {
+      const shuffled = cachedQuestions.sort(() => 0.5 - Math.random());
+      const selected = shuffled.slice(0, numQuestions);
+      console.log(`[JLPT Gen] Served ${numQuestions} questions instantly from MongoDB cache.`);
+      return res.json({ success: true, source: "mongodb_cache", data: selected });
+    }
+
+    let allDbSentences: string[] = [];
+    if (db) {
+      try {
+        const dbQs = await db.collection("jlpt_questions").find({}, { projection: { questionSentence: 1 } }).toArray();
+        allDbSentences = dbQs.map((item: any) => item.questionSentence);
+      } catch (err) {}
+    }
+
+    const missingCount = numQuestions - (forceGenerate ? 0 : cachedQuestions.length);
     const batchSizes: number[] = [];
-    let remaining = numQuestions;
+    let remaining = missingCount > 0 ? missingCount : numQuestions;
     while (remaining > 0) {
       const size = Math.min(remaining, 5);
       batchSizes.push(size);
@@ -102,7 +136,7 @@ router.post("/generate", async (req, res) => {
     for (const batch of parsedBatches) {
       if (Array.isArray(batch)) {
         for (const item of batch) {
-          if (item && item.questionSentence && !seenSentences.has(item.questionSentence)) {
+          if (item && item.questionSentence && !seenSentences.has(item.questionSentence) && !allDbSentences.includes(item.questionSentence)) {
             seenSentences.add(item.questionSentence);
             mergedData.push(item);
           }
@@ -110,7 +144,20 @@ router.post("/generate", async (req, res) => {
       }
     }
 
-    res.json({ success: true, source: "gemini_parallel", data: mergedData });
+    if (db && mergedData.length > 0) {
+      try {
+        const ops = mergedData.map((q: any) => ({
+          updateOne: { filter: { questionSentence: q.questionSentence }, update: { $setOnInsert: q }, upsert: true }
+        }));
+        await db.collection("jlpt_questions").bulkWrite(ops);
+        console.log(`[DB Sync] Cached ${mergedData.length} jlpt questions to DB.`);
+      } catch (cacheErr) {
+        console.error("Failed to cache jlpt questions to DB:", cacheErr);
+      }
+    }
+
+    const finalData = forceGenerate ? mergedData : [...cachedQuestions, ...mergedData].slice(0, numQuestions);
+    res.json({ success: true, source: mergedData.length > 0 ? "gemini_parallel" : "mongodb_cache", data: finalData });
   } catch (err: any) {
     console.error("Gemini API JLPT generation error:", err);
     res.json({ success: false, errorMsg: `JLPT 문제 생성 중 오류가 발생했습니다: ${err.message}` });

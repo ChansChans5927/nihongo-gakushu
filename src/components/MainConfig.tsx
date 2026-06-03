@@ -255,7 +255,7 @@ export function MainConfig({
                 {isLoading && !isReviewMode ? (
                   <>
                     <RefreshCw className="w-5 h-5 animate-spin" />
-                    <span>AI가 한자 구성하는 중...</span>
+                    <span>학습 데이터를 불러오는 중...</span>
                   </>
                 ) : (
                   <>
@@ -430,7 +430,7 @@ export function MainConfig({
                 {isLoading && !isReviewMode ? (
                   <>
                     <RefreshCw className="w-5 h-5 animate-spin" />
-                    <span>AI가 단어 구성하는 중...</span>
+                    <span>학습 데이터를 불러오는 중...</span>
                   </>
                 ) : (
                   <>
@@ -663,7 +663,7 @@ export function MainConfig({
                 {isNewsLoading ? (
                   <>
                     <RefreshCw className="w-5 h-5 animate-spin text-white" />
-                    <span>AI가 무작위 뉴스 영상을 탐색 및 분석 중입니다...</span>
+                    <span>학습 데이터를 불러오는 중...</span>
                   </>
                 ) : (
                   <>

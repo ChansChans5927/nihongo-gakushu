@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { connectDB } from "./server/db.ts";
 import { startPushScheduler } from "./server/schedulers/pushScheduler.ts";
+import { startDataGeneratorScheduler } from "./server/schedulers/dataGenerator.ts";
 
 // Route imports
 import authRouter from "./server/routes/auth.ts";
@@ -58,6 +59,8 @@ async function startServer() {
 
   // Start background push notification cron jobs
   startPushScheduler();
+  // Start background data generator cron job
+  startDataGeneratorScheduler();
 }
 
 startServer();

@@ -6,7 +6,7 @@ import { Type } from "@google/genai";
 const router = express.Router();
 
 router.post("/generate", async (req, res) => {
-  const { count, level, excludeKanji } = req.body;
+  const { count, level, excludeKanji, forceGenerate } = req.body;
   const numCount = parseInt(count, 10) || 5;
   const targetLevel = level || "all";
   const excludedList = Array.isArray(excludeKanji) ? excludeKanji : [];
@@ -36,7 +36,7 @@ router.post("/generate", async (req, res) => {
       }
     }
 
-    if (cachedKanjis.length >= numCount) {
+    if (!forceGenerate && cachedKanjis.length >= numCount) {
       const shuffled = cachedKanjis.sort(() => 0.5 - Math.random());
       const selectedKanjis = shuffled.slice(0, numCount);
       console.log(`[Kanji Gen] Served ${numCount} cards instantly from MongoDB cache.`);
@@ -147,7 +147,7 @@ router.post("/generate", async (req, res) => {
     for (const batch of parsedBatches) {
       if (Array.isArray(batch)) {
         for (const item of batch) {
-          if (item && item.kanji && !seenKanji.has(item.kanji) && !excludedList.includes(item.kanji)) {
+          if (item && item.kanji && !seenKanji.has(item.kanji) && !excludedList.includes(item.kanji) && !allDbKanjis.includes(item.kanji)) {
             if (item.hunyomi) {
               item.hunyomi = item.hunyomi.replace(/\./g, "");
             }

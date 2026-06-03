@@ -19,6 +19,7 @@ const getRandomNewsQuery = () => {
 };
 
 router.get("/random", async (req, res) => {
+  const forceGenerate = req.query.forceGenerate === 'true';
   const hasProject = !process.env.GCP_PROJECT_ID || process.env.GCP_PROJECT_ID === "YOUR_GCP_PROJECT_ID" ? false : true;
   if (!hasProject) {
     return res.json({ success: false, errorMsg: "구글 클라우드 프로젝트 ID가 구성되지 않았습니다. .env 파일에 GCP_PROJECT_ID를 설정해 주세요." });
@@ -77,7 +78,7 @@ router.get("/random", async (req, res) => {
     }));
 
     // 3. MongoDB 캐시가 있는 경우 조회
-    if (db) {
+    if (!forceGenerate && db) {
       try {
         const cached = await db.collection("news_lessons").findOne({ id: selectedVideo.videoId });
         if (cached) {
@@ -202,7 +203,7 @@ router.get("/random", async (req, res) => {
       try {
         await db.collection("news_lessons").updateOne(
           { id: selectedVideo.videoId },
-          { $set: newsLessonData },
+          { $setOnInsert: newsLessonData },
           { upsert: true }
         );
         console.log(`[News Gen] Saved news lesson ${selectedVideo.videoId} to MongoDB.`);

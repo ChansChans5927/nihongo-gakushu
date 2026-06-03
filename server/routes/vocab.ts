@@ -6,7 +6,7 @@ import { Type } from "@google/genai";
 const router = express.Router();
 
 router.post("/generate", async (req, res) => {
-  const { count, level, excludeVocab } = req.body;
+  const { count, level, excludeVocab, forceGenerate } = req.body;
   const numCount = parseInt(count, 10) || 5;
   const targetLevel = level || "all";
   const excludedList = Array.isArray(excludeVocab) ? excludeVocab : [];
@@ -52,7 +52,7 @@ router.post("/generate", async (req, res) => {
       }
     }
 
-    if (hasAllQuizzes && selectedVocabs.length >= numCount) {
+    if (!forceGenerate && hasAllQuizzes && selectedVocabs.length >= numCount) {
       const formattedQuiz = selectedQuizzes.map((q, idx) => {
         const associatedItem = selectedVocabs.find(item => item.word === q.targetWord);
         return {
@@ -175,7 +175,7 @@ router.post("/generate", async (req, res) => {
     for (const batch of parsedBatches) {
       if (batch && Array.isArray(batch.data)) {
         for (const item of batch.data) {
-          if (item && item.word && !seenWords.has(item.word) && !excludedList.includes(item.word)) {
+          if (item && item.word && !seenWords.has(item.word) && !excludedList.includes(item.word) && !allDbVocabs.includes(item.word)) {
             seenWords.add(item.word);
             newGeneratedVocabs.push(item);
           }
