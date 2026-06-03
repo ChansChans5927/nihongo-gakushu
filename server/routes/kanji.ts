@@ -74,33 +74,32 @@ router.post("/generate", async (req, res) => {
     const promises = batchSizes.map(async (size, idx) => {
       const focusHint = batchInstructions[idx % batchInstructions.length];
       const prompt = `
-        Create a list of exactly ${size} Japanese Kanji (한자) learning cards for a Korean speaker studying Japanese.
-        Target JLPT difficulty level filter: ${targetLevel === "all" ? "A high quality balanced mix of useful JLPT levels from N5 to N1" : `Strictly JLPT ${targetLevel}`} level characters.
+        Create exactly ${size} Japanese Kanji learning cards for a Korean speaker.
+        Target JLPT difficulty level filter: ${targetLevel === "all" ? "A high quality balanced mix of useful JLPT levels from N5 to N1" : `Strictly JLPT ${targetLevel}`}.
         
-        Focus hint for this specific small batch of ${size} characters (which MUST be followed to ensure character diversity): ${focusHint}
+        Focus hint for this specific small batch of ${size} characters (MUST follow for diversity): ${focusHint}
         
-        For each Kanji character, provide concise, creative, and easy-to-remember Korean mnemonics/association stories ("mnemonic" - 외우는 방법).
-        To prevent truncation and ensure snappy responses, keep all mnemonics and explanations very brief (maximum 2 concise sentences each).
+        - Keep all mnemonics and explanations very brief (max 2 concise Korean sentences) to ensure snappy responses.
         
-        CRITICAL DUPLICATION CONSTRAINT:
+        CRITICAL CONSTRAINTS:
         - Strictly ensure all generated Kanji are globally unique.
-        - ABSOLUTELY EXCLUDE the following list of Kanji characters (which the user has already mastered): ${JSON.stringify(fullExcludedList)}. Do not include any of these characters in the response.
+        - ABSOLUTELY EXCLUDE these Kanji characters (already mastered): ${JSON.stringify(fullExcludedList)}.
         
         CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
-        - **Radical Breakdown Accuracy**: Deconstruct the Kanji into its actual visual components. If a part is not a standard Kanji, do NOT map it to an incorrect character (e.g., do NOT map the right side of '拝' to '未'). Describe it directly as a shape (e.g., component: "丰", meaning: "양손을 맞잡은 모양").
-        - **Mnemonic Consistency**: The mnemonic story must be strictly consistent with the components in \`radicalsBreakdown\`. Do not mention unrelated characters or meanings (e.g., for '換', use '扌' and '奐'; do NOT mention '황새 황').
-        - **Pictorial Explanations**: Describe ancient pictographs or non-standard symbols as visual shapes representing objects or actions rather than forcing a modern character match.
+        - Radical Breakdown Accuracy: Deconstruct the Kanji into its actual visual components. If not a standard Kanji, describe it directly as a shape (e.g., component: "丰", meaning: "양손을 맞잡은 모양"). NEVER map to incorrect characters.
+        - Mnemonic Consistency: The mnemonic story MUST be strictly consistent with the components in 'radicalsBreakdown'.
+        - Pictorial Explanations: Describe ancient pictographs/symbols as visual shapes instead of forcing a modern character match.
 
-        The prompt matches the book design style:
-        - "mnemonic" (외우는 방법): Create extremely intuitive, vivid, and memorable visual association explanations in Korean, but KEEP IT VERY CONCISE (maximum 1-2 short sentences). Describe the components, like "눈(目)으로 사람(儿)이 하는 것은 보는 것이니 볼 견".
-        - "meaning": The Korean Hanja definition, format: "뜻 음" (e.g. "볼 견", "날 일", "말할 왈", "보일 시").
-        - "onyomi" is the Japanese 音(음독) in Hiragana, "onyomiKorean" is its Korean pronunciation (e.g. "けん" -> "켄").
-        - "hunyomi" is the Japanese 訓(훈독) in Hiragana, "hunyomiKorean" is its Korean pronunciation (e.g. "みる" -> "미루").
-        - "radicalsBreakdown": Provide an array of constituent components or radicals that form this Kanji. For each component, provide its single character ("component"), its Korean meaning ("meaning", e.g., "눈 목"), and a very brief Korean mnemonic visual association storyline ("mnemonic", e.g., "눈(目)은 사람의 눈모습을 세워서 본뜬 모양") strictly under 1 sentence (maximum 15 words) to help study.
-        - Provide exactly 3 high-quality, practical "relatedWords" in Japanese containing the main Kanji. Their pronunciation and meaning should represent common usage (e.g. 발견 - はっけん, 핫켄 - 발견).
-        - Provide 1 natural "exampleSentence" utilizing one of the main readings or words.
+        FORMATTING RULES:
+        - "mnemonic": Create extremely intuitive visual association explanations in Korean (max 1-2 short sentences).
+        - "meaning": Format EXACTLY as "뜻 음" (e.g., "볼 견").
+        - "onyomi" & "hunyomi": MUST be in Hiragana ONLY.
+        - "onyomiKorean" & "hunyomiKorean": MUST be Korean pronunciations ONLY.
+        - "radicalsBreakdown": Provide constituent components. For each component, provide "component", "meaning" (in Korean), and "mnemonic" (under 1 sentence, max 15 Korean words).
+        - "relatedWords": Exactly 3 practical words containing the Kanji.
+        - "exampleSentence": 1 natural sentence utilizing the Kanji.
 
-        Make sure to return absolutely valid JSON following the provided responseSchema precisely.
+        Return absolutely valid JSON matching the responseSchema precisely.
       `;
 
       const systemInstruction = "You are an expert Japanese and Kanji language professor who specializes in visual mnemonics, associations, and helping Korean learners master Japanese characters with minimal effort.";

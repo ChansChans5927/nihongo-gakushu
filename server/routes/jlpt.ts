@@ -30,32 +30,31 @@ router.post("/generate", async (req, res) => {
     const promises = batchSizes.map(async (size, idx) => {
       const focusHint = jlptBatchFocus[idx % jlptBatchFocus.length];
       const prompt = `
-        Create exactly ${size} realistic Japanese JLPT exam questions (객관식 기출 및 고빈도 모의고사 형식) for JLPT ${targetLevel} level.
-        Each question targets Korean speakers studying Japanese.
-        Focus on vocabulary, kanji reading, meaning, and kanji writing that frequently appear in real JLPT exam sessions.
+        Create exactly ${size} realistic Japanese JLPT exam questions for JLPT ${targetLevel} level.
+        Target audience: Korean speakers studying Japanese.
+        Focus on vocabulary, kanji reading, meaning, and kanji writing.
 
-        Focus hint for this specific small batch of ${size} questions (which MUST be followed to ensure question diversity): ${focusHint}
+        Focus hint for this specific small batch of ${size} questions (MUST follow for diversity): ${focusHint}
 
         TYPES OF QUESTIONS TO GENERATE:
-        - "reading": Testing target word Kanji reading (요미가나 고르기).
-        - "writing": Testing correct Kanji writing for a target Japanese spelling (한자 표기 고르기).
-        - "meaning": Testing correct Korean meaning of a specific target Japanese word (뜻 고르기).
-        - "context_fit": A blanks-filling grammatical/vocabulary test (문맥 규정 - 알맞은 단어 고르기). For example, "お酒를 飲んで__blank__はいけません" with choices like ["あばれて (暴れて)", "さわいで (騒いで)", "おこって (怒って)", "おどろいて (驚いて)"]. Wrap the blanks with "__blank__" inside "questionSentence".
-        
-        For each question, provide:
-        - "id": a unique string identifier
-        - "type": One of: "reading", "writing", "meaning", "context_fit".
-        - "level": "${targetLevel}"
-        - "questionSentence": A complete, natural Japanese sentence containing the target word under study, e.g. "昨日はいい__天気__でした。" format (wrap target tests with double underscores like '__target__') or "お酒를 飲んで__blank__はいけません。" (for context_fit, use '__blank__').
-        - "targetWord": The specific target word being tested (e.g., "天気" or "暴れて").
-        - "questionText": The question instruction in Korean, e.g. "빈칸의 __targetWord__의 올바른 뜻/독음/표기를 고르세요." or "문맥상 빈칸에 들어갈 가장 알맞은 단어를 고르세요."
-        - "choices": Exactly 4 plausible Japanese options. STRICTLY Japanese characters only (e.g., 'てんき' or '天気'). NEVER include English Romaji or Korean pronunciation in parentheses.
-        - "correctIndex": The 0-based index of the correct answer (from 0 to 3).
-        - "translation": High-quality Korean translation of the questionSentence.
-        - "explanation": Brief, clear explanation in Korean (strictly maximum 2 concise sentences, under 40 Korean words), explaining why the correct answer is right and why other options are wrong.
+        - "reading": Test Kanji reading.
+        - "writing": Test correct Kanji writing.
+        - "meaning": Test correct Korean meaning.
+        - "context_fit": Fill-in-the-blank vocabulary test. Replace the target word with "__blank__".
 
-        To prevent response chunk truncation on high question counts, KEEP ALL TRANSLATIONS AND EXPLANATIONS VERY CONCISE.
-        Make sure to return absolutely valid JSON following the provided responseSchema precisely.
+        FORMATTING RULES:
+        - "id": unique string.
+        - "type": "reading", "writing", "meaning", or "context_fit".
+        - "level": "${targetLevel}".
+        - "questionSentence": A natural Japanese sentence. For context_fit, use "__blank__". Otherwise wrap the target word like "__targetWord__".
+        - "targetWord": The target word tested.
+        - "questionText": MUST be in Korean. For reading/writing/meaning: format exactly as "빈칸의 [targetWord]의 올바른 뜻/독음/표기를 고르세요.". For context_fit: "문맥상 빈칸에 들어갈 가장 알맞은 단어를 고르세요."
+        - "choices": Exactly 4 options. STRICTLY Japanese characters ONLY (NO Romaji, NO Korean).
+        - "correctIndex": 0-based integer.
+        - "translation": Concise Korean translation.
+        - "explanation": Very brief Korean explanation (max 2 sentences, under 40 words).
+
+        Return absolutely valid JSON matching the responseSchema precisely.
       `;
 
       const systemInstruction = "You are an expert Japanese professor specializing in creating highly accurate JLPT mock exam questions tailored for Korean learners.";

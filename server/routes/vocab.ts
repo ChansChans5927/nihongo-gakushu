@@ -96,42 +96,36 @@ router.post("/generate", async (req, res) => {
     const promises = batchSizes.map(async (size, idx) => {
       const focusHint = batchInstructions[idx % batchInstructions.length];
       const prompt = `
-        Create a list of exactly ${size} Japanese vocabulary (단어) learning cards for a Korean speaker studying Japanese, AND a corresponding set of exactly ${size} multiple-choice quiz questions to test them.
-        Target JLPT difficulty level filter: ${targetLevel === "all" ? "A high quality balanced mix of useful JLPT levels from N5 to N1" : `Strictly JLPT ${targetLevel}`} level characters.
+        Create exactly ${size} Japanese vocabulary study cards and a corresponding set of exactly ${size} multiple-choice quizzes for Korean speakers.
+        Target JLPT difficulty level filter: ${targetLevel === "all" ? "A high quality balanced mix of useful JLPT levels from N5 to N1" : `Strictly JLPT ${targetLevel}`}.
         
-        Focus hint for this specific small batch of ${size} words (which MUST be followed to ensure word diversity): ${focusHint}
+        Focus hint for this specific small batch of ${size} words (MUST follow for diversity): ${focusHint}
         
         CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
-        - **Radical Breakdown Accuracy**: For each Kanji in \`kanjiBreakdown\`, deconstruct it into its actual visual components. If a part is not a standard Kanji, do NOT map it to an incorrect character (e.g., do NOT map the right side of '拝' to '미'). Describe it directly as a shape (e.g., "양손을 맞잡은 모양").
-        - **Mnemonic Consistency**: The mnemonic story for each Kanji must be strictly consistent with its components. Do not mention unrelated characters or meanings (e.g., for '換', use '扌' and '奐'; do NOT mention '황새 황').
-        - **Pictorial Explanations**: Describe ancient pictographs or non-standard symbols as visual shapes representing objects or actions rather than forcing a modern character match.
+        - Radical Breakdown Accuracy: For each Kanji, deconstruct into its actual visual components. If not a standard Kanji, describe it directly as a shape (e.g., "양손을 맞잡은 모양"). NEVER map to incorrect characters.
+        - Mnemonic Consistency: The mnemonic story MUST be strictly consistent with its components.
+        - Pictorial Explanations: Describe ancient pictographs/symbols as visual shapes instead of forcing a modern character match.
 
         CRITICAL CONSTRAINTS:
-        1. Strictly ensure all generated words contain at least one Kanji (한자) character (e.g., 食べる, 勉強, 銀行). Words containing only Hiragana or Katakana (e.g., 하는, くる, 카메라) are strictly forbidden.
+        1. Every generated word MUST contain at least one Kanji (e.g., 食べる, 銀行). Hiragana/Katakana-only words are STRICTLY FORBIDDEN.
         2. Ensure all generated words are globally unique.
-        3. ABSOLUTELY EXCLUDE the following list of Japanese words (which the user has already mastered): ${JSON.stringify(fullExcludedList)}. Do not include any of these words in the response.
-        4. CRITICAL QUESTION QUALITY CONSTRAINT:
-           - In the "quiz" array, NEVER include the target Japanese Kanji character, its constituent Kanji characters, or the Japanese word anywhere inside the "questionText" or "questionSentence"!
-           - For 'kanji_match' type: The questionText MUST follow this exact format: '한국어 뜻이 "[meaning]"인 알맞은 일본어 단어 표기(한자)는 무엇일까요?'. For example, if the word is "教室" (meaning "교실"), the questionText MUST be: '한국어 뜻이 "교실"인 알맞은 일본어 단어 표기(한자)는 무엇일까요?'. Do NOT ask about its constituent kanjis (e.g. '가르칠 교', '집 실') or show their characters, as this exposes the spelling of the answer.
-           - Ensure the questionText only describes the target in terms of its Korean meaning, Hiragana/pronunciation, or grammar, without showing the actual Japanese Kanji/word character in the question itself.
+        3. ABSOLUTELY EXCLUDE these words (already mastered): ${JSON.stringify(fullExcludedList)}.
+        4. CRITICAL QUESTION QUALITY:
+           - NEVER include the target Japanese word or its constituent Kanji in 'questionText' or 'questionSentence'!
+           - 'kanji_match': Format 'questionText' EXACTLY as '한국어 뜻이 "[meaning]"인 알맞은 일본어 단어 표기(한자)는 무엇일까요?'. NEVER expose the constituent Kanji meanings in the question.
         
         For the "data" array:
-        - Generate exactly ${size} vocabulary cards (with id, word, hiragana, pronunciation, meaning, jlptLevel, kanjiBreakdown, exampleSentence).
-        - Under exampleSentence, provide "japanese", "hiragana", "pronunciation", "meaning". It should be a natural sentence.
+        - Generate exactly ${size} vocabulary cards.
+        - 'exampleSentence' MUST be a natural sentence.
         
         For the "quiz" array:
-        - Generate exactly ${size} multiple-choice questions (one corresponding to each generated vocabulary card).
-        - Distribute different question types: 'meaning', 'reading', 'kanji_match', and 'blank_fill'.
-        - CRITICAL RULE FOR "blank_fill" TYPE:
-          - Use the generated exampleSentence but replace the target word with "__blank__". For example, if the sentence is "私は毎日新聞를読みます。" and the word is "読む", the questionSentence must be "저는 매일 신문을 __blank__。".
-          - The 4 choices MUST be conjugated in the exact same grammatical form to fit the sentence context.
-          - The correctIndex is the 0-based index of the correct conjugated choice.
-          - The questionText should be: "제시된 일본어 예문의 빈칸에 들어갈 알맞은 단어는 무엇일까요?"
-        - For 'meaning' type: The questionText asks for the Korean meaning of the Japanese word. Choices are Korean meanings.
-        - For 'reading' type: The questionText asks for the pronunciation/reading of the Japanese word. Choices MUST be strictly ONLY Hiragana (e.g., 'かんしゃ'). NEVER include English Romaji or Korean pronunciation in parentheses.
-        - For 'kanji_match' type: The questionText asks for the correct Japanese word spelling based on its Korean meaning. Choices are base Japanese words.
+        - Generate exactly ${size} quizzes. Distribute types: 'meaning', 'reading', 'kanji_match', and 'blank_fill'.
+        - 'blank_fill': Replace the target word in 'exampleSentence' with "__blank__". Format 'questionText' EXACTLY as "제시된 일본어 예문의 빈칸에 들어갈 알맞은 단어는 무엇일까요?". Choices MUST match grammatical context.
+        - 'meaning': Format 'questionText' EXACTLY as "다음 단어의 올바른 한국어 뜻은 무엇입니까?". Choices MUST be Korean meanings.
+        - 'reading': Format 'questionText' EXACTLY as "다음 단어의 올바른 일본어 발음은 무엇입니까?". Choices MUST be STRICTLY Hiragana ONLY (NO Romaji, NO Korean).
+        - 'kanji_match': Choices MUST be base Japanese words.
         
-        Make sure to return absolutely valid JSON following the provided responseSchema precisely.
+        Return absolutely valid JSON matching the responseSchema precisely.
       `;
 
       const systemInstruction = "You are an expert Japanese and Kanji professor specializing in visual mnemonics, associations, and helping Korean learners master Japanese words and characters.";

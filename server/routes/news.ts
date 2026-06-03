@@ -92,34 +92,34 @@ router.get("/random", async (req, res) => {
     // 4. Gemini API를 이용해 대본으로부터 중요 어휘 카드 및 연계 퀴즈 생성
     const transcriptText = subtitles.map((s: any) => `[${s.start.toFixed(1)}s - ${parseFloat((s.start + s.duration).toFixed(1))}s] ${s.japanese}`).join("\n");
     const prompt = `
-      You are processing a raw YouTube auto-generated transcript for a Japanese news video. The transcript is broken into unnatural, very short chunks.
+      You are processing a raw YouTube auto-generated transcript for a Japanese news video. The transcript is broken into short chunks.
       Your tasks:
       1. Merge the raw transcript lines into natural, complete Japanese sentences.
-      2. For each merged sentence, calculate the 'start' time (the start time of the first chunk in the sentence) and 'duration' (the difference between the end time of the last chunk and the start time).
-      3. For each merged sentence, break it into meaningful word/phrase chunks separated by " / ". Then provide MATCHING Korean Hangul pronunciation and Korean translation for each chunk, also separated by " / ".
+      2. For each merged sentence, calculate the 'start' time and 'duration'.
+      3. For each merged sentence, break it into meaningful chunks separated by " / ". Provide MATCHING Korean Hangul pronunciation and Korean translation for each chunk, also separated by " / ".
          Example:
          japanese: "過去最大規模で / 行われましたが、"
          pronunciation: "카코사이다이키보데 / 오코나와레마시타가,"
          korean: "과거 최대 규모로 / 실시되었으나,"
-         The number of " / " segments in japanese, pronunciation, and korean MUST be identical.
-      4. Create a list of exactly 5 Japanese vocabulary (단어) study cards for a Korean speaker studying Japanese, based on the provided news transcript.
-      5. Create exactly 5 corresponding multiple-choice quiz questions to test the learner on these specific 5 vocabulary words.
+         The number of " / " segments MUST be identical across all three fields.
+      4. Create exactly 5 Japanese vocabulary study cards for Korean speakers based on the transcript.
+      5. Create exactly 5 corresponding multiple-choice quiz questions to test these 5 words.
 
       News Title: ${selectedVideo.title}
       Raw Transcript:
       ${transcriptText}
 
       CRITICAL CONSTRAINTS:
-      - 'processedSubtitles': MUST contain the entire video transcript merged into natural sentence units. Provide 'start' and 'duration' as numbers (seconds). Use " / " to delimit word/phrase chunks within each field (japanese, pronunciation, korean). The chunk count MUST match across all three fields.
-      - 'vocabItems': Extract exactly 5 words from the transcript. Each word MUST contain at least one Kanji. Keep definitions/mnemonics concise (max 2 sentences in Korean).
-      - ALL pronunciation fields MUST be Korean Hangul (e.g. "카코", "니혼"). NEVER use English/Romaji.
-      - 'vocabItems.exampleSentence.japanese': MUST be an ACTUAL sentence copied verbatim from the merged processedSubtitles (without the / delimiters). Wrap the vocabulary word with '__' on both sides.
-      - 'quizzes': Create exactly 5 questions of type 'reading' or 'meaning'.
-        * 'meaning' type: questionText MUST include the target word, e.g. "다음 단어 '韓国軍'의 올바른 뜻은 무엇입니까?". Choices are 4 Korean meanings.
-        * 'reading' type: questionText MUST include the target word, e.g. "다음 단어 '緊張'의 올바른 한국어 발음은 무엇입니까?". Choices are 4 Korean Hangul pronunciations (NOT hiragana).
-      - TRANSLATION ACCURACY IS CRITICAL: Ensure natural Korean translations and correct pronunciation transcriptions.
+      - 'processedSubtitles': MUST contain the entire video transcript merged into natural sentence units. Provide 'start' and 'duration' as numbers (seconds).
+      - 'vocabItems': Extract exactly 5 words containing at least one Kanji. Keep mnemonics concise (max 2 Korean sentences).
+      - ALL pronunciation fields MUST be Korean Hangul ONLY (e.g. "카코"). NEVER use Romaji.
+      - 'vocabItems.exampleSentence.japanese': MUST be copied verbatim from 'processedSubtitles' (without ' / '). Wrap the target word with '__' on both sides.
+      - 'quizzes': Generate exactly 5 questions ('reading' or 'meaning' type).
+        * 'meaning': Format 'questionText' EXACTLY as "다음 단어 '[word]'의 올바른 뜻은 무엇입니까?". Choices MUST be Korean meanings.
+        * 'reading': Format 'questionText' EXACTLY as "다음 단어 '[word]'의 올바른 한국어 발음은 무엇입니까?". Choices MUST be Korean Hangul pronunciations ONLY (NO hiragana).
+      - TRANSLATION ACCURACY IS CRITICAL: Ensure natural Korean translations.
       
-      Make sure to return absolutely valid JSON following the provided responseSchema precisely.
+      Return absolutely valid JSON matching the responseSchema precisely.
     `;
 
     console.log(`[News Gen] Calling Gemini API for video ${selectedVideo.videoId}...`);
