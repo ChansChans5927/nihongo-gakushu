@@ -29,10 +29,10 @@ app.use("/api/auth", authRouter);
 app.use("/api/kanji", kanjiRouter);
 app.use("/api/vocab", vocabRouter);
 app.use("/api/jlpt", jlptRouter);
-app.use("/api", progressRouter); // progressRouter internally mounts /progress/* and /user/* routes
 app.use("/api/news", newsRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/tts", ttsRouter);
+app.use("/api", progressRouter); // progressRouter internally mounts /progress/* and /user/* routes
 
 async function startServer() {
   // Connect to MongoDB Atlas
