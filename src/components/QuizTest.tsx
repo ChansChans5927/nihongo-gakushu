@@ -128,11 +128,6 @@ export function QuizTest({
                   return <span className="text-slate-800 font-bold leading-normal">{sentence}</span>;
                 })()}
               </div>
-              {currentQuestion.vocabItem && (
-                <p className="text-xs text-slate-500 italic">
-                  해석: {currentQuestion.vocabItem.exampleSentence.meaning}
-                </p>
-              )}
             </div>
           ) : (
             <>
