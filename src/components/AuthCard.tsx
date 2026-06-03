@@ -45,6 +45,9 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
       const resData = await response.json();
 
       if (resData.success && resData.user) {
+        if (resData.token) {
+          localStorage.setItem("nihongo_token", resData.token);
+        }
         onAuthSuccess(resData.user);
       } else {
         setErrorMsg(resData.errorMsg || "인증 처리 중 오류가 발생했습니다.");

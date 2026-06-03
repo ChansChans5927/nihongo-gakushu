@@ -646,6 +646,7 @@ export default function App() {
     if (confirm("로그아웃 하시겠습니까?")) {
       setCurrentUser(null);
       localStorage.removeItem("user");
+      localStorage.removeItem("nihongo_token");
       setIsReviewMode(false);
     }
   };
