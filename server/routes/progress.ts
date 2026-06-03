@@ -21,7 +21,10 @@ router.get("/progress/get", async (req: AuthenticatedRequest, res) => {
     res.json({
       success: true,
       masteredKanjis: progress?.masteredKanjis || [],
-      masteredVocabs: progress?.masteredVocabs || []
+      masteredVocabs: progress?.masteredVocabs || [],
+      points: progress?.points || 0,
+      unlockedThemes: progress?.unlockedThemes || ["default"],
+      currentTheme: progress?.currentTheme || "default"
     });
   } catch (err: any) {
     console.error("Get progress error:", err);
@@ -128,6 +131,110 @@ router.post("/progress/save", async (req: AuthenticatedRequest, res) => {
   } catch (err: any) {
     console.error("Save progress error:", err);
     res.json({ success: false, errorMsg: `진행률 저장 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint to add points
+router.post("/progress/addPoints", async (req: AuthenticatedRequest, res) => {
+  const username = req.user!.username;
+  const { points } = req.body;
+  if (typeof points !== "number" || points <= 0) {
+    return res.json({ success: false, errorMsg: "올바르지 않은 포인트입니다." });
+  }
+
+  const db = getDB();
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    await db.collection("progress").updateOne(
+      { username: normalizedUsername },
+      { $inc: { points: points } },
+      { upsert: true }
+    );
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Add points error:", err);
+    res.json({ success: false, errorMsg: `포인트 적립 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint to buy a theme
+router.post("/progress/buyTheme", async (req: AuthenticatedRequest, res) => {
+  const username = req.user!.username;
+  const { theme, cost } = req.body;
+  if (!theme || typeof cost !== "number" || cost < 0) {
+    return res.json({ success: false, errorMsg: "올바르지 않은 요청 데이터입니다." });
+  }
+
+  const db = getDB();
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    const progress = await db.collection("progress").findOne({ username: normalizedUsername });
+    const currentPoints = progress?.points || 0;
+    const unlockedThemes = progress?.unlockedThemes || ["default"];
+
+    if (unlockedThemes.includes(theme)) {
+      return res.json({ success: false, errorMsg: "이미 구매한 테마입니다." });
+    }
+
+    if (currentPoints < cost) {
+      return res.json({ success: false, errorMsg: "포인트가 부족합니다." });
+    }
+
+    await db.collection("progress").updateOne(
+      { username: normalizedUsername },
+      { 
+        $inc: { points: -cost },
+        $addToSet: { unlockedThemes: theme },
+        $set: { currentTheme: theme } // 자동 장착
+      },
+      { upsert: true }
+    );
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Buy theme error:", err);
+    res.json({ success: false, errorMsg: `테마 구매 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint to equip a theme
+router.post("/progress/equipTheme", async (req: AuthenticatedRequest, res) => {
+  const username = req.user!.username;
+  const { theme } = req.body;
+  if (!theme) {
+    return res.json({ success: false, errorMsg: "올바르지 않은 요청 데이터입니다." });
+  }
+
+  const db = getDB();
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    const progress = await db.collection("progress").findOne({ username: normalizedUsername });
+    const unlockedThemes = progress?.unlockedThemes || [];
+
+    if (theme !== 'default' && !unlockedThemes.includes(theme)) {
+      return res.json({ success: false, errorMsg: "구매하지 않은 테마입니다." });
+    }
+
+    await db.collection("progress").updateOne(
+      { username: normalizedUsername },
+      { $set: { currentTheme: theme } },
+      { upsert: true }
+    );
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Equip theme error:", err);
+    res.json({ success: false, errorMsg: `테마 장착 중 오류가 발생했습니다: ${err.message}` });
   }
 });
 

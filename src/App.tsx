@@ -41,6 +41,11 @@ export default function App() {
   // Study Mode State: 'kanji' | 'vocab'
   const [studyMode, setStudyMode] = useState<'kanji' | 'vocab'>('kanji');
 
+  // Economy & Theme States
+  const [points, setPoints] = useState<number>(0);
+  const [unlockedThemes, setUnlockedThemes] = useState<string[]>(["default"]);
+  const [currentTheme, setCurrentTheme] = useState<string>("default");
+
   // Vocab States
   const [vocabCount, setVocabCount] = useState<number>(5);
   const [vocabList, setVocabList] = useState<VocabItem[]>([]);
@@ -182,6 +187,9 @@ export default function App() {
       if (resData.success) {
         setMasteredKanji(resData.masteredKanjis || []);
         setMasteredVocab(resData.masteredVocabs || []);
+        setPoints(resData.points || 0);
+        setUnlockedThemes(resData.unlockedThemes || ["default"]);
+        setCurrentTheme(resData.currentTheme || "default");
 
         // Sync local storage data if user previously worked offline/without account
         const localKanji = localStorage.getItem("mastered_kanji");
@@ -233,6 +241,9 @@ export default function App() {
     } else {
       setMasteredKanji([]);
       setMasteredVocab([]);
+      setPoints(0);
+      setUnlockedThemes(["default"]);
+      setCurrentTheme("default");
     }
   }, [currentUser]);
 
@@ -557,6 +568,14 @@ export default function App() {
       const correctVocabList = questions
         .filter(q => userAnswers[q.id] === q.correctIndex && q.vocabItem)
         .map(q => q.vocabItem!.word as string);
+      const correctCount = correctVocabList.length;
+      if (correctCount > 0 && currentUser) {
+        fetch("/api/progress/addPoints", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ points: correctCount * 10 })
+        }).then(() => fetchUserProgress(currentUser.username)).catch(err => console.error(err));
+      }
       const finishedVocab = Array.from(new Set<string>(correctVocabList));
       const updated = Array.from(new Set<string>([...masteredVocab, ...finishedVocab]));
       saveMasteredVocab(updated, finishedVocab);
@@ -565,6 +584,14 @@ export default function App() {
       const correctKanjiList = questions
         .filter(q => userAnswers[q.id] === q.correctIndex && q.kanjiItem)
         .map(q => q.kanjiItem!.kanji as string);
+      const correctCount = correctKanjiList.length;
+      if (correctCount > 0 && currentUser) {
+        fetch("/api/progress/addPoints", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ points: correctCount * 10 })
+        }).then(() => fetchUserProgress(currentUser.username)).catch(err => console.error(err));
+      }
       const finishedKanjis = Array.from(new Set<string>(correctKanjiList));
       const updated = Array.from(new Set<string>([...masteredKanji, ...finishedKanjis]));
       saveMasteredKanji(updated, finishedKanjis);
@@ -599,6 +626,14 @@ export default function App() {
       if (!confirm(`아직 풀지 않은 문제가 ${unansweredCount}개 있습니다. 이대로 채점하시겠습니까?`)) {
         return;
       }
+    }
+    const correctCount = jlptQuestions.filter(q => jlptAnswers[q.id] === q.correctIndex).length;
+    if (correctCount > 0 && currentUser) {
+      fetch("/api/progress/addPoints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ points: correctCount * 10 })
+      }).then(() => fetchUserProgress(currentUser.username)).catch(err => console.error(err));
     }
     setIsJlptGraded(true);
   };
@@ -788,6 +823,11 @@ export default function App() {
                   startNewsStudy={startNewsStudy}
                   isNewsLoading={isNewsLoading}
                   newsErrorMsg={newsErrorMsg}
+                  points={points}
+                  unlockedThemes={unlockedThemes}
+                  currentTheme={currentTheme}
+                  currentUser={currentUser}
+                  onThemeUpdate={() => currentUser && fetchUserProgress(currentUser.username)}
                 />
               )}
 
@@ -801,6 +841,7 @@ export default function App() {
                        handlePrevStudy={handlePrevStudy}
                        handleNextStudy={handleNextStudy}
                        speakJapanese={speakJapanese}
+                       currentTheme={currentTheme}
                      />
                   )
                 ) : (
@@ -811,6 +852,7 @@ export default function App() {
                       handlePrevStudy={handlePrevStudy}
                       handleNextStudy={handleNextStudy}
                       speakJapanese={speakJapanese}
+                      currentTheme={currentTheme}
                     />
                   )
                 )
@@ -826,6 +868,7 @@ export default function App() {
                   handlePrevQuestion={handlePrevQuestion}
                   handleNextQuestion={handleNextQuestion}
                   handleGradeQuiz={handleGradeQuiz}
+                  currentTheme={currentTheme}
                 />
               )}
 

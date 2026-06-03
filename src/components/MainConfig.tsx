@@ -41,6 +41,11 @@ interface MainConfigProps {
   startNewsStudy: () => void;
   isNewsLoading: boolean;
   newsErrorMsg: string | null;
+  points?: number;
+  unlockedThemes?: string[];
+  currentTheme?: string;
+  currentUser?: any;
+  onThemeUpdate?: () => void;
 }
 
 export function MainConfig({
@@ -70,13 +75,60 @@ export function MainConfig({
   setIsReviewMode,
   startNewsStudy,
   isNewsLoading,
-  newsErrorMsg
+  newsErrorMsg,
+  points = 0,
+  unlockedThemes = ["default"],
+  currentTheme = "default",
+  currentUser,
+  onThemeUpdate
 }: MainConfigProps) {
   const isAnyLoading = isLoading || isJlptLoading || isNewsLoading;
 
-  const [activeTab, setActiveTab] = useState<'kanji' | 'vocab' | 'jlpt' | 'news'>(
+  const [activeTab, setActiveTab] = useState<'kanji' | 'vocab' | 'jlpt' | 'news' | 'shop'>(
     studyMode === 'vocab' ? 'vocab' : 'kanji'
   );
+
+  const [shopMsg, setShopMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  const buyTheme = async (themeId: string, cost: number) => {
+    setShopMsg(null);
+    try {
+      const res = await fetch("/api/progress/buyTheme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme: themeId, cost })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShopMsg({ type: 'success', text: "성공적으로 구매하여 장착했습니다!" });
+        if (onThemeUpdate) onThemeUpdate();
+      } else {
+        setShopMsg({ type: 'error', text: data.errorMsg || "구매에 실패했습니다." });
+      }
+    } catch (e) {
+      setShopMsg({ type: 'error', text: "네트워크 오류가 발생했습니다." });
+    }
+  };
+
+  const equipTheme = async (themeId: string) => {
+    setShopMsg(null);
+    try {
+      const res = await fetch("/api/progress/equipTheme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme: themeId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShopMsg({ type: 'success', text: "스킨을 변경했습니다." });
+        if (onThemeUpdate) onThemeUpdate();
+      } else {
+        setShopMsg({ type: 'error', text: data.errorMsg || "장착에 실패했습니다." });
+      }
+    } catch (e) {
+      setShopMsg({ type: 'error', text: "네트워크 오류가 발생했습니다." });
+    }
+  };
 
   return (
     <motion.div
@@ -102,6 +154,13 @@ export function MainConfig({
           <span className="block">무작정 쓰면서 외우지 마세요. <br className="block sm:hidden" />가장 친숙한 스토리텔링 연상법과</span>
           <span className="block">JLPT 기출 풀이로 <br className="block sm:hidden" />일본어 실력을 확실하게 완성합니다.</span>
         </p>
+
+        {currentUser && (
+          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur border border-amber-200 shadow-sm px-3 py-1.5 rounded-2xl flex items-center gap-2 cursor-pointer transition-transform hover:scale-105" onClick={() => setActiveTab('shop')}>
+            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Points</span>
+            <strong className="text-slate-800 font-mono font-black text-sm">{points.toLocaleString()} <span className="text-amber-500">P</span></strong>
+          </div>
+        )}
       </div>
 
       {/* Tab Selector Pills */}
@@ -168,6 +227,21 @@ export function MainConfig({
           <span className="hidden sm:inline">뉴스 학습</span>
           <span className="inline sm:hidden">뉴스</span>
         </button>
+        {currentUser && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('shop')}
+            disabled={isAnyLoading}
+            className={`py-2 px-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50 disabled:pointer-events-none ${activeTab === 'shop'
+              ? "bg-white text-purple-600 shadow-sm border border-slate-200/20"
+              : "text-slate-500 hover:text-slate-800"
+              }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden sm:inline">테마 상점</span>
+            <span className="inline sm:hidden">상점</span>
+          </button>
+        )}
       </div>
 
       {/* Tab Panels */}
@@ -673,6 +747,97 @@ export function MainConfig({
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'shop' && currentUser && (
+        <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+          <div className="text-center space-y-2 mb-8">
+            <h4 className="text-xl sm:text-2xl font-black font-display text-slate-900">
+              테마 스킨 상점
+            </h4>
+            <p className="text-xs text-slate-500">
+              퀴즈 정답(1문제 당 10P)을 통해 획득한 포인트로 특별한 퀴즈 스킨을 구매하세요!
+            </p>
+            <div className="inline-block mt-4 bg-amber-50 border border-amber-200 text-amber-900 px-4 py-2 rounded-xl font-mono font-bold text-lg shadow-inner">
+              내 포인트: {points.toLocaleString()} P
+            </div>
+          </div>
+
+          {shopMsg && (
+            <div className={`mb-6 p-4 rounded-xl text-sm font-semibold flex items-center gap-2 ${shopMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+              <CheckCircle2 className={`w-5 h-5 shrink-0 ${shopMsg.type === 'success' ? 'text-emerald-500' : 'text-red-500'}`} />
+              {shopMsg.text}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Default Theme */}
+            <div className={`border rounded-2xl p-5 flex flex-col justify-between ${currentTheme === 'default' ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/30' : 'border-slate-200'}`}>
+              <div className="space-y-2">
+                <h5 className="font-bold text-slate-800 text-lg">기본 스킨</h5>
+                <p className="text-xs text-slate-500">가장 깔끔하고 심플한 기본 퀴즈 UI입니다.</p>
+              </div>
+              <div className="mt-6">
+                {currentTheme === 'default' ? (
+                  <div className="w-full text-center py-2 bg-slate-100 text-slate-500 font-bold rounded-xl text-sm cursor-not-allowed">
+                    현재 장착 중
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => equipTheme('default')}
+                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer"
+                  >
+                    장착하기
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Samurai Theme */}
+            <div className={`border rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden ${currentTheme === 'samurai' ? 'border-amber-600 ring-2 ring-amber-600/20 bg-amber-50/30' : 'border-slate-200'}`}>
+              <div className="absolute top-0 right-0 p-3 opacity-10 pointer-events-none">
+                <Sparkles className="w-16 h-16" />
+              </div>
+              <div className="space-y-2 relative z-10">
+                <div className="flex items-center justify-between">
+                  <h5 className="font-bold text-slate-900 text-lg flex items-center gap-1.5">
+                    사무라이 스킨 ⚔️
+                  </h5>
+                  {!unlockedThemes.includes('samurai') && (
+                    <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-300">
+                      1,000 P
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500">
+                  정답을 맞힐 때마다 붓글씨 애니메이션과 함께 통쾌한 <strong>'서걱!'</strong> 효과음이 재생됩니다.
+                </p>
+              </div>
+              <div className="mt-6 relative z-10">
+                {currentTheme === 'samurai' ? (
+                  <div className="w-full text-center py-2 bg-slate-100 text-slate-500 font-bold rounded-xl text-sm cursor-not-allowed">
+                    현재 장착 중
+                  </div>
+                ) : unlockedThemes.includes('samurai') ? (
+                  <button 
+                    onClick={() => equipTheme('samurai')}
+                    className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer"
+                  >
+                    장착하기
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => buyTheme('samurai', 1000)}
+                    disabled={points < 1000}
+                    className="w-full py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    1,000 P로 구매하기
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

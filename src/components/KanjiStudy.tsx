@@ -16,6 +16,7 @@ interface KanjiStudyProps {
   handlePrevStudy: () => void;
   handleNextStudy: () => void;
   speakJapanese: (text: string) => void;
+  currentTheme?: string;
 }
 
 export function KanjiStudy({
@@ -23,9 +24,12 @@ export function KanjiStudy({
   currentKanjiIndex,
   handlePrevStudy,
   handleNextStudy,
-  speakJapanese
+  speakJapanese,
+  currentTheme = 'default'
 }: KanjiStudyProps) {
   const [activeRadical, setActiveRadical] = useState<RadicalPart | null>(null);
+  
+  const isSamurai = currentTheme === 'samurai';
 
   const currentKanji = kanjiList[currentKanjiIndex];
 
@@ -58,18 +62,21 @@ export function KanjiStudy({
       </div>
 
       {/* TEXTBOOK CORE CARD: Realizing Book-Aesthetic Page */}
-      <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col shrink-0">
+      <div className={isSamurai
+        ? "bg-[#f4e8d1] border-y-[12px] border-y-[#3e2723] border-x-2 border-x-amber-900/30 rounded-md shadow-[inset_0_0_50px_rgba(139,69,19,0.15),0_10px_20px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col shrink-0 relative font-serif text-amber-950"
+        : "bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col shrink-0"
+      }>
 
         {/* Book style index header */}
-        <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-          <span className="font-mono text-xs text-slate-400 font-bold">
+        <div className={`px-5 py-3.5 flex items-center justify-between ${isSamurai ? "bg-[rgba(255,255,255,0.2)] border-b border-amber-900/20" : "bg-slate-50 border-b border-slate-100"}`}>
+          <span className={`font-mono text-xs font-bold ${isSamurai ? "text-amber-900/70" : "text-slate-400"}`}>
             INDEX #{String(currentKanjiIndex + 1).padStart(4, '0')}
           </span>
           <div className="flex items-center gap-1.5">
-            <span className="px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold rounded">
+            <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${isSamurai ? "bg-[#3e2723] text-[#f4e8d1] border border-amber-900/50" : "bg-amber-50 border border-amber-200 text-amber-800"}`}>
               GRADE: {currentKanji.grade}
             </span>
-            <span className="px-2 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded">
+            <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${isSamurai ? "bg-amber-900/20 text-amber-950" : "bg-slate-100 text-slate-700"}`}>
               JLPT: {currentKanji.jlptLevel}
             </span>
           </div>
@@ -81,15 +88,17 @@ export function KanjiStudy({
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
 
             {/* Character Card Visual Panel (Left side in Book page) */}
-            <div className="md:col-span-4 bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col justify-between items-center text-center relative overflow-hidden">
-              <div className="absolute top-2 left-2 text-[10px] text-slate-400 font-mono font-bold">
+            <div 
+              className={`md:col-span-4 rounded-2xl p-5 flex flex-col justify-between items-center text-center relative overflow-hidden ${isSamurai ? "samurai-card-texture" : "bg-slate-50 border border-slate-100"}`}
+            >
+              <div className={`absolute top-2 left-2 text-[10px] font-mono font-bold ${isSamurai ? "text-amber-950/70" : "text-slate-400"}`}>
                 {currentKanji.strokeCount} 획
               </div>
 
               <div className="my-auto py-4">
                 <div
                   onClick={() => speakJapanese(currentKanji.kanji)}
-                  className="text-7xl sm:text-8xl font-serif font-semibold text-slate-900 leading-none select-none select-all relative group cursor-pointer hover:text-amber-600 transition-colors"
+                  className={`text-7xl sm:text-8xl font-serif font-semibold leading-none select-none select-all relative group cursor-pointer transition-colors ${isSamurai ? "text-amber-950 hover:text-red-800" : "text-slate-900 hover:text-amber-600"}`}
                   title="클릭하여 발음 듣기"
                 >
                   {currentKanji.kanji}
@@ -98,42 +107,40 @@ export function KanjiStudy({
                       e.stopPropagation();
                       speakJapanese(currentKanji.kanji);
                     }}
-                    className="absolute -top-2 -right-10 p-1.5 rounded-full bg-white shadow-sm border border-slate-200/50 hover:bg-slate-50 text-slate-500 hover:text-amber-600 transition-all opacity-100 cursor-pointer flex items-center justify-center"
+                    className={`absolute -top-2 -right-10 p-1.5 rounded-full shadow-sm transition-all opacity-100 cursor-pointer flex items-center justify-center ${isSamurai ? "bg-[#f4e8d1] border border-amber-900/30 text-amber-950 hover:bg-[#3e2723] hover:text-[#f4e8d1]" : "bg-white border border-slate-200/50 hover:bg-slate-50 text-slate-500 hover:text-amber-600"}`}
                     title="한자 발음 듣기"
                   >
                     <Volume2 className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="mt-4 px-3 py-1 bg-slate-900 text-white rounded-full text-base font-bold">
+                <div className={`mt-4 px-3 py-1 rounded-full text-base font-bold ${isSamurai ? "bg-[#3e2723] text-[#f4e8d1]" : "bg-slate-900 text-white"}`}>
                   {currentKanji.meaning}
                 </div>
               </div>
 
-              <div className="w-full text-center border-t border-slate-200/50 pt-2 text-[11px] text-slate-400 font-medium">
-                스마트 획수: 명확 {currentKanji.strokeCount}획수 기준
-              </div>
+
             </div>
 
             {/* STORYBOARD & MEMORIZATION EXPLANATION PANEL */}
             <div className="md:col-span-8 flex flex-col justify-between space-y-4">
 
               {/* Associative 스토리 보드 */}
-              <div className="bg-amber-50/50 border border-amber-200/50 rounded-2xl p-4 space-y-2 relative">
-                <div className="absolute top-2.5 right-2 text-amber-400/80">
+              <div className={`rounded-2xl p-4 space-y-2 relative ${isSamurai ? "bg-amber-900/10 border border-amber-900/20" : "bg-amber-50/50 border border-amber-200/50"}`}>
+                <div className={`absolute top-2.5 right-2 ${isSamurai ? "text-amber-700" : "text-amber-400/80"}`}>
                   <Sparkles className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] font-bold text-amber-800 tracking-wider block">
+                <span className={`text-[10px] font-bold tracking-wider block ${isSamurai ? "text-amber-950" : "text-amber-800"}`}>
                   💡 핵심 이미지 연상 암기 키워드
                 </span>
-                <p className="text-sm sm:text-base text-slate-800 font-medium leading-relaxed">
+                <p className={`text-sm sm:text-base font-medium leading-relaxed ${isSamurai ? "text-amber-950 font-serif" : "text-slate-800"}`}>
                   {currentKanji.mnemonic}
                 </p>
               </div>
 
               {/* Radicals Component Breakdown for absolute beginners */}
               {currentKanji.radicalsBreakdown && currentKanji.radicalsBreakdown.length > 0 && (
-                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3">
-                  <span className="text-[10px] font-bold text-slate-500 tracking-wider block uppercase">
+                <div className={`rounded-2xl p-4 space-y-3 ${isSamurai ? "bg-transparent border border-amber-900/20" : "bg-slate-50 border border-slate-200/80"}`}>
+                  <span className={`text-[10px] font-bold tracking-wider block uppercase ${isSamurai ? "text-amber-900/80" : "text-slate-500"}`}>
                     🧩 초보자를 위한 한자 파해 (부수 구성요소 클릭해서 쉽게 외우기)
                   </span>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
@@ -147,19 +154,27 @@ export function KanjiStudy({
                               setActiveRadical(rad);
                             }
                           }}
-                          className={`group bg-white border border-slate-200/60 rounded-xl p-3 shadow-3xs hover:border-amber-300 hover:bg-amber-50/10 hover:shadow-2xs active:scale-[0.99] transition-all flex items-center justify-between cursor-pointer`}
+                          className={`group rounded-xl p-3 transition-all flex items-center justify-between cursor-pointer ${
+                            isSamurai 
+                              ? "bg-[rgba(255,255,255,0.3)] border border-amber-900/20 hover:border-amber-900/40 hover:bg-[rgba(255,255,255,0.5)]"
+                              : "bg-white border border-slate-200/60 shadow-3xs hover:border-amber-300 hover:bg-amber-50/10 hover:shadow-2xs active:scale-[0.99]"
+                          }`}
                           title={hasDetails ? "클릭하여 어원 파해 및 상세 연상 암기 비법 보기" : ""}
                         >
                           <div className="flex items-center gap-3 overflow-hidden">
-                            <span className="text-lg font-serif font-black text-amber-600 bg-amber-50 rounded-lg w-9 h-9 flex items-center justify-center border border-amber-100 group-hover:bg-amber-100/60 group-hover:scale-105 transition-all shrink-0">
+                            <span className={`text-lg font-serif font-black rounded-lg w-9 h-9 flex items-center justify-center group-hover:scale-105 transition-all shrink-0 ${
+                              isSamurai 
+                                ? "text-red-800 bg-[#f4e8d1] border border-amber-900/30 group-hover:bg-[#f8f5ec]" 
+                                : "text-amber-600 bg-amber-50 border border-amber-100 group-hover:bg-amber-100/60"
+                            }`}>
                               {rad.component}
                             </span>
                             <div className="flex flex-col truncate">
-                              <span className="text-xs text-slate-800 font-bold font-sans">
+                              <span className={`text-xs font-bold font-sans ${isSamurai ? "text-amber-950" : "text-slate-800"}`}>
                                 {rad.meaning}
                               </span>
                               {rad.mnemonic && (
-                                <p className="text-[10px] text-slate-400 font-sans truncate mt-0.5">
+                                <p className={`text-[10px] font-sans truncate mt-0.5 ${isSamurai ? "text-amber-900/70" : "text-slate-400"}`}>
                                   {rad.mnemonic}
                                 </p>
                               )}
@@ -167,8 +182,12 @@ export function KanjiStudy({
                           </div>
 
                           {hasDetails && (
-                            <div className="flex items-center gap-1 text-[9px] text-amber-700 font-black bg-amber-50/80 border border-amber-100 rounded-full px-2 py-0.5 shrink-0 group-hover:bg-amber-100 transition-colors">
-                              <Sparkles className="w-2.5 h-2.5 text-amber-500" />
+                            <div className={`flex items-center gap-1 text-[9px] font-black rounded-full px-2 py-0.5 shrink-0 transition-colors ${
+                              isSamurai 
+                                ? "text-red-900 bg-amber-900/10 border border-amber-900/20" 
+                                : "text-amber-700 bg-amber-50/80 border border-amber-100 group-hover:bg-amber-100"
+                            }`}>
+                              <Sparkles className={`w-2.5 h-2.5 ${isSamurai ? "text-red-700" : "text-amber-500"}`} />
                               <span>파해 보기</span>
                             </div>
                           )}
@@ -180,49 +199,43 @@ export function KanjiStudy({
               )}
 
               {/* Reading Table structure inspired accurately from the book screenshot */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden text-xs">
+              <div className={`border rounded-xl overflow-hidden text-xs ${isSamurai ? "border-amber-900/20" : "border-slate-200"}`}>
                 {/* Table row Onyomi */}
-                <div className="grid grid-cols-12 border-b border-slate-200 shrink-0">
-                  <div className="col-span-3 bg-slate-50 p-2.5 font-bold text-slate-700 flex flex-col justify-center items-center text-center border-r border-slate-200 gap-0.5">
+                <div className={`grid grid-cols-12 border-b shrink-0 ${isSamurai ? "border-amber-900/20" : "border-slate-200"}`}>
+                  <div className={`col-span-3 p-2.5 font-bold flex flex-col justify-center items-center text-center border-r gap-0.5 ${
+                    isSamurai ? "bg-[rgba(255,255,255,0.2)] text-amber-950 border-amber-900/20" : "bg-slate-50 text-slate-700 border-slate-200"
+                  }`}>
                     <span>음독</span>
-                    <span className="text-[10px] text-slate-400 font-mono">(音)</span>
+                    <span className={`text-[10px] font-mono ${isSamurai ? "text-amber-900/60" : "text-slate-400"}`}>(音)</span>
                   </div>
-                  <div className="col-span-9 p-2.5 bg-white space-y-1">
+                  <div className={`col-span-9 p-2.5 space-y-1 ${isSamurai ? "bg-transparent" : "bg-white"}`}>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-900 font-mono">{currentKanji.onyomi}</span>
-                      <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-bold font-mono">
+                      <span className={`text-sm font-bold font-mono ${isSamurai ? "text-amber-950" : "text-slate-900"}`}>{currentKanji.onyomi}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold font-mono ${
+                        isSamurai ? "bg-amber-900/10 text-amber-900" : "bg-amber-100 text-amber-900"
+                      }`}>
                         {currentKanji.onyomiKorean}
                       </span>
-                      <button
-                        onClick={() => speakJapanese(currentKanji.onyomi)}
-                        className="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-500 hover:text-slate-700 transition-all cursor-pointer flex items-center justify-center shrink-0"
-                        title="음독 발음 듣기"
-                      >
-                        <Volume2 className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
                 </div>
 
                 {/* Table row Hunyomi */}
                 <div className="grid grid-cols-12 shrink-0">
-                  <div className="col-span-3 bg-slate-50 p-2.5 font-bold text-slate-700 flex flex-col justify-center items-center text-center border-r border-slate-200 gap-0.5">
+                  <div className={`col-span-3 p-2.5 font-bold flex flex-col justify-center items-center text-center border-r gap-0.5 ${
+                    isSamurai ? "bg-[rgba(255,255,255,0.2)] text-amber-950 border-amber-900/20" : "bg-slate-50 text-slate-700 border-slate-200"
+                  }`}>
                     <span>훈독</span>
-                    <span className="text-[10px] text-slate-400 font-mono">(訓)</span>
+                    <span className={`text-[10px] font-mono ${isSamurai ? "text-amber-900/60" : "text-slate-400"}`}>(訓)</span>
                   </div>
-                  <div className="col-span-9 p-2.5 bg-white space-y-1">
+                  <div className={`col-span-9 p-2.5 space-y-1 ${isSamurai ? "bg-transparent" : "bg-white"}`}>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-900 font-mono">{currentKanji.hunyomi?.replace(/\./g, "")}</span>
-                      <span className="text-[10px] bg-rose-100 text-rose-900 px-1.5 py-0.5 rounded font-bold font-mono">
+                      <span className={`text-sm font-bold font-mono ${isSamurai ? "text-amber-950" : "text-slate-900"}`}>{currentKanji.hunyomi?.replace(/\./g, "")}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold font-mono ${
+                        isSamurai ? "bg-red-900/10 text-red-900" : "bg-rose-100 text-rose-900"
+                      }`}>
                         {currentKanji.hunyomiKorean}
                       </span>
-                      <button
-                        onClick={() => speakJapanese(currentKanji.hunyomi?.replace(/\./g, ""))}
-                        className="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-500 hover:text-slate-700 transition-all cursor-pointer flex items-center justify-center shrink-0"
-                        title="훈독 발음 듣기"
-                      >
-                        <Volume2 className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -242,26 +255,25 @@ export function KanjiStudy({
               {currentKanji.relatedWords.map((item, idx) => (
                 <div
                   key={idx}
-                  className="bg-slate-50 hover:bg-amber-50/20 border border-slate-100 hover:border-amber-100 rounded-xl p-3 space-y-1 text-xs transition-colors relative group"
+                  className={`border rounded-xl p-3 space-y-1 text-xs transition-colors relative group ${
+                    isSamurai 
+                      ? "bg-transparent hover:bg-[rgba(255,255,255,0.2)] border-amber-900/20 hover:border-amber-900/40" 
+                      : "bg-slate-50 hover:bg-amber-50/20 border-slate-100 hover:border-amber-100"
+                  }`}
                 >
                   <div className="flex justify-between items-center gap-2">
-                    <span className="font-bold text-slate-900 text-sm tracking-wide font-mono select-all">
+                    <span className={`font-bold text-sm tracking-wide font-mono select-all ${isSamurai ? "text-amber-950" : "text-slate-900"}`}>
                       {item.word}
                     </span>
-                    <button
-                      onClick={() => speakJapanese(item.word)}
-                      className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-all cursor-pointer flex items-center justify-center shrink-0"
-                      title="어휘 발음 듣기"
-                    >
-                      <Volume2 className="w-3.5 h-3.5" />
-                    </button>
                   </div>
-                  <div className="flex items-center gap-1 text-[11px] text-slate-400 font-mono">
+                  <div className={`flex items-center gap-1 text-[11px] font-mono ${isSamurai ? "text-amber-900/70" : "text-slate-400"}`}>
                     <span>{item.hiragana}</span>
                     <span> | </span>
-                    <span className="text-slate-500">{item.pronunciation}</span>
+                    <span className={isSamurai ? "text-amber-950" : "text-slate-500"}>{item.pronunciation}</span>
                   </div>
-                  <div className="font-semibold text-slate-700 font-sans border-t border-slate-200/40 pt-1 mt-1 text-[11px]">
+                  <div className={`font-semibold font-sans border-t pt-1 mt-1 text-[11px] ${
+                    isSamurai ? "text-amber-900 border-amber-900/20" : "text-slate-700 border-slate-200/40"
+                  }`}>
                     뜻: {item.meaning}
                   </div>
                 </div>
@@ -270,15 +282,19 @@ export function KanjiStudy({
           </div>
 
           {/* LOWER EXAMPLE DIALOGUE ACCORDION BOX */}
-          <div className="bg-slate-900 text-slate-100 rounded-2xl p-4 space-y-2.5 shadow-inner relative overflow-hidden">
-            <div className="absolute -bottom-4 -right-4 text-slate-800 text-7xl font-sans font-bold select-none pointer-events-none opacity-25">
+          <div className={`rounded-2xl p-4 space-y-2.5 shadow-inner relative overflow-hidden ${
+            isSamurai ? "bg-[rgba(255,255,255,0.3)] border border-amber-900/20 text-amber-950" : "bg-slate-900 text-slate-100"
+          }`}>
+            <div className={`absolute -bottom-4 -right-4 text-7xl font-sans font-bold select-none pointer-events-none ${isSamurai ? "text-amber-900/10" : "text-slate-800 opacity-25"}`}>
               文
             </div>
-            <div className="flex items-center justify-between text-[10px] font-bold text-amber-400 uppercase tracking-wider gap-2">
+            <div className={`flex items-center justify-between text-[10px] font-bold uppercase tracking-wider gap-2 ${isSamurai ? "text-amber-900/80" : "text-amber-400"}`}>
               <span>연상 학습 필수 예문 (例文)</span>
               <button
                 onClick={() => speakJapanese(currentKanji.exampleSentence.japanese)}
-                className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white py-1.5 px-3 rounded-lg transition-colors cursor-pointer text-xs font-semibold shrink-0"
+                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg transition-colors cursor-pointer text-xs font-semibold shrink-0 ${
+                  isSamurai ? "bg-amber-900/10 hover:bg-amber-900/20 text-amber-950" : "bg-white/10 hover:bg-white/20 text-white"
+                }`}
               >
                 <Volume2 className="w-4 h-4" />
                 <span>예문 연속 읽기</span>
@@ -286,16 +302,18 @@ export function KanjiStudy({
             </div>
 
             <div className="space-y-1.5">
-              <p className="text-base sm:text-lg font-bold tracking-wide text-white select-all">
+              <p className={`text-base sm:text-lg font-bold tracking-wide select-all ${isSamurai ? "text-amber-950" : "text-white"}`}>
                 {currentKanji.exampleSentence.japanese}
               </p>
-              <p className="text-xs text-slate-400 font-mono">
+              <p className={`text-xs font-mono ${isSamurai ? "text-amber-900/70" : "text-slate-400"}`}>
                 {currentKanji.exampleSentence.hiragana}
               </p>
-              <p className="text-xs text-amber-200 font-sans font-medium">
+              <p className={`text-xs font-sans font-medium ${isSamurai ? "text-red-800" : "text-amber-200"}`}>
                 [{currentKanji.exampleSentence.pronunciation}]
               </p>
-              <p className="text-xs sm:text-sm text-slate-300 border-t border-white/10 pt-1.5 mt-1.5 font-sans leading-relaxed">
+              <p className={`text-xs sm:text-sm border-t pt-1.5 mt-1.5 font-sans leading-relaxed ${
+                isSamurai ? "text-amber-950 border-amber-900/20" : "text-slate-300 border-white/10"
+              }`}>
                 {currentKanji.exampleSentence.meaning}
               </p>
             </div>
@@ -304,22 +322,32 @@ export function KanjiStudy({
         </div>
 
         {/* Footer and Navigation Action Controllers */}
-        <div className="bg-slate-50 border-t border-slate-100 px-5 py-4 flex items-center justify-between">
+        <div className={`px-5 py-4 flex items-center justify-between ${
+          isSamurai ? "bg-transparent border-t border-amber-900/20" : "bg-slate-50 border-t border-slate-100"
+        }`}>
           <button
             onClick={handlePrevStudy}
             disabled={currentKanjiIndex === 0}
-            className="py-2.5 px-4 bg-white hover:bg-slate-100 disabled:opacity-35 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition-colors disabled:cursor-not-allowed cursor-pointer"
+            className={`py-2.5 px-4 text-xs font-semibold transition-colors disabled:cursor-not-allowed cursor-pointer disabled:opacity-35 ${
+              isSamurai 
+                ? "bg-transparent hover:bg-amber-900/10 text-amber-950 border border-amber-900/30 rounded-none" 
+                : "bg-white hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200"
+            }`}
           >
             이전 한자
           </button>
 
-          <div className="text-xs text-slate-500 font-mono hidden sm:block">
+          <div className={`text-xs font-mono hidden sm:block ${isSamurai ? "text-amber-900/70" : "text-slate-500"}`}>
             {currentKanjiIndex + 1} / {kanjiList.length} 완독 진행
           </div>
 
           <button
             onClick={handleNextStudy}
-            className="py-3 px-6 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 text-white text-sm font-bold rounded-xl shadow-md cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5"
+            className={`py-3 px-6 text-sm font-bold shadow-md cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5 ${
+              isSamurai 
+                ? "bg-[#3e2723] hover:bg-[#2d1b18] text-[#f4e8d1] rounded-none border border-amber-900/50" 
+                : "bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 text-white rounded-xl"
+            }`}
           >
             <span>이해했음 (다음)</span>
             <ArrowRight className="w-4 h-4" />
