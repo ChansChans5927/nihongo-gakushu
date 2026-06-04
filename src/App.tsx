@@ -927,6 +927,7 @@ export default function App() {
                   handleGradeJlptQuiz={handleGradeJlptQuiz}
                   handleGoHomeJlpt={handleGoHomeJlpt}
                   startJlptQuiz={startJlptQuiz}
+                  currentTheme={currentTheme}
                 />
               )}
             </motion.div>
