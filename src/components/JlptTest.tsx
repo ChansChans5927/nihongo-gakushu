@@ -1,3 +1,4 @@
+import { useState, useRef } from "react";
 import { motion } from "motion/react";
 import {
   Award,
@@ -42,10 +43,48 @@ export function JlptTest({
   startJlptQuiz,
   currentTheme = 'default'
 }: JlptTestProps) {
+  const [slashingChoice, setSlashingChoice] = useState<number | null>(null);
+  const [isShaking, setIsShaking] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const yokaiAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize audio once
+  if (typeof window !== 'undefined') {
+    if (!audioRef.current) {
+      audioRef.current = new Audio("/sounds/slash.mp3");
+      audioRef.current.volume = 0.6;
+    }
+    if (!yokaiAudioRef.current) {
+      yokaiAudioRef.current = new Audio("/sounds/chime.mp3");
+      yokaiAudioRef.current.volume = 0.6;
+    }
+  }
+
   if (jlptQuestions.length === 0) return null;
 
   const isSamurai = currentTheme === "samurai";
   const isYokai = currentTheme === "yokai";
+
+  const onSelect = (choiceIdx: number) => {
+    if (isSamurai) {
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(e => console.log("Audio play failed:", e));
+      }
+      setSlashingChoice(choiceIdx);
+      setIsShaking(true);
+      setTimeout(() => {
+        setSlashingChoice(null);
+        setIsShaking(false);
+      }, 600);
+    } else if (isYokai) {
+      if (yokaiAudioRef.current) {
+        yokaiAudioRef.current.currentTime = 0;
+        yokaiAudioRef.current.play().catch(e => console.log("Audio play failed:", e));
+      }
+    }
+    handleSelectJlptAnswer(choiceIdx);
+  };
 
   return (
     <motion.div
@@ -77,9 +116,24 @@ export function JlptTest({
             </div>
           </div>
 
-          <div className={`border rounded-2xl sm:rounded-3xl shadow-sm p-4 sm:p-6 space-y-4 sm:space-y-6 ${isSamurai ? "bg-[url('/paper-texture.png')] bg-cover bg-center border-amber-900/20 samurai-theme-base" : isYokai ? "bg-slate-900 border-[#0ea5e9]/30 yokai-theme-base" : "bg-white border-slate-200"}`}>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold uppercase rounded-md tracking-wider">
+          <div 
+            className={isSamurai
+              ? `bg-[#f4e8d1] border-y-[12px] border-y-[#3e2723] border-x-2 border-x-amber-900/30 rounded-md shadow-[inset_0_0_50px_rgba(139,69,19,0.15),0_10px_20px_rgba(0,0,0,0.1)] overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-6 relative font-serif text-amber-950 ${isShaking ? "shake-effect" : ""}`
+              : isYokai
+              ? `yokai-theme-base rounded-xl overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-6 relative font-sans text-slate-200`
+              : "bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-sm overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-6 relative"
+            }
+          >
+            {isSamurai && <div className="samurai-embers"></div>}
+            {isYokai && <div className="yokai-embers"></div>}
+
+            <div className="flex items-center justify-between border-b border-slate-100/20 pb-3 relative z-10">
+              <span className={isSamurai 
+                ? "inline-block px-3 py-1 bg-transparent text-red-800 border-2 border-red-800 text-[11px] font-bold uppercase tracking-widest rounded-sm transform -rotate-2 opacity-90 select-none"
+                : isYokai
+                ? "yokai-seal-badge inline-block px-3 py-1 text-[11px] font-bold uppercase tracking-widest rounded-sm transform -rotate-1 opacity-90 select-none"
+                : "px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold uppercase rounded-md tracking-wider"
+              }>
                 기출 문항 #{currentJlptIndex + 1}
               </span>
               <button
@@ -91,9 +145,9 @@ export function JlptTest({
             </div>
 
             {/* Question Content */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                <CornerDownRight className="w-3.5 h-3.5 text-amber-500" />
+            <div className="space-y-4 relative z-10">
+              <h3 className={`text-xs font-bold uppercase tracking-widest flex items-center gap-1 ${isSamurai ? "text-amber-900/80" : isYokai ? "text-[#38bdf8]/80" : "text-slate-400"}`}>
+                <CornerDownRight className={`w-3.5 h-3.5 ${isSamurai ? "text-amber-800" : isYokai ? "text-[#0ea5e9]" : "text-amber-500"}`} />
                 다음 JLPT 지문을 읽고 물음에 답하십시오
               </h3>
 
@@ -102,10 +156,10 @@ export function JlptTest({
                 const q = jlptQuestions[currentJlptIndex];
                 const parts = q.questionSentence.split("__");
                 return (
-                  <div className={`text-lg sm:text-2xl font-semibold tracking-wide font-sans leading-relaxed text-center py-4 sm:py-6 px-3 border rounded-xl sm:rounded-2xl select-all ${isSamurai ? "bg-[rgba(255,255,255,0.3)] border-amber-900/20 text-amber-950" : isYokai ? "bg-[#030712]/50 border-[#0ea5e9]/20 text-[#f8f9fa]" : "bg-slate-50 border-slate-100 text-slate-900"}`}>
+                  <div className={`text-lg sm:text-2xl font-semibold tracking-wide leading-relaxed text-center py-4 sm:py-6 px-3 border rounded-xl sm:rounded-2xl select-all ${isSamurai ? "bg-[rgba(255,255,255,0.3)] border-amber-900/20 text-amber-950 font-serif" : isYokai ? "bg-[#030712]/50 border-[#0ea5e9]/20 text-[#f8f9fa] font-sans" : "bg-slate-50 border-slate-100 text-slate-900 font-sans"}`}>
                     {parts.map((p, idx) => idx % 2 === 1 ? (
                       p.toLowerCase() === "blank" ? (
-                        <span key={idx} className={`inline-flex items-center border-2 border-dashed px-3 py-1 rounded-xl text-xs tracking-widest font-bold mx-1 animate-pulse select-none ${isSamurai ? "bg-amber-900/5 border-amber-900/30 text-amber-900" : isYokai ? "bg-[#0ea5e9]/10 border-[#0ea5e9]/40 text-[#38bdf8]" : "bg-amber-50 border-amber-400 text-amber-800"}`}>
+                        <span key={idx} className={`inline-flex items-center border-2 border-dashed px-3 py-1 rounded-xl text-xs tracking-widest font-bold mx-1 animate-pulse select-none ${isSamurai ? "bg-amber-900/5 border-amber-900/30 text-amber-900 font-sans" : isYokai ? "bg-[#0ea5e9]/10 border-[#0ea5e9]/40 text-[#38bdf8] font-sans" : "bg-amber-50 border-amber-400 text-amber-800"}`}>
                           ( 빈칸에 들어갈 말 )
                         </span>
                       ) : (
@@ -129,33 +183,43 @@ export function JlptTest({
             </div>
 
             {/* Output Choice Buttons */}
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-3 relative z-10">
               {jlptQuestions[currentJlptIndex].choices.map((choice, choiceIdx) => {
                 const isSelected = jlptAnswers[jlptQuestions[currentJlptIndex].id] === choiceIdx;
+                const isSlashing = slashingChoice === choiceIdx;
+
+                let baseStyles = "bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 shadow-xs";
+                let selectedStyles = "bg-amber-50 border-amber-400 text-amber-900 ring-2 ring-amber-400/20 shadow-sm";
+                let indexStyles = "bg-slate-100 text-slate-500";
+                let selectedIndexStyles = "bg-amber-500 text-slate-950 font-black";
+                let checkIconColor = "text-amber-600";
+                let customClasses = "rounded-xl border";
+
+                if (isSamurai) {
+                  baseStyles = "bg-transparent border-amber-900/40 hover:border-amber-950 text-amber-950 hover:bg-amber-900/5 transition-colors";
+                  selectedStyles = "bg-amber-900/10 border-amber-950 text-amber-950 font-serif ring-1 ring-amber-950";
+                  indexStyles = "bg-transparent text-amber-950 border border-amber-900/50 rounded-none font-bold";
+                  selectedIndexStyles = "bg-red-800 text-amber-50 font-bold border-2 border-red-900 transform -rotate-3";
+                  checkIconColor = "text-red-800";
+                  customClasses = "border-2 rounded-none sword-glint";
+                } else if (isYokai) {
+                  baseStyles = "yokai-button text-[#e2e8f0]";
+                  selectedStyles = "yokai-button-selected text-white shadow-[0_0_15px_rgba(14,165,233,0.3)]";
+                  indexStyles = "bg-[#0f172a] text-[#38bdf8] border border-[#0ea5e9]/30";
+                  selectedIndexStyles = "bg-[#0ea5e9] text-white shadow-[0_0_10px_rgba(14,165,233,0.8)]";
+                  checkIconColor = "text-[#38bdf8]";
+                  customClasses = "rounded-xl border-transparent";
+                }
+
                 return (
                   <button
                     key={choiceIdx}
-                    onClick={() => handleSelectJlptAnswer(choiceIdx)}
-                    className={`w-full text-left p-3.5 sm:p-4.5 rounded-xl border font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${
-                      isSelected
-                        ? isSamurai
-                          ? "bg-amber-900/10 border-amber-900 text-amber-950 ring-2 ring-amber-900/20 shadow-sm"
-                          : isYokai
-                          ? "bg-[#0ea5e9]/20 border-[#38bdf8] text-[#38bdf8] ring-2 ring-[#0ea5e9]/30 shadow-[0_0_15px_rgba(14,165,233,0.3)]"
-                          : "bg-amber-50 border-amber-400 text-amber-900 ring-2 ring-amber-400/20 shadow-sm"
-                        : isSamurai
-                        ? "bg-[rgba(255,255,255,0.2)] border-amber-900/20 text-amber-950 hover:bg-[rgba(255,255,255,0.4)] shadow-xs"
-                        : isYokai
-                        ? "bg-[#0f172a]/80 border-[#0ea5e9]/30 text-slate-300 hover:border-[#38bdf8]/50 hover:text-white shadow-xs"
-                        : "bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 shadow-xs"
-                    }`}
+                    onClick={() => onSelect(choiceIdx)}
+                    className={`w-full text-left p-3.5 sm:p-4.5 font-bold transition-all duration-200 flex items-center justify-between cursor-pointer relative overflow-hidden ${customClasses} ${isSelected ? selectedStyles : baseStyles}`}
                   >
-                    <div className="flex items-center gap-4">
-                      <span className={`w-7 h-7 rounded-full flex items-center justify-center font-mono text-xs ${
-                        isSelected 
-                          ? isSamurai ? "bg-amber-900 text-[#f4e8d1]" : isYokai ? "bg-[#38bdf8] text-slate-900" : "bg-amber-500 text-slate-950 font-black"
-                          : isSamurai ? "bg-amber-900/10 text-amber-900" : isYokai ? "bg-[#0ea5e9]/20 text-[#38bdf8]" : "bg-slate-100 text-slate-500"
-                      }`}>
+                    {isSamurai && isSlashing && <div className="slash-line" />}
+                    <div className="flex items-center gap-4 relative z-10">
+                      <span className={`w-7 h-7 flex items-center justify-center font-mono text-xs ${isSamurai ? "rounded-none" : "rounded-full"} ${isSelected ? selectedIndexStyles : indexStyles}`}>
                         {choiceIdx + 1}
                       </span>
                       <span className={`text-sm sm:text-base font-semibold ${isSelected ? "" : isSamurai ? "text-amber-950" : isYokai ? "text-slate-200" : "text-slate-800"}`}>
@@ -163,7 +227,7 @@ export function JlptTest({
                       </span>
                     </div>
                     {isSelected && (
-                      <CheckCircle2 className={`w-5 h-5 shrink-0 select-none ${isSamurai ? "text-amber-900" : isYokai ? "text-[#38bdf8]" : "text-amber-600"}`} />
+                      <CheckCircle2 className={`w-5 h-5 shrink-0 select-none relative z-10 ${checkIconColor}`} />
                     )}
                   </button>
                 );
@@ -171,7 +235,7 @@ export function JlptTest({
             </div>
 
             {/* Layout Footer Controls */}
-            <div className="border-t border-slate-100 pt-4 flex items-center justify-between">
+            <div className="border-t border-slate-100/20 pt-4 flex items-center justify-between relative z-10">
               <button
                 onClick={handlePrevJlptQuestion}
                 disabled={currentJlptIndex === 0}
