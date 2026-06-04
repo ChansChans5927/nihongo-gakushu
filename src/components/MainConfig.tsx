@@ -768,7 +768,7 @@ export function MainConfig({
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Default Theme */}
             <div className={`border rounded-2xl p-5 flex flex-col justify-between ${currentTheme === 'default' ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/30' : 'border-slate-200'}`}>
               <div className="space-y-2">
@@ -830,6 +830,50 @@ export function MainConfig({
                     className="w-full py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     1,000 P로 구매하기
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Yokai Theme */}
+            <div className={`border rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden ${currentTheme === 'yokai' ? 'border-sky-500 ring-2 ring-sky-500/20 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+              <div className="absolute top-0 right-0 p-3 opacity-10 pointer-events-none">
+                <Sparkles className={`w-16 h-16 ${currentTheme === 'yokai' ? 'text-sky-400' : 'text-slate-400'}`} />
+              </div>
+              <div className="space-y-2 relative z-10">
+                <div className="flex items-center justify-between">
+                  <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'yokai' ? 'text-sky-100' : 'text-slate-900'}`}>
+                    요괴 스킨 👻
+                  </h5>
+                  {!unlockedThemes.includes('yokai') && (
+                    <span className="bg-sky-100 text-sky-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-sky-300">
+                      1,500 P
+                    </span>
+                  )}
+                </div>
+                <p className={`text-xs ${currentTheme === 'yokai' ? 'text-sky-200/70' : 'text-slate-500'}`}>
+                  깊은 밤의 분위기를 자아내는 다크 테마입니다. 정답을 맞힐 때 영혼이 스며드는 <strong>'차링~'</strong> 효과음이 울려 퍼집니다.
+                </p>
+              </div>
+              <div className="mt-6 relative z-10">
+                {currentTheme === 'yokai' ? (
+                  <div className="w-full text-center py-2 bg-slate-800 text-sky-400 font-bold rounded-xl text-sm cursor-not-allowed border border-sky-500/30">
+                    현재 장착 중
+                  </div>
+                ) : unlockedThemes.includes('yokai') ? (
+                  <button 
+                    onClick={() => equipTheme('yokai')}
+                    className="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer"
+                  >
+                    장착하기
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => buyTheme('yokai', 1500)}
+                    disabled={points < 1500}
+                    className="w-full py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    1,500 P로 구매하기
                   </button>
                 )}
               </div>

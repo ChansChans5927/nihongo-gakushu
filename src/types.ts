@@ -48,6 +48,8 @@ export interface Question {
   type: 'meaning' | 'reading' | 'word_meaning' | 'kanji_match' | 'blank_fill';
   kanjiItem?: KanjiItem;
   vocabItem?: VocabItem;
+  targetWord?: string;
+  targetKanji?: string;
   questionText: string;
   choices: string[];
   correctIndex: number;
@@ -67,6 +69,8 @@ export interface VocabItem {
   hiragana: string;
   pronunciation: string;
   meaning: string;
+  pos?: string;
+  mnemonic?: string;
   jlptLevel: string;
   kanjiBreakdown: KanjiMnemonicBreakdown[];
   exampleSentence: {
