@@ -214,10 +214,29 @@ export function JlptTest({
                 return (
                   <button
                     key={choiceIdx}
-                    onClick={() => onSelect(choiceIdx)}
-                    className={`w-full text-left p-3.5 sm:p-4.5 font-bold transition-all duration-200 flex items-center justify-between cursor-pointer relative overflow-hidden ${customClasses} ${isSelected ? selectedStyles : baseStyles}`}
+                    onClick={(e) => {
+                      if (isYokai) {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        
+                        const ripple = document.createElement('div');
+                        ripple.className = 'yokai-ripple';
+                        ripple.style.left = `${x}px`;
+                        ripple.style.top = `${y}px`;
+                        ripple.style.width = ripple.style.height = `${Math.max(rect.width, rect.height)}px`;
+                        ripple.style.transform = `translate(-50%, -50%) scale(0)`;
+                        
+                        e.currentTarget.appendChild(ripple);
+                        
+                        setTimeout(() => {
+                          ripple.remove();
+                        }, 500);
+                      }
+                      onSelect(choiceIdx);
+                    }}
+                    className={`w-full text-left p-3.5 sm:p-4.5 font-bold transition-all duration-200 flex items-center justify-between cursor-pointer relative overflow-hidden ${customClasses} ${isSelected ? selectedStyles : baseStyles} ${isSlashing ? "samurai-slash-effect scale-[0.98]" : ""}`}
                   >
-                    {isSamurai && isSlashing && <div className="slash-line" />}
                     <div className="flex items-center gap-4 relative z-10">
                       <span className={`w-7 h-7 flex items-center justify-center font-mono text-xs ${isSamurai ? "rounded-none" : "rounded-full"} ${isSelected ? selectedIndexStyles : indexStyles}`}>
                         {choiceIdx + 1}
