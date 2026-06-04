@@ -43,7 +43,7 @@ router.post("/generate", async (req, res) => {
       return res.json({ success: true, source: "mongodb_cache", data: selectedKanjis });
     }
 
-    const missingCount = numCount - cachedKanjis.length;
+    const missingCount = forceGenerate ? numCount : Math.max(0, numCount - cachedKanjis.length);
 
     let allDbKanjis: string[] = [];
     if (db) {

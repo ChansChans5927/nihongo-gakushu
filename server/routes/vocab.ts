@@ -65,7 +65,7 @@ router.post("/generate", async (req, res) => {
       return res.json({ success: true, source: "mongodb_cache", data: selectedVocabs, quiz: formattedQuiz });
     }
 
-    const missingCount = numCount - selectedVocabs.length;
+    const missingCount = forceGenerate ? numCount : Math.max(0, numCount - selectedVocabs.length);
 
     let allDbVocabs: string[] = [];
     if (db) {

@@ -32,6 +32,14 @@ router.get("/random", async (req, res) => {
     let transcriptData = null;
     let subtitles = [];
 
+    let existingIds: string[] = [];
+    if (db) {
+      try {
+        const dbNews = await db.collection("news_lessons").find({}, { projection: { id: 1 } }).toArray();
+        existingIds = dbNews.map((n: any) => n.id);
+      } catch (err) {}
+    }
+
     // 1. YouTube 검색을 통해 무작위 비디오 선정 및 자막 추출
     let retryCount = 0;
     while (retryCount < 5) {
@@ -42,7 +50,8 @@ router.get("/random", async (req, res) => {
         const videos = r.videos;
 
         if (videos.length > 0) {
-          const shuffled = videos.sort(() => 0.5 - Math.random()).slice(0, 5);
+          const freshVideos = videos.filter((v: any) => !existingIds.includes(v.videoId));
+          const shuffled = freshVideos.sort(() => 0.5 - Math.random()).slice(0, 15);
           for (let v of shuffled) {
             try {
               const t = await YoutubeTranscript.fetchTranscript(v.videoId, { lang: 'ja' });
