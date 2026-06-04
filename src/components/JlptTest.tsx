@@ -317,23 +317,23 @@ export function JlptTest({
             const ratio = Math.round((correctCount / jlptQuestions.length) * 100);
 
             return (
-              <div className={`border rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm text-center space-y-4 relative overflow-hidden ${isSamurai ? "bg-[url('/paper-texture.png')] bg-cover bg-center border-amber-900/20 samurai-theme-base" : isYokai ? "bg-slate-900 border-[#0ea5e9]/30 yokai-theme-base" : "bg-white border-slate-200"}`}>
-                <div className={`absolute top-0 left-0 w-full h-1.5 ${isSamurai ? "bg-gradient-to-r from-amber-700 via-red-800 to-amber-900" : isYokai ? "bg-gradient-to-r from-cyan-600 via-blue-700 to-indigo-800" : "bg-gradient-to-r from-amber-400 via-rose-400 to-indigo-500"}`} />
+              <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm text-center space-y-4 relative">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-rose-400 to-indigo-500" />
 
-                <div className={`mx-auto w-24 h-24 rounded-full border flex items-center justify-center relative ${isSamurai ? "bg-[rgba(255,255,255,0.2)] border-amber-900/20" : isYokai ? "bg-[#030712]/50 border-[#0ea5e9]/30" : "bg-slate-50 border-slate-100"}`}>
-                  <div className={`text-3xl font-display font-extrabold font-mono ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa]" : "text-slate-900"}`}>
+                <div className="mx-auto w-24 h-24 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center relative">
+                  <div className="text-3xl font-display font-extrabold text-slate-900 font-mono">
                     {correctCount} / {jlptQuestions.length}
                   </div>
-                  <div className={`absolute -bottom-1 -right-1 rounded-full p-1 shadow ${isSamurai ? "bg-amber-900 text-[#f4e8d1]" : isYokai ? "bg-[#38bdf8] text-slate-900" : "bg-amber-500 text-slate-950"}`}>
+                  <div className="absolute -bottom-1 -right-1 bg-amber-500 rounded-full p-1 text-slate-950 shadow">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <h3 className={`text-2xl font-bold ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa]" : "text-slate-900"}`}>
+                  <h3 className="text-2xl font-bold text-slate-900">
                     JLPT {selectedJlptLevel} 기출 실전 성적 : {ratio}점!
                   </h3>
-                  <p className={`text-sm max-w-md mx-auto leading-relaxed ${isSamurai ? "text-amber-900/80" : isYokai ? "text-[#38bdf8]/80" : "text-slate-500"}`}>
+                  <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
                     {ratio === 100
                       ? "경이롭습니다! 해당 레벨의 핵심 어휘 요건을 모두 갖추셨습니다. 다음 등급에 도전하십시오!"
                       : "해설을 통해 문제를 짚어보세요. JLPT 고빈도 단어는 독해와 청해의 필수 기초가 됩니다."}
@@ -344,7 +344,7 @@ export function JlptTest({
                   <button
                     onClick={startJlptQuiz}
                     disabled={isJlptLoading}
-                    className={`py-2.5 px-5 text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-45 ${isSamurai ? "bg-amber-950 hover:bg-amber-900 text-[#f4e8d1]" : isYokai ? "bg-[#0ea5e9] hover:bg-sky-500 text-white shadow-[0_0_10px_rgba(14,165,233,0.5)]" : "bg-slate-950 hover:bg-slate-900 text-white"}`}
+                    className="py-2.5 px-5 bg-slate-950 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-45"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isJlptLoading ? "animate-spin" : ""}`} />
                     <span>한 번 더 응시하기</span>
@@ -352,7 +352,7 @@ export function JlptTest({
 
                   <button
                     onClick={handleGoHomeJlpt}
-                    className={`py-2.5 px-5 text-xs font-semibold rounded-xl transition-colors cursor-pointer border ${isSamurai ? "bg-[rgba(255,255,255,0.3)] hover:bg-[rgba(255,255,255,0.5)] border-amber-900/30 text-amber-950" : isYokai ? "bg-[#0f172a]/80 hover:bg-[#0ea5e9]/20 border-[#0ea5e9]/40 text-[#38bdf8]" : "bg-white hover:bg-slate-50 border-slate-200 text-slate-700"}`}
+                    className="py-2.5 px-5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
                   >
                     기출 세트 목록으로
                   </button>
@@ -363,8 +363,8 @@ export function JlptTest({
 
           {/* List of answers */}
           <div className="space-y-4">
-            <h4 className={`text-sm font-bold uppercase tracking-widest flex items-center gap-1.5 px-1 ${isSamurai ? "text-amber-900" : isYokai ? "text-[#38bdf8]" : "text-slate-500"}`}>
-              <HelpCircle className={`w-4 h-4 ${isSamurai ? "text-amber-700" : isYokai ? "text-[#0ea5e9]" : "text-amber-500"}`} />
+            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 px-1">
+              <HelpCircle className="w-4 h-4 text-amber-500" />
               <span>기출전문가 심층 오답 및 구체적 문법해설 리포트</span>
             </h4>
 
@@ -376,23 +376,23 @@ export function JlptTest({
               return (
                 <div
                   key={q.id}
-                  className={`border rounded-2xl overflow-hidden p-4 sm:p-5 space-y-4 transition-all ${isCorrect
-                      ? isSamurai ? "bg-[rgba(255,255,255,0.3)] border-emerald-700/40 shadow-xs" : isYokai ? "bg-[#030712]/50 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.1)]" : "bg-white border-emerald-200/60 shadow-xs"
-                      : isSamurai ? "bg-[rgba(255,255,255,0.3)] border-red-800/40 shadow-sm" : isYokai ? "bg-[#030712]/50 border-rose-500/40 shadow-[0_0_15px_rgba(244,63,94,0.1)]" : "bg-white border-red-200 shadow-sm"
+                  className={`bg-white border rounded-2xl overflow-hidden p-4 sm:p-5 space-y-4 transition-all ${isCorrect
+                      ? "border-emerald-200/60 shadow-xs"
+                      : "border-red-200 shadow-sm"
                     }`}
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className={`font-mono font-bold ${isSamurai ? "text-amber-900/60" : isYokai ? "text-[#38bdf8]/60" : "text-slate-400"}`}>
+                    <span className="font-mono font-bold text-slate-400">
                       기출문제 #{idx + 1}
                     </span>
 
                     {isCorrect ? (
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-bold border ${isSamurai ? "bg-emerald-900/10 border-emerald-800/30 text-emerald-800" : isYokai ? "bg-emerald-900/20 border-emerald-500/30 text-emerald-400" : "bg-emerald-50 border-emerald-200 text-emerald-800"}`}>
+                      <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded font-bold">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         정답
                       </span>
                     ) : (
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-bold border ${isSamurai ? "bg-red-900/10 border-red-800/30 text-red-800" : isYokai ? "bg-rose-900/20 border-rose-500/30 text-rose-400" : "bg-red-50 border-red-200 text-red-800"}`}>
+                      <span className="inline-flex items-center gap-1 bg-red-50 border border-red-200 text-red-800 px-2 py-0.5 rounded font-bold">
                         <XCircle className="w-3.5 h-3.5" />
                         정답 오선택
                       </span>
@@ -401,45 +401,45 @@ export function JlptTest({
 
                   {/* Sentence render */}
                   <div className="space-y-2">
-                    <div className={`text-lg font-semibold tracking-wide font-sans leading-relaxed py-3 border rounded-xl px-4 select-all ${isSamurai ? "bg-[rgba(255,255,255,0.4)] border-amber-900/20 text-amber-950" : isYokai ? "bg-[#0f172a]/60 border-[#0ea5e9]/30 text-[#f8f9fa]" : "bg-slate-50 border-slate-100 text-slate-800"}`}>
+                    <div className="text-lg font-semibold text-slate-850 text-slate-800 tracking-wide font-sans leading-relaxed py-3 bg-slate-50 border border-slate-100 rounded-xl px-4 select-all">
                       {parts.map((p, pIdx) => pIdx % 2 === 1 ? (
                         p.toLowerCase() === "blank" ? (
-                          <strong key={pIdx} className={`font-extrabold underline underline-offset-4 mx-1 ${isSamurai ? "text-emerald-800 decoration-emerald-700" : isYokai ? "text-emerald-400 decoration-emerald-500" : "text-emerald-600 decoration-emerald-500"}`}>
+                          <strong key={pIdx} className="text-emerald-600 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
                             {q.targetWord}
                           </strong>
                         ) : (
-                          <strong key={pIdx} className={`font-extrabold mx-0.5 ${isSamurai ? "text-amber-800" : isYokai ? "text-cyan-400" : "text-amber-600"}`}>
+                          <strong key={pIdx} className="text-amber-600 font-extrabold mx-0.5">
                             {p}
                           </strong>
                         )
                       ) : p)}
                     </div>
-                    <p className={`text-xs font-medium italic ${isSamurai ? "text-amber-900/70" : isYokai ? "text-[#38bdf8]/70" : "text-slate-500"}`}>
+                    <p className="text-xs text-slate-500 font-medium italic">
                       * 해석 : {q.translation}
                     </p>
                   </div>
 
                   <div className="space-y-1">
-                    <h5 className={`text-sm font-bold ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa]" : "text-slate-800"}`}>
+                    <h5 className="text-sm font-bold text-slate-800">
                       Q. {q.questionText.replace(/__/g, "")}
                     </h5>
                   </div>
 
                   {/* Selected answer view */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div className={`p-3 rounded-xl space-y-0.5 border ${isSamurai ? "bg-[rgba(255,255,255,0.4)] border-amber-900/20" : isYokai ? "bg-[#0f172a]/60 border-[#0ea5e9]/30" : "bg-slate-50 border-slate-100"}`}>
-                      <span className={`font-medium block ${isSamurai ? "text-amber-900/60" : isYokai ? "text-[#38bdf8]/60" : "text-slate-400"}`}>정답보기</span>
-                      <span className={`font-bold ${isSamurai ? "text-emerald-800" : isYokai ? "text-emerald-400" : "text-emerald-800"}`}>
+                    <div className="p-3 bg-slate-50 rounded-xl space-y-0.5 border border-slate-100">
+                      <span className="text-slate-400 font-medium block">정답보기</span>
+                      <span className="font-bold text-emerald-800">
                         {q.choices[q.correctIndex]}
                       </span>
                     </div>
 
                     <div className={`p-3 rounded-xl space-y-0.5 border ${isCorrect
-                        ? isSamurai ? "bg-[rgba(255,255,255,0.4)] border-amber-900/20" : isYokai ? "bg-[#0f172a]/60 border-[#0ea5e9]/30" : "bg-slate-50 border-slate-100"
-                        : isSamurai ? "bg-red-900/10 border-red-800/30" : isYokai ? "bg-rose-900/20 border-rose-500/30" : "bg-red-50/50 border-red-100"
+                        ? "bg-slate-50 border-slate-100"
+                        : "bg-red-50/50 border-red-100"
                       }`}>
-                      <span className={`font-medium block ${isSamurai ? "text-amber-900/60" : isYokai ? "text-[#38bdf8]/60" : "text-slate-400"}`}>내가 고른 답</span>
-                      <span className={`font-semibold ${isCorrect ? (isSamurai ? "text-amber-950" : isYokai ? "text-slate-200" : "text-slate-800") : (isSamurai ? "text-red-800 font-bold" : isYokai ? "text-rose-400 font-bold" : "text-red-700 font-bold")}`}>
+                      <span className="text-slate-400 font-medium block">내가 고른 답</span>
+                      <span className={`font-semibold ${isCorrect ? "text-slate-800" : "text-red-700 font-bold"}`}>
                         {ansIdx !== undefined
                           ? q.choices[ansIdx]
                           : "응답 없음"}
@@ -448,12 +448,12 @@ export function JlptTest({
                   </div>
 
                   {/* Comprehensive analysis explanation panel */}
-                  <div className={`border-l-4 rounded-r-xl p-3 sm:p-4 space-y-2 text-xs leading-relaxed ${isSamurai ? "bg-[rgba(255,255,255,0.2)] border-amber-800" : isYokai ? "bg-[#0f172a]/50 border-cyan-500" : "bg-slate-50 border-amber-500"}`}>
-                    <div className={`flex items-center gap-1 font-bold ${isSamurai ? "text-amber-950" : isYokai ? "text-cyan-400" : "text-slate-900"}`}>
-                      <Sparkles className={`w-4 h-4 ${isSamurai ? "text-amber-800" : isYokai ? "text-cyan-400" : "text-amber-500"}`} />
+                  <div className="bg-slate-50 border-l-4 border-amber-500 rounded-r-xl p-3 sm:p-4 space-y-2 text-xs leading-relaxed">
+                    <div className="flex items-center gap-1 text-slate-900 font-bold">
+                      <Sparkles className="w-4 h-4 text-amber-500" />
                       <span>기출 분석 핵심 해설</span>
                     </div>
-                    <p className={`font-medium p-3 rounded-lg border ${isSamurai ? "bg-transparent text-amber-900 border-amber-900/20" : isYokai ? "bg-[#030712]/50 text-[#38bdf8]/90 border-[#0ea5e9]/30" : "bg-white text-slate-700 border-slate-200"}`}>
+                    <p className="text-slate-700 font-medium bg-white p-3 rounded-lg border border-slate-200">
                       {q.explanation}
                     </p>
                   </div>
