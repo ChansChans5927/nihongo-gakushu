@@ -15,10 +15,11 @@ import { AuthCard } from "./components/AuthCard";
 import { NewsStudy } from "./components/NewsStudy";
 import { UserDropdown } from "./components/UserDropdown";
 import { SettingsView } from "./components/SettingsView";
+import { ShopView } from "./components/ShopView";
 
 export default function App() {
-  // App Phase States: 'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt'
-  const [phase, setPhase] = useState<'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt'>('config');
+  // App Phase States: 'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt' | 'shop'
+  const [phase, setPhase] = useState<'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt' | 'shop'>('config');
 
   // Configuration Settings
   const [kanjiCount, setKanjiCount] = useState<number>(5);
@@ -713,10 +714,7 @@ export default function App() {
                 <UserDropdown
                   username={currentUser.username}
                   onNavigateSettings={() => setPhase('settings')}
-                  onNavigateShop={() => {
-                    setPhase('config');
-                    setTimeout(() => window.dispatchEvent(new CustomEvent('open-shop')), 100);
-                  }}
+                  onNavigateShop={() => setPhase('shop')}
                   onLogout={handleLogout}
                 />
               </div>
@@ -832,6 +830,7 @@ export default function App() {
                   currentTheme={currentTheme}
                   currentUser={currentUser}
                   onThemeUpdate={() => currentUser && fetchUserProgress(currentUser.username)}
+                  onOpenShop={() => setPhase('shop')}
                 />
               )}
 
@@ -909,6 +908,17 @@ export default function App() {
                     setIsReviewMode(false);
                     setPhase('config');
                   }}
+                />
+              )}
+
+              {/* PHASE 7: Shop View */}
+              {phase === 'shop' && currentUser && (
+                <ShopView
+                  points={points}
+                  unlockedThemes={unlockedThemes}
+                  currentTheme={currentTheme}
+                  onThemeUpdate={() => currentUser && fetchUserProgress(currentUser.username)}
+                  onGoBack={handleGoHome}
                 />
               )}
 
