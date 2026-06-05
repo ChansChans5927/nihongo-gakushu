@@ -808,7 +808,7 @@ export function MainConfig({
                   )}
                 </div>
                 <p className="text-xs text-slate-500">
-                  정답을 맞힐 때마다 붓글씨 애니메이션과 함께 통쾌한 <strong>'서걱!'</strong> 효과음이 재생됩니다.
+                  정답을 맞힐 때마다 화면을 가르는 날카로운 검격 애니메이션과 함께 통쾌한 <strong>'서걱!'</strong> 효과음이 재생됩니다.
                 </p>
               </div>
               <div className="mt-6 relative z-10">
@@ -852,7 +852,7 @@ export function MainConfig({
                   )}
                 </div>
                 <p className={`text-xs ${currentTheme === 'yokai' ? 'text-sky-200/70' : 'text-slate-500'}`}>
-                  깊은 밤의 분위기를 자아내는 다크 테마입니다. 정답을 맞힐 때 영혼이 스며드는 <strong>'차링~'</strong> 효과음이 울려 퍼집니다.
+                  기묘한 밤의 분위기를 자아내는 다크 테마입니다. 정답을 맞힐 때 도깨비불 애니메이션과 함께 서늘한 <strong>'차링~'</strong> 효과음이 울려 퍼집니다.
                 </p>
               </div>
               <div className="mt-6 relative z-10">
