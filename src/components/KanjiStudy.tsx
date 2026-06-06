@@ -104,6 +104,7 @@ export function KanjiStudy({
                 <div
                   key={`kanji-${currentKanji.kanji}`}
                   onClick={() => speakJapanese(currentKanji.kanji)}
+                  lang="ja"
                   className={`text-7xl sm:text-8xl font-serif font-semibold leading-none select-none select-all relative group cursor-pointer transition-colors ${isSamurai ? "text-amber-950 hover:text-red-800 ink-reveal" : isYokai ? "text-[#f8f9fa] hover:text-[#38bdf8] drop-shadow-[0_0_15px_rgba(56,189,248,0.6)]" : "text-slate-900 hover:text-amber-600"}`}
                   title="클릭하여 발음 듣기"
                 >
@@ -169,7 +170,7 @@ export function KanjiStudy({
                           title={hasDetails ? "클릭하여 어원 파해 및 상세 연상 암기 비법 보기" : ""}
                         >
                           <div className="flex items-center gap-3 overflow-hidden">
-                            <span className={`text-lg font-serif font-black rounded-lg w-9 h-9 flex items-center justify-center group-hover:scale-105 transition-all shrink-0 ${isSamurai
+                            <span lang="ja" className={`text-lg font-serif font-black rounded-lg w-9 h-9 flex items-center justify-center group-hover:scale-105 transition-all shrink-0 ${isSamurai
                                 ? "text-red-800 bg-[#f4e8d1] border border-amber-900/30 group-hover:bg-[#f8f5ec]"
                                 : isYokai
                                 ? "text-[#38bdf8] bg-[#030712] border border-[#38bdf8]/40 group-hover:bg-[#0f172a]"
@@ -218,7 +219,7 @@ export function KanjiStudy({
                   </div>
                   <div className={`col-span-9 p-2.5 space-y-1 ${isSamurai ? "bg-transparent" : isYokai ? "bg-[#0f172a]/50" : "bg-white"}`}>
                     <div className="flex items-center gap-2">
-                      <span className={`text-sm font-bold font-mono ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa]" : "text-slate-900"}`}>{currentKanji.onyomi}</span>
+                      <span lang="ja" className={`text-sm font-bold font-mono ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa]" : "text-slate-900"}`}>{currentKanji.onyomi}</span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold font-mono ${isSamurai ? "bg-amber-900/10 text-amber-900" : isYokai ? "bg-[#0ea5e9]/20 text-[#38bdf8]" : "bg-amber-100 text-amber-900"
                         }`}>
                         {currentKanji.onyomiKorean}
@@ -252,7 +253,7 @@ export function KanjiStudy({
                   </div>
                   <div className={`col-span-9 p-2.5 space-y-1 ${isSamurai ? "bg-transparent" : isYokai ? "bg-[#0f172a]/50" : "bg-white"}`}>
                     <div className="flex items-center gap-2">
-                      <span className={`text-sm font-bold font-mono ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa]" : "text-slate-900"}`}>{currentKanji.hunyomi?.replace(/\./g, "")}</span>
+                      <span lang="ja" className={`text-sm font-bold font-mono ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa]" : "text-slate-900"}`}>{currentKanji.hunyomi?.replace(/\./g, "")}</span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold font-mono ${isSamurai ? "bg-red-900/10 text-red-900" : isYokai ? "bg-rose-900/20 text-rose-400 border border-rose-900/50" : "bg-rose-100 text-rose-900"
                         }`}>
                         {currentKanji.hunyomiKorean}
@@ -302,7 +303,7 @@ export function KanjiStudy({
                     }`}
                 >
                   <div className="flex justify-between items-center gap-2">
-                    <span className={`font-bold text-sm tracking-wide font-mono select-all ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa]" : "text-slate-900"}`}>
+                    <span lang="ja" className={`font-bold text-sm tracking-wide font-mono select-all ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa]" : "text-slate-900"}`}>
                       {item.word}
                     </span>
                     <button
@@ -323,9 +324,9 @@ export function KanjiStudy({
                     </button>
                   </div>
                   <div className={`flex items-center gap-1 text-[11px] font-mono ${isSamurai ? "text-amber-900/70" : isYokai ? "text-[#38bdf8]/70" : "text-slate-400"}`}>
-                    <span>{item.hiragana}</span>
+                    <span lang="ja">{item.hiragana}</span>
                     <span> | </span>
-                    <span className={isSamurai ? "text-amber-950" : isYokai ? "text-[#38bdf8]" : "text-slate-500"}>{item.pronunciation}</span>
+                    <span lang="ko" className={isSamurai ? "text-amber-950" : isYokai ? "text-[#38bdf8]" : "text-slate-500"}>{item.pronunciation}</span>
                   </div>
                   <div className={`font-semibold font-sans border-t pt-1 mt-1 text-[11px] ${isSamurai ? "text-amber-900 border-amber-900/20" : isYokai ? "text-slate-300 border-[#0ea5e9]/30" : "text-slate-700 border-slate-200/40"
                     }`}>
@@ -355,10 +356,10 @@ export function KanjiStudy({
             </div>
 
             <div className="space-y-1.5 z-10 relative">
-              <p className={`text-base sm:text-lg font-bold tracking-wide select-all ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa] drop-shadow-[0_0_8px_rgba(56,189,248,0.3)]" : "text-white"}`}>
+              <p lang="ja" className={`text-base sm:text-lg font-bold tracking-wide select-all ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa] drop-shadow-[0_0_8px_rgba(56,189,248,0.3)]" : "text-white"}`}>
                 {currentKanji.exampleSentence.japanese}
               </p>
-              <p className={`text-xs font-mono ${isSamurai ? "text-amber-900/70" : isYokai ? "text-[#38bdf8]/70" : "text-slate-400"}`}>
+              <p lang="ja" className={`text-xs font-mono ${isSamurai ? "text-amber-900/70" : isYokai ? "text-[#38bdf8]/70" : "text-slate-400"}`}>
                 {currentKanji.exampleSentence.hiragana}
               </p>
               <p className={`text-xs font-sans font-medium ${isSamurai ? "text-red-800" : isYokai ? "text-[#0ea5e9]" : "text-amber-200"}`}>

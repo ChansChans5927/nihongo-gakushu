@@ -156,10 +156,10 @@ export function JlptTest({
                 const q = jlptQuestions[currentJlptIndex];
                 const parts = q.questionSentence.split("__");
                 return (
-                  <div className={`text-lg sm:text-2xl font-semibold tracking-wide leading-relaxed text-center py-4 sm:py-6 px-3 border rounded-xl sm:rounded-2xl select-all ${isSamurai ? "bg-[rgba(255,255,255,0.3)] border-amber-900/20 text-amber-950 font-serif" : isYokai ? "bg-[#030712]/50 border-[#0ea5e9]/20 text-[#f8f9fa] font-sans" : "bg-slate-50 border-slate-100 text-slate-900 font-sans"}`}>
+                  <div lang="ja" className={`text-lg sm:text-2xl font-semibold tracking-wide leading-relaxed text-center py-4 sm:py-6 px-3 border rounded-xl sm:rounded-2xl select-all ${isSamurai ? "bg-[rgba(255,255,255,0.3)] border-amber-900/20 text-amber-950 font-serif" : isYokai ? "bg-[#030712]/50 border-[#0ea5e9]/20 text-[#f8f9fa] font-sans" : "bg-slate-50 border-slate-100 text-slate-900 font-sans"}`}>
                     {parts.map((p, idx) => idx % 2 === 1 ? (
                       p.toLowerCase() === "blank" ? (
-                        <span key={idx} className={`inline-flex items-center border-2 border-dashed px-3 py-1 rounded-xl text-xs tracking-widest font-bold mx-1 animate-pulse select-none ${isSamurai ? "bg-amber-900/5 border-amber-900/30 text-amber-900 font-sans" : isYokai ? "bg-[#0ea5e9]/10 border-[#0ea5e9]/40 text-[#38bdf8] font-sans" : "bg-amber-50 border-amber-400 text-amber-800"}`}>
+                        <span key={idx} lang="ko" className={`inline-flex items-center border-2 border-dashed px-3 py-1 rounded-xl text-xs tracking-widest font-bold mx-1 animate-pulse select-none ${isSamurai ? "bg-amber-900/5 border-amber-900/30 text-amber-900 font-sans" : isYokai ? "bg-[#0ea5e9]/10 border-[#0ea5e9]/40 text-[#38bdf8] font-sans" : "bg-amber-50 border-amber-400 text-amber-800"}`}>
                           ( 빈칸에 들어갈 말 )
                         </span>
                       ) : (
@@ -241,7 +241,7 @@ export function JlptTest({
                       <span className={`w-7 h-7 flex items-center justify-center font-mono text-xs ${isSamurai ? "rounded-none" : "rounded-full"} ${isSelected ? selectedIndexStyles : indexStyles}`}>
                         {choiceIdx + 1}
                       </span>
-                      <span className={`text-sm sm:text-base font-semibold ${isSelected ? "" : isSamurai ? "text-amber-950" : isYokai ? "text-slate-200" : "text-slate-800"}`}>
+                      <span lang="ja" className={`text-sm sm:text-base font-semibold ${isSelected ? "" : isSamurai ? "text-amber-950" : isYokai ? "text-slate-200" : "text-slate-800"}`}>
                         {choice}
                       </span>
                     </div>
@@ -401,7 +401,7 @@ export function JlptTest({
 
                   {/* Sentence render */}
                   <div className="space-y-2">
-                    <div className="text-lg font-semibold text-slate-850 text-slate-800 tracking-wide font-sans leading-relaxed py-3 bg-slate-50 border border-slate-100 rounded-xl px-4 select-all">
+                    <div lang="ja" className="text-lg font-semibold text-slate-850 text-slate-800 tracking-wide font-sans leading-relaxed py-3 bg-slate-50 border border-slate-100 rounded-xl px-4 select-all">
                       {parts.map((p, pIdx) => pIdx % 2 === 1 ? (
                         p.toLowerCase() === "blank" ? (
                           <strong key={pIdx} className="text-emerald-600 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
@@ -429,7 +429,7 @@ export function JlptTest({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     <div className="p-3 bg-slate-50 rounded-xl space-y-0.5 border border-slate-100">
                       <span className="text-slate-400 font-medium block">정답보기</span>
-                      <span className="font-bold text-emerald-800">
+                      <span lang="ja" className="font-bold text-emerald-800">
                         {q.choices[q.correctIndex]}
                       </span>
                     </div>
@@ -439,7 +439,7 @@ export function JlptTest({
                         : "bg-red-50/50 border-red-100"
                       }`}>
                       <span className="text-slate-400 font-medium block">내가 고른 답</span>
-                      <span className={`font-semibold ${isCorrect ? "text-slate-800" : "text-red-700 font-bold"}`}>
+                      <span lang="ja" className={`font-semibold ${isCorrect ? "text-slate-800" : "text-red-700 font-bold"}`}>
                         {ansIdx !== undefined
                           ? q.choices[ansIdx]
                           : "응답 없음"}

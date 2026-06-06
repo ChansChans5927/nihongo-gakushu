@@ -94,6 +94,7 @@ export function VocabStudy({
                   onClick={() => speakJapanese(currentVocab.word)}
                 >
                   <h1 
+                    lang="ja"
                     className={`text-4xl sm:text-6xl font-serif font-semibold leading-none select-none select-all relative group cursor-pointer transition-colors ${isSamurai ? "text-amber-950 hover:text-red-800 ink-reveal" : isYokai ? "text-[#f8f9fa] hover:text-[#38bdf8] drop-shadow-[0_0_15px_rgba(56,189,248,0.6)]" : "text-slate-900 hover:text-emerald-600"}`}
                     title="클릭하여 발음 듣기"
                   >
@@ -101,8 +102,8 @@ export function VocabStudy({
                   </h1>
                 </div>
                 <div className="relative">
-                  <span className={`text-xs font-mono ${isSamurai ? "text-amber-900/70" : isYokai ? "text-[#38bdf8]/70" : "text-slate-400"}`}>
-                    {currentVocab.hiragana} ({currentVocab.pronunciation})
+                  <span lang="ja" className={`text-xs font-mono ${isSamurai ? "text-amber-900/70" : isYokai ? "text-[#38bdf8]/70" : "text-slate-400"}`}>
+                    {currentVocab.hiragana} <span lang="ko">({currentVocab.pronunciation})</span>
                   </span>
                   <button
                     onClick={(e) => {
@@ -148,6 +149,7 @@ export function VocabStudy({
                       >
                         <div 
                           onClick={() => speakJapanese(kj.kanji)}
+                          lang="ja"
                           className={`text-xl font-serif font-black rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
                             isSamurai 
                               ? "text-red-800 bg-[#f4e8d1] border border-amber-900/30 hover:bg-[#f8f5ec]" 
@@ -204,10 +206,10 @@ export function VocabStudy({
             </div>
 
             <div className="space-y-1.5 z-10 relative">
-              <p className={`text-base sm:text-lg font-bold tracking-wide select-all ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa] drop-shadow-[0_0_8px_rgba(56,189,248,0.3)]" : "text-white"}`}>
+              <p lang="ja" className={`text-base sm:text-lg font-bold tracking-wide select-all ${isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa] drop-shadow-[0_0_8px_rgba(56,189,248,0.3)]" : "text-white"}`}>
                 {currentVocab.exampleSentence.japanese}
               </p>
-              <p className={`text-xs font-mono ${isSamurai ? "text-amber-900/70" : isYokai ? "text-[#38bdf8]/70" : "text-slate-400"}`}>
+              <p lang="ja" className={`text-xs font-mono ${isSamurai ? "text-amber-900/70" : isYokai ? "text-[#38bdf8]/70" : "text-slate-400"}`}>
                 {currentVocab.exampleSentence.hiragana}
               </p>
               <p className={`text-xs font-sans font-medium ${isSamurai ? "text-red-800" : isYokai ? "text-[#0ea5e9]" : "text-emerald-200"}`}>

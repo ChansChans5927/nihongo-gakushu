@@ -136,7 +136,7 @@ export function QuizTest({
           : "bg-slate-50 border border-slate-100 rounded-2xl py-6 sm:py-10 flex flex-col items-center justify-center space-y-3 px-4"
         }>
           {currentQuestion.type === 'blank_fill' ? (
-            <div className="w-full text-center space-y-3">
+            <div lang="ja" className="w-full text-center space-y-3">
               <div className={`text-lg sm:text-2xl font-semibold tracking-wide leading-relaxed ${isSamurai ? "text-amber-950 font-serif" : isYokai ? "text-[#f8f9fa] font-sans" : "text-slate-800 font-sans"}`}>
                 {(() => {
                   const sentence = currentQuestion.questionSentence || "";
@@ -145,7 +145,7 @@ export function QuizTest({
                     return (
                       <>
                         {parts[0]}
-                        <span className={`inline-flex items-center border-2 border-dashed px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold mx-1 select-none animate-pulse ${
+                        <span lang="ko" className={`inline-flex items-center border-2 border-dashed px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold mx-1 select-none animate-pulse ${
                           isSamurai ? "bg-amber-900/10 border-amber-900/40 text-amber-900" : isYokai ? "bg-[#38bdf8]/10 border-[#38bdf8]/40 text-[#38bdf8]" : "bg-emerald-50 border-emerald-400 text-emerald-800"
                         }`}>
                           빈칸
@@ -165,7 +165,7 @@ export function QuizTest({
                       return (
                         <>
                           {parts[0]}
-                          <span className={`inline-flex items-center border-2 border-dashed px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold mx-1 select-none animate-pulse ${
+                          <span lang="ko" className={`inline-flex items-center border-2 border-dashed px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold mx-1 select-none animate-pulse ${
                             isSamurai ? "bg-amber-900/10 border-amber-900/40 text-amber-900" : isYokai ? "bg-[#38bdf8]/10 border-[#38bdf8]/40 text-[#38bdf8]" : "bg-emerald-50 border-emerald-400 text-emerald-800"
                           }`}>
                             빈칸
@@ -180,7 +180,7 @@ export function QuizTest({
                         return (
                           <>
                             {charParts[0]}
-                            <span className={`inline-flex items-center border-2 border-dashed px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold mx-1 select-none animate-pulse ${
+                            <span lang="ko" className={`inline-flex items-center border-2 border-dashed px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold mx-1 select-none animate-pulse ${
                               isSamurai ? "bg-amber-900/10 border-amber-900/40 text-amber-900" : isYokai ? "bg-[#38bdf8]/10 border-[#38bdf8]/40 text-[#38bdf8]" : "bg-emerald-50 border-emerald-400 text-emerald-800"
                             }`}>
                               빈칸
@@ -198,7 +198,7 @@ export function QuizTest({
             </div>
           ) : (
             <>
-              <div className={`text-4xl sm:text-5xl font-extrabold select-none text-center ${isSamurai ? "font-serif text-amber-950 drop-shadow-sm" : isYokai ? "font-serif text-[#f8f9fa] drop-shadow-md shadow-[#48cae4]" : "font-serif text-slate-800"}`}>
+              <div lang="ja" className={`text-4xl sm:text-5xl font-extrabold select-none text-center ${isSamurai ? "font-serif text-amber-950 drop-shadow-sm" : isYokai ? "font-serif text-[#f8f9fa] drop-shadow-md shadow-[#48cae4]" : "font-serif text-slate-800"}`}>
                 {currentQuestion.type === 'kanji_match' ? (
                   <span className={`font-sans tracking-widest animate-pulse ${isSamurai ? "text-red-800" : isYokai ? "text-[#38bdf8]" : "text-amber-500"}`}>?</span>
                 ) : (
@@ -282,7 +282,7 @@ export function QuizTest({
                   } ${!isSamurai && "rounded-full"}`}>
                     {choiceIdx + 1}
                   </span>
-                  <span className={`leading-none ${
+                  <span lang="ja" className={`leading-none ${
                     isKanjiMatch
                       ? `text-xl sm:text-2xl font-serif font-extrabold tracking-normal pl-2 ${isSelected && isSamurai ? "text-amber-950" : isYokai ? "text-[#f8f9fa]" : "text-slate-900"}`
                       : `text-sm sm:text-base font-semibold ${isSamurai ? "font-serif" : isYokai ? "text-slate-200" : "text-slate-800"}`
