@@ -380,7 +380,7 @@ export function KanjiStudy({
           <button
             onClick={handlePrevStudy}
             disabled={currentKanjiIndex === 0}
-            className={`py-2.5 px-4 text-xs font-semibold transition-colors disabled:cursor-not-allowed cursor-pointer disabled:opacity-35 ${isSamurai
+            className={`py-3 px-5 text-sm font-bold transition-colors disabled:cursor-not-allowed cursor-pointer disabled:opacity-35 ${isSamurai
                 ? "bg-transparent hover:bg-amber-900/10 text-amber-950 border border-amber-900/30 rounded-none"
                 : isYokai
                 ? "bg-transparent hover:bg-[#0ea5e9]/20 text-[#e2e8f0] border border-[#0ea5e9]/40 rounded-lg"
