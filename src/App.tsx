@@ -454,7 +454,8 @@ export default function App() {
       const resData = await response.json();
 
       if (resData.success && resData.data && resData.data.length > 0) {
-        setJlptQuestions(resData.data);
+        const uniqueQs = resData.data.map((q: any, index: number) => ({ ...q, id: `jlpt_${index}` }));
+        setJlptQuestions(uniqueQs);
         setPhase('jlpt');
       } else {
         throw new Error(resData.errorMsg || "JLPT 기출문제를 불러오는 데 실패했습니다.");
