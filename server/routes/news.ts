@@ -8,14 +8,33 @@ import { Type } from "@google/genai";
 const router = express.Router();
 
 const getRandomNewsQuery = () => {
-  const queries = [
-    "TBS NEWS DIG shorts",
-    "ANNnewsCH shorts",
-    "FNNプライムオンライン shorts",
-    "日テレNEWS shorts",
-    "読売テレビニュース shorts"
+  const channels = [
+    "TBS NEWS DIG",
+    "ANNnewsCH",
+    "FNNプライムオンライン",
+    "日テレNEWS",
+    "読売テレビニュース",
+    "ABEMAニュース",
+    "テレ東BIZ"
   ];
-  return queries[Math.floor(Math.random() * queries.length)];
+
+  const topics = [
+    "",
+    "社会",
+    "経済",
+    "政治",
+    "国際",
+    "IT",
+    "話題",
+    "事件",
+    "動物",
+    "天気"
+  ];
+
+  const channel = channels[Math.floor(Math.random() * channels.length)];
+  const topic = topics[Math.floor(Math.random() * topics.length)];
+
+  return `${channel} shorts ${topic}`.trim();
 };
 
 router.get("/random", async (req, res) => {
@@ -33,11 +52,19 @@ router.get("/random", async (req, res) => {
     let subtitles = [];
 
     let existingIds: string[] = [];
+    let cachedNewsList: any[] = [];
     if (db) {
       try {
-        const dbNews = await db.collection("news_lessons").find({}, { projection: { id: 1 } }).toArray();
-        existingIds = dbNews.map((n: any) => n.id);
-      } catch (err) {}
+        cachedNewsList = await db.collection("news_lessons").find({}).toArray();
+        existingIds = cachedNewsList.map((n: any) => n.id);
+      } catch (err) { }
+    }
+
+    // 0. 캐시 제공 로직
+    if (!forceGenerate) {
+      const randomCached = cachedNewsList[Math.floor(Math.random() * cachedNewsList.length)];
+      console.log(`[News Gen] Served news lesson ${randomCached.id} instantly from MongoDB cache.`);
+      return res.json({ success: true, source: "mongodb_cache", data: randomCached });
     }
 
     // 1. YouTube 검색을 통해 무작위 비디오 선정 및 자막 추출
@@ -50,7 +77,8 @@ router.get("/random", async (req, res) => {
         const videos = r.videos;
 
         if (videos.length > 0) {
-          const freshVideos = videos.filter((v: any) => !existingIds.includes(v.videoId));
+          // Gemini API 토큰 폭탄을 방지하기 위해 90초 이하의 영상만 엄격하게 필터링
+          const freshVideos = videos.filter((v: any) => !existingIds.includes(v.videoId) && v.duration.seconds <= 90);
           const shuffled = freshVideos.sort(() => 0.5 - Math.random()).slice(0, 15);
           for (let v of shuffled) {
             try {
