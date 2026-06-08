@@ -172,7 +172,6 @@ export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps
       if (data.success) {
         setTtsGender(newGender);
         localStorage.setItem(`${username}_ttsGender`, newGender);
-        setMessage({ text: "음성 성별이 변경되었습니다.", type: 'success' });
       } else {
         throw new Error(data.errorMsg);
       }
