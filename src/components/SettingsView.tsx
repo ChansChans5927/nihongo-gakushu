@@ -30,7 +30,6 @@ export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps
   const [ttsGender, setTtsGender] = useState<'female' | 'male'>('female');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
 
@@ -149,7 +148,6 @@ export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps
       if (data.success) {
         setTtsSpeed(newSpeed);
         localStorage.setItem(`${username}_ttsSpeed`, newSpeed);
-        setMessage({ text: "음성 속도가 변경되었습니다.", type: 'success' });
       } else {
         throw new Error(data.errorMsg);
       }
@@ -183,31 +181,6 @@ export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps
       setMessage({ text: error.message || "설정 변경에 실패했습니다.", type: 'error' });
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleTestNotification = async () => {
-    setIsTesting(true);
-    setMessage(null);
-    try {
-      const res = await fetch('/api/notifications/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username })
-      });
-      const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.errorMsg);
-      }
-      const successMsg = NativeBridge.isMobileApp() 
-        ? "테스트 알림이 발송되었습니다. 상단 알림창을 확인해주세요!" 
-        : "테스트 알림이 발송되었습니다. PC 우측 하단(또는 우측 상단)을 확인해주세요!";
-      setMessage({ text: successMsg, type: 'success' });
-    } catch (error: any) {
-      console.error(error);
-      setMessage({ text: error.message || "테스트 알림 발송에 실패했습니다.", type: 'error' });
-    } finally {
-      setIsTesting(false);
     }
   };
 
@@ -319,23 +292,6 @@ export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps
                   </button>
                 )}
               </div>
-
-              {/* Test Button Section */}
-              {notificationsEnabled && (
-                <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between">
-                  <div className="text-sm text-slate-600">
-                    실제 알림이 어떻게 오는지 확인해 보세요.
-                  </div>
-                  <button
-                    onClick={handleTestNotification}
-                    disabled={isTesting}
-                    className="px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
-                    테스트 알림 발송
-                  </button>
-                </div>
-              )}
 
               {message && (
                 <div className={`mt-4 p-3 rounded-lg text-sm flex items-center gap-2 ${
