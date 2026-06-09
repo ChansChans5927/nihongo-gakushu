@@ -672,7 +672,7 @@ export default function App() {
     setQuestions([]);
     setNewsLesson(null);
     setNewsErrorMsg(null);
-    
+
     setIsJlptGraded(false);
     setJlptQuestions([]);
     setJlptAnswers({});
@@ -744,7 +744,7 @@ export default function App() {
                   테스트 단계: {currentQuestionIndex + 1} / {questions.length}
                 </span>
                 <span className="inline sm:hidden text-[10px] bg-blue-50 border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full font-mono font-semibold">
-                  테스트: {currentQuestionIndex + 1}/${questions.length}
+                  테스트: {currentQuestionIndex + 1}/{questions.length}
                 </span>
               </>
             )}
@@ -839,14 +839,14 @@ export default function App() {
               {phase === 'studying' && (
                 studyMode === 'vocab' ? (
                   vocabList.length > 0 && (
-                     <VocabStudy
-                       vocabList={vocabList}
-                       currentVocabIndex={currentVocabIndex}
-                       handlePrevStudy={handlePrevStudy}
-                       handleNextStudy={handleNextStudy}
-                       speakJapanese={speakJapanese}
-                       currentTheme={currentTheme}
-                     />
+                    <VocabStudy
+                      vocabList={vocabList}
+                      currentVocabIndex={currentVocabIndex}
+                      handlePrevStudy={handlePrevStudy}
+                      handleNextStudy={handleNextStudy}
+                      speakJapanese={speakJapanese}
+                      currentTheme={currentTheme}
+                    />
                   )
                 ) : (
                   kanjiList.length > 0 && (
