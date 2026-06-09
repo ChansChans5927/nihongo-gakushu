@@ -264,3 +264,271 @@
   box-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
   clip-path: polygon(10% 0, 90% 0, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0 90%, 0 10%);
 }
+
+/* ========================================================
+   Zen Garden Theme (Matcha / Calm Green)
+   ======================================================== */
+
+.zen-theme-base {
+  background-color: #f3f7f4;
+  background-image: 
+    repeating-linear-gradient(90deg, transparent, transparent 24px, rgba(74, 114, 86, 0.025) 24px, rgba(74, 114, 86, 0.025) 26px),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.7) 0%, transparent 100%);
+  color: #1e3524;
+  border: 1px solid #b8d0c0;
+  box-shadow: 
+    0 20px 45px rgba(45, 70, 53, 0.07),
+    0 1px 3px rgba(45, 70, 53, 0.02),
+    inset 0 0 50px rgba(255, 255, 255, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+/* Zen Button: Elegant Cream & Green border */
+.zen-button {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  color: #243e2a;
+  border: 1px solid #ccdcd2;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(45, 70, 53, 0.02);
+}
+
+.zen-button:hover {
+  background: #ffffff;
+  border-color: #8cba9a;
+  box-shadow: 0 5px 15px rgba(45, 70, 53, 0.06);
+  transform: translateY(-2px);
+}
+
+.zen-button-selected {
+  background: linear-gradient(135deg, #2d4c36, #1c3323);
+  border: 1px solid #15271b;
+  box-shadow: 0 8px 20px rgba(28, 51, 35, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+/* Ripple Click Animation for Zen Buttons (Concentric water droplet wave) */
+.zen-ripple {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(140, 186, 154, 0.7);
+  background: radial-gradient(circle, rgba(140, 186, 154, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  animation: zen-ripple-effect 0.9s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+  z-index: 5;
+}
+
+@keyframes zen-ripple-effect {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(8);
+    opacity: 0;
+  }
+}
+
+/* Zen Badge */
+.zen-seal-badge {
+  background: #ffffff;
+  color: #2d4c36;
+  border: 1.5px solid #8cba9a;
+  text-shadow: 0 1px 1px rgba(74, 114, 86, 0.05);
+  box-shadow: 0 2px 8px rgba(74, 114, 86, 0.04);
+}
+
+/* Drifting Leaves Effect */
+.zen-leaves {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1; /* behind contents but above card base */
+}
+
+/* Base leaves classes */
+.leaf-1, .leaf-2, .leaf-3, .leaf-4, .leaf-5 {
+  position: absolute;
+  opacity: 0;
+  filter: drop-shadow(0 2px 4px rgba(45, 70, 53, 0.1));
+  pointer-events: none;
+}
+
+/* Leaf 1: Matcha Green Tea Leaf */
+.leaf-1 {
+  left: 15%;
+  width: 14px;
+  height: 22px;
+  background: linear-gradient(to bottom right, #a2cca8, #2d4c36);
+  border-radius: 80% 0 85% 0;
+  animation: leaf-fall-3d-1 14s linear infinite;
+  animation-delay: 0s;
+}
+
+/* Leaf 2: Sakura Cherry Blossom Petal */
+.leaf-2 {
+  left: 38%;
+  width: 12px;
+  height: 18px;
+  background: linear-gradient(to bottom right, #fbcfe8, #f472b6);
+  border-radius: 50% 0 50% 50%;
+  animation: leaf-fall-3d-2 17s linear infinite;
+  animation-delay: -3.5s;
+}
+
+/* Leaf 3: Red Autumn Maple Leaf */
+.leaf-3 {
+  left: 58%;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(to bottom right, #fb923c, #ea580c, #dc2626);
+  border-radius: 60% 0 100% 0;
+  transform-origin: center;
+  animation: leaf-fall-3d-3 20s linear infinite;
+  animation-delay: -7s;
+}
+
+/* Leaf 4: Matcha Green Tea Leaf (Small) */
+.leaf-4 {
+  left: 78%;
+  width: 10px;
+  height: 16px;
+  background: linear-gradient(to bottom right, #b2dbb8, #3b6346);
+  border-radius: 80% 0 85% 0;
+  animation: leaf-fall-3d-4 12s linear infinite;
+  animation-delay: -1.5s;
+}
+
+/* Leaf 5: Sakura Cherry Blossom Petal (Pale) */
+.leaf-5 {
+  left: 92%;
+  width: 11px;
+  height: 16px;
+  background: linear-gradient(to bottom right, #fae8ff, #f0abfc);
+  border-radius: 50% 0 50% 50%;
+  animation: leaf-fall-3d-5 15s linear infinite;
+  animation-delay: -9.5s;
+}
+
+/* 3D Falling Animations for beautiful organic motion */
+@keyframes leaf-fall-3d-1 {
+  0% {
+    top: -10%;
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(15deg) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.85;
+  }
+  50% {
+    transform: rotateX(180deg) rotateY(360deg) rotateZ(120deg) translateX(35px);
+  }
+  90% {
+    opacity: 0.85;
+  }
+  100% {
+    top: 110%;
+    transform: rotateX(360deg) rotateY(720deg) rotateZ(240deg) translateX(-15px);
+    opacity: 0;
+  }
+}
+
+@keyframes leaf-fall-3d-2 {
+  0% {
+    top: -10%;
+    transform: rotateX(30deg) rotateY(-15deg) rotateZ(-45deg) translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  45% {
+    transform: rotateX(210deg) rotateY(180deg) rotateZ(60deg) translateX(-30px);
+  }
+  85% {
+    opacity: 0.8;
+  }
+  100% {
+    top: 110%;
+    transform: rotateX(390deg) rotateY(360deg) rotateZ(180deg) translateX(15px);
+    opacity: 0;
+  }
+}
+
+@keyframes leaf-fall-3d-3 {
+  0% {
+    top: -10%;
+    transform: rotateX(0deg) rotateY(45deg) rotateZ(0deg) translateX(0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  60% {
+    transform: rotateX(360deg) rotateY(180deg) rotateZ(180deg) translateX(-45px);
+  }
+  88% {
+    opacity: 0.9;
+  }
+  100% {
+    top: 110%;
+    transform: rotateX(720deg) rotateY(360deg) rotateZ(360deg) translateX(10px);
+    opacity: 0;
+  }
+}
+
+@keyframes leaf-fall-3d-4 {
+  0% {
+    top: -10%;
+    transform: rotateX(45deg) rotateY(-45deg) rotateZ(20deg) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.85;
+  }
+  50% {
+    transform: rotateX(135deg) rotateY(225deg) rotateZ(150deg) translateX(25px);
+  }
+  90% {
+    opacity: 0.85;
+  }
+  100% {
+    top: 110%;
+    transform: rotateX(270deg) rotateY(450deg) rotateZ(280deg) translateX(-25px);
+    opacity: 0;
+  }
+}
+
+@keyframes leaf-fall-3d-5 {
+  0% {
+    top: -10%;
+    transform: rotateX(-20deg) rotateY(10deg) rotateZ(-30deg) translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.75;
+  }
+  40% {
+    transform: rotateX(160deg) rotateY(200deg) rotateZ(90deg) translateX(-20px);
+  }
+  85% {
+    opacity: 0.75;
+  }
+  100% {
+    top: 110%;
+    transform: rotateX(340deg) rotateY(380deg) rotateZ(210deg) translateX(20px);
+    opacity: 0;
+  }
+}

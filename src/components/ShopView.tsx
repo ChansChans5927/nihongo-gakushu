@@ -208,6 +208,63 @@ export function ShopView({
               )}
             </div>
           </div>
+
+          {/* Zen Garden Theme */}
+          <div className={`border rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
+            currentTheme === 'zen'
+              ? 'zen-theme-base border-emerald-600/40 ring-2 ring-emerald-600/20 shadow-md'
+              : 'border-slate-200 bg-gradient-to-br from-white to-[#f0f5f2] hover:border-emerald-300 hover:shadow-sm'
+          }`}>
+            {currentTheme === 'zen' && (
+              <div className="zen-leaves">
+                <div className="leaf-1"></div>
+                <div className="leaf-2"></div>
+                <div className="leaf-3"></div>
+                <div className="leaf-4"></div>
+                <div className="leaf-5"></div>
+              </div>
+            )}
+            <div className="absolute top-0 right-0 p-3 opacity-15 pointer-events-none z-0">
+              <Sparkles className={`w-16 h-16 ${currentTheme === 'zen' ? 'text-emerald-700' : 'text-slate-400'}`} />
+            </div>
+            <div className="space-y-2 relative z-10">
+              <div className="flex items-center justify-between">
+                <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'zen' ? 'text-emerald-950 font-black' : 'text-slate-900'}`}>
+                  젠 가든 스킨 🍵
+                </h5>
+                {!unlockedThemes.includes('zen') && (
+                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-300">
+                    1,000 P
+                  </span>
+                )}
+              </div>
+              <p className={`text-xs ${currentTheme === 'zen' ? 'text-emerald-800/80' : 'text-slate-500'}`}>
+                마음이 차분해지는 단아한 젠 가든 디자인입니다. 배경에 잎사귀들이 잔잔히 흩날리며, 보기를 클릭할 때마다 맑은 물방울 파동이 일어납니다.
+              </p>
+            </div>
+            <div className="mt-6 relative z-10">
+              {currentTheme === 'zen' ? (
+                <div className="w-full text-center py-2 bg-emerald-800/10 text-emerald-800 border border-emerald-800/20 font-bold rounded-xl text-sm cursor-not-allowed">
+                  현재 장착 중
+                </div>
+              ) : unlockedThemes.includes('zen') ? (
+                <button
+                  onClick={() => equipTheme('zen')}
+                  className="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer"
+                >
+                  장착하기
+                </button>
+              ) : (
+                <button
+                  onClick={() => buyTheme('zen', 1000)}
+                  disabled={points < 1000}
+                  className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  1,000 P로 구매하기
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </motion.div>
