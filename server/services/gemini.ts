@@ -66,7 +66,7 @@ export const QUIZ_SCHEMA = {
       type: { type: Type.STRING, description: "One of: meaning, reading, kanji_match, blank_fill" },
       targetWord: { type: Type.STRING, description: "The target word from study cards" },
       questionText: { type: Type.STRING, description: "Question instruction text in Korean" },
-      questionSentence: { type: Type.STRING, description: "Sentence with '__blank__' replacing target word (e.g., '本을__blank__。'). For other types, empty string." },
+      questionSentence: { type: Type.STRING, description: "Sentence with '__blank__' replacing target word (e.g., '本を__blank__。'). For other types, empty string." },
       choices: {
         type: Type.ARRAY,
         items: { type: Type.STRING },

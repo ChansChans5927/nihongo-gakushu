@@ -89,7 +89,7 @@ router.post("/generate", async (req, res) => {
     const batchInstructions = [
       "Focus on common daily life verbs and adjectives (e.g. 食べる, 行く, 楽しい).",
       "Focus on nouns related to objects, places, or jobs (e.g. 教室, 銀行, 会社員).",
-      "Focus on abstract vocabulary, emotions, or social concepts (e.g. 感謝, 경제, 협력).",
+      "Focus on abstract vocabulary, emotions, or social concepts (e.g. 感謝, 経済, 協力).",
       "Focus on vocabulary related to movement, direction, or time (e.g. 準備, 週末)."
     ];
 
