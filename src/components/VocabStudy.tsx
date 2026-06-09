@@ -70,7 +70,14 @@ export function VocabStudy({
             : "bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col shrink-0 relative"
       }>
         {isSamurai && <div className="samurai-embers"></div>}
-        {isYokai && <div className="yokai-embers"></div>}
+        {isYokai && (
+          <div className="yokai-wisps-container">
+            <div className="yokai-wisp yokai-wisp-1"></div>
+            <div className="yokai-wisp yokai-wisp-2"></div>
+            <div className="yokai-wisp yokai-wisp-3"></div>
+            <div className="yokai-wisp yokai-wisp-4"></div>
+          </div>
+        )}
         {isZen && (
           <div className="zen-leaves">
             <div className="leaf-1"></div>
