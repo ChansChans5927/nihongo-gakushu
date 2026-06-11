@@ -6,7 +6,7 @@ import { Type } from "@google/genai";
 const router = express.Router();
 
 router.post("/generate", async (req, res) => {
-  const { count, level, excludeKanji, forceGenerate } = req.body;
+  const { count, level, excludeKanji, forceGenerate, targetKanjis } = req.body;
   const numCount = parseInt(count, 10) || 5;
   const targetLevel = level || "all";
   const excludedList = Array.isArray(excludeKanji) ? excludeKanji : [];
@@ -21,7 +21,9 @@ router.post("/generate", async (req, res) => {
 
   try {
     let cachedKanjis: any[] = [];
-    if (db) {
+    const hasTargets = Array.isArray(targetKanjis) && targetKanjis.length > 0;
+
+    if (!hasTargets && db) {
       const query: any = {};
       if (targetLevel !== "all") {
         query.jlptLevel = targetLevel;
@@ -36,17 +38,19 @@ router.post("/generate", async (req, res) => {
       }
     }
 
-    if (!forceGenerate && cachedKanjis.length >= numCount) {
+    if (!hasTargets && !forceGenerate && cachedKanjis.length >= numCount) {
       const shuffled = cachedKanjis.sort(() => 0.5 - Math.random());
       const selectedKanjis = shuffled.slice(0, numCount);
       console.log(`[Kanji Gen] Served ${numCount} cards instantly from MongoDB cache.`);
       return res.json({ success: true, source: "mongodb_cache", data: selectedKanjis });
     }
 
-    const missingCount = forceGenerate ? numCount : Math.max(0, numCount - cachedKanjis.length);
+    const missingCount = hasTargets 
+      ? targetKanjis.length 
+      : (forceGenerate ? numCount : Math.max(0, numCount - cachedKanjis.length));
 
     let allDbKanjis: string[] = [];
-    if (db) {
+    if (!hasTargets && db) {
       try {
         const dbKanjis = await db.collection("kanjis").find({}, { projection: { kanji: 1 } }).toArray();
         allDbKanjis = dbKanjis.map((item: any) => item.kanji);
@@ -56,12 +60,20 @@ router.post("/generate", async (req, res) => {
     }
     const fullExcludedList = Array.from(new Set([...excludedList, ...allDbKanjis]));
 
+    const targetBatches: string[][] = [];
     const batchSizes: number[] = [];
-    let remaining = missingCount;
-    while (remaining > 0) {
-      const size = Math.min(remaining, 5);
-      batchSizes.push(size);
-      remaining -= size;
+
+    if (hasTargets) {
+      for (let i = 0; i < targetKanjis.length; i += 5) {
+        targetBatches.push(targetKanjis.slice(i, i + 5));
+      }
+    } else {
+      let remaining = missingCount;
+      while (remaining > 0) {
+        const size = Math.min(remaining, 5);
+        batchSizes.push(size);
+        remaining -= size;
+      }
     }
 
     const batchInstructions = [
@@ -71,73 +83,112 @@ router.post("/generate", async (req, res) => {
       "Focus primarily on feelings, natural elements, workspace items, or social words."
     ];
 
-    const promises = batchSizes.map(async (size, idx) => {
-      const focusHint = batchInstructions[idx % batchInstructions.length];
-      const prompt = `
-        Create exactly ${size} Japanese Kanji learning cards for a Korean speaker.
-        Target JLPT difficulty level filter: ${targetLevel === "all" ? "A high quality balanced mix of useful JLPT levels from N5 to N1" : `Strictly JLPT ${targetLevel}`}.
-        
-        Focus hint for this specific small batch of ${size} characters (MUST follow for diversity): ${focusHint}
-        
-        - Keep all mnemonics and explanations very brief (max 2 concise Korean sentences) to ensure snappy responses.
-        
-        CRITICAL CONSTRAINTS:
-        - Strictly ensure all generated Kanji are globally unique.
-        - ABSOLUTELY EXCLUDE these Kanji characters (already mastered): ${JSON.stringify(fullExcludedList)}.
-        
-        CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
-        - Radical Breakdown Accuracy: Deconstruct the Kanji into its actual visual components. If not a standard Kanji, describe it directly as a shape (e.g., component: "丰", meaning: "양손을 맞잡은 모양"). NEVER map to incorrect characters.
-        - Mnemonic Consistency: The mnemonic story MUST be strictly consistent with the components in 'radicalsBreakdown'.
-        - Pictorial Explanations: Describe ancient pictographs/symbols as visual shapes instead of forcing a modern character match.
-
-        FORMATTING RULES:
-        - "mnemonic": Create extremely intuitive visual association explanations in Korean (max 1-2 short sentences).
-        - "meaning": Format EXACTLY as "뜻 음" (e.g., "볼 견").
-        - "onyomi" & "hunyomi": MUST be in Hiragana ONLY.
-        - "onyomiKorean" & "hunyomiKorean": MUST be Korean pronunciations ONLY.
-        - "radicalsBreakdown": Provide constituent components. For each component, provide "component", "meaning" (in Korean), and "mnemonic" (under 1 sentence, max 15 Korean words).
-        - "relatedWords": Exactly 3 practical words containing the Kanji.
-        - "exampleSentence": 1 natural sentence utilizing the Kanji.
-
-        Return absolutely valid JSON matching the responseSchema precisely.
-      `;
-
-      const systemInstruction = "You are an expert Japanese and Kanji language professor who specializes in visual mnemonics, associations, and helping Korean learners master Japanese characters with minimal effort.";
-      const schema = {
-        type: Type.ARRAY,
-        description: "List of Kanji learning cards",
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            id: { type: Type.STRING, description: "Unique alphabetic id" },
-            kanji: { type: Type.STRING, description: "The single Kanji character" },
-            strokeCount: { type: Type.INTEGER, description: "Stroke count as an integer" },
-            jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
-            grade: { type: Type.STRING, description: "School grade or level (e.g., 초등 1학년, 상용 한자)" },
-            mnemonic: { type: Type.STRING, description: "An intuitive visual association storyboard in Korean (strictly maximum 2 brief sentences, under 40 Korean words)" },
-            meaning: { type: Type.STRING, description: "Korean meaning and Hanja reading Name (e.g., 볼 견)" },
-            onyomi: { type: Type.STRING, description: "Main Onyomi readings in Hiragana split by comma" },
-            onyomiKorean: { type: Type.STRING, description: "Main Onyomi Korean pronunciations split by comma" },
-            hunyomi: { type: Type.STRING, description: "Main Hunyomi readings in Hiragana split by comma" },
-            hunyomiKorean: { type: Type.STRING, description: "Main Hunyomi Korean pronunciations split by comma" },
-            radicalsBreakdown: KANJI_BREAKDOWN_SCHEMA,
-            relatedWords: RELATED_WORDS_SCHEMA,
-            exampleSentence: EXAMPLE_SENTENCE_SCHEMA
-          },
-          required: [
-            "id", "kanji", "strokeCount", "jlptLevel", "grade", "mnemonic", "meaning",
-            "onyomi", "onyomiKorean", "hunyomi", "hunyomiKorean", "relatedWords", "exampleSentence", "radicalsBreakdown"
-          ]
-        }
-      };
-
-      try {
-        return await callGeminiJSON(prompt, systemInstruction, schema);
-      } catch (parseErr) {
-        console.error("Failed to fetch or parse single batch JSON response.", parseErr);
-        return [];
+    const schema = {
+      type: Type.ARRAY,
+      description: "List of Kanji learning cards",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          id: { type: Type.STRING, description: "Unique alphabetic id" },
+          kanji: { type: Type.STRING, description: "The single Kanji character" },
+          strokeCount: { type: Type.INTEGER, description: "Stroke count as an integer" },
+          jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
+          grade: { type: Type.STRING, description: "School grade or level (e.g., 초등 1학년, 상용 한자)" },
+          mnemonic: { type: Type.STRING, description: "An intuitive visual association storyboard in Korean (strictly maximum 2 brief sentences, under 40 Korean words)" },
+          meaning: { type: Type.STRING, description: "Korean meaning and Hanja reading Name (e.g., 볼 견)" },
+          onyomi: { type: Type.STRING, description: "Main Onyomi readings in Hiragana split by comma" },
+          onyomiKorean: { type: Type.STRING, description: "Main Onyomi Korean pronunciations split by comma" },
+          hunyomi: { type: Type.STRING, description: "Main Hunyomi readings in Hiragana split by comma" },
+          hunyomiKorean: { type: Type.STRING, description: "Main Hunyomi Korean pronunciations split by comma" },
+          radicalsBreakdown: KANJI_BREAKDOWN_SCHEMA,
+          relatedWords: RELATED_WORDS_SCHEMA,
+          exampleSentence: EXAMPLE_SENTENCE_SCHEMA
+        },
+        required: [
+          "id", "kanji", "strokeCount", "jlptLevel", "grade", "mnemonic", "meaning",
+          "onyomi", "onyomiKorean", "hunyomi", "hunyomiKorean", "relatedWords", "exampleSentence", "radicalsBreakdown"
+        ]
       }
-    });
+    };
+
+    const systemInstruction = "You are an expert Japanese and Kanji language professor who specializes in visual mnemonics, associations, and helping Korean learners master Japanese characters with minimal effort.";
+
+    const promises = hasTargets
+      ? targetBatches.map(async (batch, idx) => {
+          const focusHint = batchInstructions[idx % batchInstructions.length];
+          const prompt = `
+            Create Japanese Kanji learning cards for a Korean speaker.
+            Specifically, you MUST create cards for exactly these ${batch.length} Kanji characters: ${JSON.stringify(batch)}.
+            Ensure you detect the correct JLPT level for each character (N5, N4, N3, N2, or N1) and fill it in 'jlptLevel'.
+            
+            Focus hint (apply to components context if relevant): ${focusHint}
+            
+            - Keep all mnemonics and explanations very brief (max 2 concise Korean sentences) to ensure snappy responses.
+            
+            CRITICAL CONSTRAINTS:
+            - Only create cards for the requested Kanjis: ${JSON.stringify(batch)}.
+            - Strictly ensure all generated Kanji are globally unique.
+            
+            CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
+            - Radical Breakdown Accuracy: Deconstruct the Kanji into its actual visual components. If not a standard Kanji, describe it directly as a shape (e.g., component: "丰", meaning: "양손을 맞잡은 모양"). NEVER map to incorrect characters.
+            - Mnemonic Consistency: The mnemonic story MUST be strictly consistent with the components in 'radicalsBreakdown'.
+            - Pictorial Explanations: Describe ancient pictographs/symbols as visual shapes instead of forcing a modern character match.
+
+            FORMATTING RULES:
+            - "mnemonic": Create extremely intuitive visual association explanations in Korean (max 1-2 short sentences).
+            - "meaning": Format EXACTLY as "뜻 음" (e.g., "볼 견").
+            - "onyomi" & "hunyomi": MUST be in Hiragana ONLY.
+            - "onyomiKorean" & "hunyomiKorean": MUST be Korean pronunciations ONLY.
+            - "radicalsBreakdown": Provide constituent components. For each component, provide "component", "meaning" (in Korean), and "mnemonic" (under 1 sentence, max 15 Korean words).
+            - "relatedWords": Exactly 3 practical words containing the Kanji.
+            - "exampleSentence": 1 natural sentence utilizing the Kanji.
+
+            Return absolutely valid JSON matching the responseSchema precisely.
+          `;
+          try {
+            return await callGeminiJSON(prompt, systemInstruction, schema);
+          } catch (parseErr) {
+            console.error(`Failed to generate custom batch for ${JSON.stringify(batch)}`, parseErr);
+            return [];
+          }
+        })
+      : batchSizes.map(async (size, idx) => {
+          const focusHint = batchInstructions[idx % batchInstructions.length];
+          const prompt = `
+            Create exactly ${size} Japanese Kanji learning cards for a Korean speaker.
+            Target JLPT difficulty level filter: ${targetLevel === "all" ? "A high quality balanced mix of useful JLPT levels from N5 to N1" : `Strictly JLPT ${targetLevel}`}.
+            
+            Focus hint for this specific small batch of ${size} characters (MUST follow for diversity): ${focusHint}
+            
+            - Keep all mnemonics and explanations very brief (max 2 concise Korean sentences) to ensure snappy responses.
+            
+            CRITICAL CONSTRAINTS:
+            - Strictly ensure all generated Kanji are globally unique.
+            - ABSOLUTELY EXCLUDE these Kanji characters (already mastered): ${JSON.stringify(fullExcludedList)}.
+            
+            CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
+            - Radical Breakdown Accuracy: Deconstruct the Kanji into its actual visual components. If not a standard Kanji, describe it directly as a shape (e.g., component: "丰", meaning: "양손을 맞잡은 모양"). NEVER map to incorrect characters.
+            - Mnemonic Consistency: The mnemonic story MUST be strictly consistent with the components in 'radicalsBreakdown'.
+            - Pictorial Explanations: Describe ancient pictographs/symbols as visual shapes instead of forcing a modern character match.
+    
+            FORMATTING RULES:
+            - "mnemonic": Create extremely intuitive visual association explanations in Korean (max 1-2 short sentences).
+            - "meaning": Format EXACTLY as "뜻 음" (e.g., "볼 견").
+            - "onyomi" & "hunyomi": MUST be in Hiragana ONLY.
+            - "onyomiKorean" & "hunyomiKorean": MUST be Korean pronunciations ONLY.
+            - "radicalsBreakdown": Provide constituent components. For each component, provide "component", "meaning" (in Korean), and "mnemonic" (under 1 sentence, max 15 Korean words).
+            - "relatedWords": Exactly 3 practical words containing the Kanji.
+            - "exampleSentence": 1 natural sentence utilizing the Kanji.
+    
+            Return absolutely valid JSON matching the responseSchema precisely.
+          `;
+          try {
+            return await callGeminiJSON(prompt, systemInstruction, schema);
+          } catch (parseErr) {
+            console.error("Failed to fetch or parse single batch JSON response.", parseErr);
+            return [];
+          }
+        });
 
     const parsedBatches = await Promise.all(promises);
 

@@ -6,7 +6,7 @@ import { Type } from "@google/genai";
 const router = express.Router();
 
 router.post("/generate", async (req, res) => {
-  const { count, level, excludeVocab, forceGenerate } = req.body;
+  const { count, level, excludeVocab, forceGenerate, targetVocabs } = req.body;
   const numCount = parseInt(count, 10) || 5;
   const targetLevel = level || "all";
   const excludedList = Array.isArray(excludeVocab) ? excludeVocab : [];
@@ -20,7 +20,9 @@ router.post("/generate", async (req, res) => {
 
   try {
     let cachedVocabs: any[] = [];
-    if (db) {
+    const hasTargets = Array.isArray(targetVocabs) && targetVocabs.length > 0;
+
+    if (!hasTargets && db) {
       const query: any = {};
       if (targetLevel !== "all") {
         query.jlptLevel = targetLevel;
@@ -39,7 +41,7 @@ router.post("/generate", async (req, res) => {
     let selectedQuizzes: any[] = [];
     let hasAllQuizzes = false;
 
-    if (cachedVocabs.length >= numCount) {
+    if (!hasTargets && cachedVocabs.length >= numCount) {
       const shuffled = cachedVocabs.sort(() => 0.5 - Math.random());
       selectedVocabs = shuffled.slice(0, numCount);
 
@@ -52,7 +54,7 @@ router.post("/generate", async (req, res) => {
       }
     }
 
-    if (!forceGenerate && hasAllQuizzes && selectedVocabs.length >= numCount) {
+    if (!hasTargets && !forceGenerate && hasAllQuizzes && selectedVocabs.length >= numCount) {
       const formattedQuiz = selectedQuizzes.map((q, idx) => {
         const associatedItem = selectedVocabs.find(item => item.word === q.targetWord);
         return {
@@ -65,10 +67,12 @@ router.post("/generate", async (req, res) => {
       return res.json({ success: true, source: "mongodb_cache", data: selectedVocabs, quiz: formattedQuiz });
     }
 
-    const missingCount = forceGenerate ? numCount : Math.max(0, numCount - selectedVocabs.length);
+    const missingCount = hasTargets
+      ? targetVocabs.length
+      : (forceGenerate ? numCount : Math.max(0, numCount - selectedVocabs.length));
 
     let allDbVocabs: string[] = [];
-    if (db) {
+    if (!hasTargets && db) {
       try {
         const dbVocabs = await db.collection("vocabs").find({}, { projection: { word: 1 } }).toArray();
         allDbVocabs = dbVocabs.map((item: any) => item.word);
@@ -78,93 +82,144 @@ router.post("/generate", async (req, res) => {
     }
     const fullExcludedList = Array.from(new Set([...excludedList, ...allDbVocabs]));
 
+    const targetBatches: { word: string; reading?: string }[][] = [];
     const batchSizes: number[] = [];
-    let remaining = missingCount;
-    while (remaining > 0) {
-      const size = Math.min(remaining, 5);
-      batchSizes.push(size);
-      remaining -= size;
+
+    if (hasTargets) {
+      for (let i = 0; i < targetVocabs.length; i += 5) {
+        targetBatches.push(targetVocabs.slice(i, i + 5));
+      }
+    } else {
+      let remaining = missingCount;
+      while (remaining > 0) {
+        const size = Math.min(remaining, 5);
+        batchSizes.push(size);
+        remaining -= size;
+      }
     }
 
     const batchInstructions = [
       "Focus on common daily life verbs and adjectives (e.g. 食べる, 行く, 楽しい).",
       "Focus on nouns related to objects, places, or jobs (e.g. 教室, 銀行, 会社員).",
-      "Focus on abstract vocabulary, emotions, or social concepts (e.g. 感謝, 経済, 協力).",
+      "Focus on abstract vocabulary, emotions, or social concepts (e.g. 感謝, 경제, 協力).",
       "Focus on vocabulary related to movement, direction, or time (e.g. 準備, 週末)."
     ];
 
-    const promises = batchSizes.map(async (size, idx) => {
-      const focusHint = batchInstructions[idx % batchInstructions.length];
-      const prompt = `
-        Create exactly ${size} Japanese vocabulary study cards and a corresponding set of exactly ${size} multiple-choice quizzes for Korean speakers.
-        Target JLPT difficulty level filter: ${targetLevel === "all" ? "A high quality balanced mix of useful JLPT levels from N5 to N1" : `Strictly JLPT ${targetLevel}`}.
-        
-        Focus hint for this specific small batch of ${size} words (MUST follow for diversity): ${focusHint}
-        
-        CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
-        - Radical Breakdown Accuracy: For each Kanji, deconstruct into its actual visual components. If not a standard Kanji, describe it directly as a shape (e.g., "양손을 맞잡은 모양"). NEVER map to incorrect characters.
-        - Mnemonic Consistency: The mnemonic story MUST be strictly consistent with its components.
-        - Pictorial Explanations: Describe ancient pictographs/symbols as visual shapes instead of forcing a modern character match.
-
-        CRITICAL CONSTRAINTS:
-        1. Every generated word MUST contain at least one Kanji (e.g., 食べる, 銀行). Hiragana/Katakana-only words are STRICTLY FORBIDDEN.
-        2. Ensure all generated words are globally unique.
-        3. ABSOLUTELY EXCLUDE these words (already mastered): ${JSON.stringify(fullExcludedList)}.
-        4. CRITICAL QUESTION QUALITY:
-           - NEVER include the target Japanese word or its constituent Kanji in 'questionText' or 'questionSentence'!
-           - 'kanji_match': Format 'questionText' EXACTLY as '한국어 뜻이 "[meaning]"인 알맞은 일본어 단어 표기(한자)는 무엇일까요?'. NEVER expose the constituent Kanji meanings in the question.
-        
-        For the "data" array:
-        - Generate exactly ${size} vocabulary cards.
-        - 'exampleSentence' MUST be a natural sentence.
-        
-        For the "quiz" array:
-        - Generate exactly ${size} quizzes. Distribute types: 'meaning', 'reading', 'kanji_match', and 'blank_fill'.
-        - 'blank_fill': Replace the target word in 'exampleSentence' with "__blank__". Format 'questionText' EXACTLY as "제시된 일본어 예문의 빈칸에 들어갈 알맞은 단어는 무엇일까요?". Choices MUST match grammatical context.
-        - 'meaning': Format 'questionText' EXACTLY as "다음 단어의 올바른 한국어 뜻은 무엇입니까?". Choices MUST be Korean meanings.
-        - 'reading': Format 'questionText' EXACTLY as "다음 단어의 올바른 일본어 발음은 무엇입니까?". Choices MUST be STRICTLY Hiragana ONLY (NO Romaji, NO Korean).
-        - 'kanji_match': Choices MUST be base Japanese words.
-        
-        Return absolutely valid JSON matching the responseSchema precisely.
-      `;
-
-      const systemInstruction = "You are an expert Japanese and Kanji professor specializing in visual mnemonics, associations, and helping Korean learners master Japanese words and characters.";
-      const schema = {
-        type: Type.OBJECT,
-        properties: {
-          data: {
-            type: Type.ARRAY,
-            description: "List of Japanese vocabulary study cards",
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING, description: "Unique alphabetic id" },
-                word: { type: Type.STRING, description: "The Japanese word containing Kanji" },
-                hiragana: { type: Type.STRING, description: "Hiragana reading of the word" },
-                pronunciation: { type: Type.STRING, description: "Korean pronunciation phonetics of the word" },
-                meaning: { type: Type.STRING, description: "Korean meaning" },
-                jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
-                kanjiBreakdown: VOCAB_KANJI_BREAKDOWN_SCHEMA,
-                exampleSentence: EXAMPLE_SENTENCE_SCHEMA
-              },
-              required: [
-                "id", "word", "hiragana", "pronunciation", "meaning", "jlptLevel",
-                "kanjiBreakdown", "exampleSentence"
-              ]
-            }
-          },
-          quiz: QUIZ_SCHEMA
+    const schema = {
+      type: Type.OBJECT,
+      properties: {
+        data: {
+          type: Type.ARRAY,
+          description: "List of Japanese vocabulary study cards",
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              id: { type: Type.STRING, description: "Unique alphabetic id" },
+              word: { type: Type.STRING, description: "The Japanese word containing Kanji" },
+              hiragana: { type: Type.STRING, description: "Hiragana reading of the word" },
+              pronunciation: { type: Type.STRING, description: "Korean pronunciation phonetics of the word" },
+              meaning: { type: Type.STRING, description: "Korean meaning" },
+              jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
+              kanjiBreakdown: VOCAB_KANJI_BREAKDOWN_SCHEMA,
+              exampleSentence: EXAMPLE_SENTENCE_SCHEMA
+            },
+            required: [
+              "id", "word", "hiragana", "pronunciation", "meaning", "jlptLevel",
+              "kanjiBreakdown", "exampleSentence"
+            ]
+          }
         },
-        required: ["data", "quiz"]
-      };
+        quiz: QUIZ_SCHEMA
+      },
+      required: ["data", "quiz"]
+    };
 
-      try {
-        return await callGeminiJSON(prompt, systemInstruction, schema);
-      } catch (parseErr) {
-        console.error("Failed to fetch or parse single vocab batch JSON response.", parseErr);
-        return { data: [], quiz: [] };
-      }
-    });
+    const systemInstruction = "You are an expert Japanese and Kanji professor specializing in visual mnemonics, associations, and helping Korean learners master Japanese words and characters.";
+
+    const promises = hasTargets
+      ? targetBatches.map(async (batch, idx) => {
+          const focusHint = batchInstructions[idx % batchInstructions.length];
+          const prompt = `
+            Create exactly ${batch.length} Japanese vocabulary study cards and a corresponding set of exactly ${batch.length} multiple-choice quizzes for Korean speakers.
+            Specifically, you MUST build cards and quizzes for exactly these ${batch.length} vocabulary words: ${JSON.stringify(batch)}.
+            Ensure you detect the correct JLPT level for each word (N5, N4, N3, N2, or N1) and fill it in 'jlptLevel'.
+            
+            Focus hint (apply to components context if relevant): ${focusHint}
+            
+            - Keep all mnemonics and explanations very brief (max 2 concise Korean sentences) to ensure snappy responses.
+            
+            CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
+            - Radical Breakdown Accuracy: For each Kanji, deconstruct into its actual visual components. If not a standard Kanji, describe it directly as a shape.
+            - Mnemonic Consistency: The mnemonic story MUST be strictly consistent with its components.
+    
+            CRITICAL CONSTRAINTS:
+            1. Every generated word MUST contain at least one Kanji.
+            2. Only create cards for the requested words: ${JSON.stringify(batch)}.
+            3. CRITICAL QUESTION QUALITY:
+               - NEVER include the target Japanese word or its constituent Kanji in 'questionText' or 'questionSentence'!
+               - 'kanji_match': Format 'questionText' EXACTLY as '한국어 뜻이 "[meaning]"인 알맞은 일본어 단어 표기(한자)는 무엇일까요?'.
+            
+            For the "data" array:
+            - Generate exactly ${batch.length} vocabulary cards.
+            - 'exampleSentence' MUST be a natural sentence.
+            
+            For the "quiz" array:
+            - Generate exactly ${batch.length} quizzes. Distribute types: 'meaning', 'reading', 'kanji_match', and 'blank_fill'.
+            - 'blank_fill': Replace the target word in 'exampleSentence' with "__blank__". Format 'questionText' EXACTLY as "제시된 일본어 예문의 빈칸에 들어갈 알맞은 단어는 무엇일까요?".
+            - 'meaning': Format 'questionText' EXACTLY as "다음 단어의 올바른 한국어 뜻은 무엇입니까?".
+            - 'reading': Format 'questionText' EXACTLY as "다음 단어의 올바른 일본어 발음은 무엇입니까?". Choices MUST be STRICTLY Hiragana ONLY (NO Romaji, NO Korean).
+            - 'kanji_match': Choices MUST be base Japanese words.
+            
+            Return absolutely valid JSON matching the responseSchema precisely.
+          `;
+          try {
+            return await callGeminiJSON(prompt, systemInstruction, schema);
+          } catch (parseErr) {
+            console.error(`Failed to generate custom vocab batch for ${JSON.stringify(batch)}`, parseErr);
+            return { data: [], quiz: [] };
+          }
+        })
+      : batchSizes.map(async (size, idx) => {
+          const focusHint = batchInstructions[idx % batchInstructions.length];
+          const prompt = `
+            Create exactly ${size} Japanese vocabulary study cards and a corresponding set of exactly ${size} multiple-choice quizzes for Korean speakers.
+            Target JLPT difficulty level filter: ${targetLevel === "all" ? "A high quality balanced mix of useful JLPT levels from N5 to N1" : `Strictly JLPT ${targetLevel}`}.
+            
+            Focus hint for this specific small batch of ${size} words (MUST follow for diversity): ${focusHint}
+            
+            CRITICAL KANJI BREAKDOWN & MNEMONIC ACCURACY RULES:
+            - Radical Breakdown Accuracy: For each Kanji, deconstruct into its actual visual components. If not a standard Kanji, describe it directly as a shape (e.g., "양손을 맞잡은 모양"). NEVER map to incorrect characters.
+            - Mnemonic Consistency: The mnemonic story MUST be strictly consistent with its components.
+            - Pictorial Explanations: Describe ancient pictographs/symbols as visual shapes instead of forcing a modern character match.
+    
+            CRITICAL CONSTRAINTS:
+            1. Every generated word MUST contain at least one Kanji (e.g., 食べる, 銀行). Hiragana/Katakana-only words are STRICTLY FORBIDDEN.
+            2. Ensure all generated words are globally unique.
+            3. ABSOLUTELY EXCLUDE these words (already mastered): ${JSON.stringify(fullExcludedList)}.
+            4. CRITICAL QUESTION QUALITY:
+               - NEVER include the target Japanese word or its constituent Kanji in 'questionText' or 'questionSentence'!
+               - 'kanji_match': Format 'questionText' EXACTLY as '한국어 뜻이 "[meaning]"인 알맞은 일본어 단어 표기(한자)는 무엇일까요?'. NEVER expose the constituent Kanji meanings in the question.
+            
+            For the "data" array:
+            - Generate exactly ${size} vocabulary cards.
+            - 'exampleSentence' MUST be a natural sentence.
+            
+            For the "quiz" array:
+            - Generate exactly ${size} quizzes. Distribute types: 'meaning', 'reading', 'kanji_match', and 'blank_fill'.
+            - 'blank_fill': Replace the target word in 'exampleSentence' with "__blank__". Format 'questionText' EXACTLY as "제시된 일본어 예문의 빈칸에 들어갈 알맞은 단어는 무엇일까요?". Choices MUST match grammatical context.
+            - 'meaning': Format 'questionText' EXACTLY as "다음 단어의 올바른 한국어 뜻은 무엇입니까?". Choices MUST be Korean meanings.
+            - 'reading': Format 'questionText' EXACTLY as "다음 단어의 올바른 일본어 발음은 무엇입니까?". Choices MUST be STRICTLY Hiragana ONLY (NO Romaji, NO Korean).
+            - 'kanji_match': Choices MUST be base Japanese words.
+            
+            Return absolutely valid JSON matching the responseSchema precisely.
+          `;
+          try {
+            return await callGeminiJSON(prompt, systemInstruction, schema);
+          } catch (parseErr) {
+            console.error("Failed to fetch or parse single vocab batch JSON response.", parseErr);
+            return { data: [], quiz: [] };
+          }
+        });
 
     const parsedBatches = await Promise.all(promises);
 

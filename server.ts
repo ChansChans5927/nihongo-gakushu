@@ -3,6 +3,7 @@ import path from "path";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { connectDB } from "./server/db.ts";
+import { startDataGeneratorScheduler } from "./server/schedulers/dataGenerator.ts";
 
 
 // Route imports
@@ -36,6 +37,9 @@ app.use("/api", progressRouter); // progressRouter internally mounts /progress/*
 async function startServer() {
   // Connect to MongoDB Atlas
   await connectDB();
+
+  // Start background data generator scheduler
+  startDataGeneratorScheduler();
 
   // Configure Vite or Serve static built content
   if (process.env.NODE_ENV !== "production") {

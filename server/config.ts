@@ -7,11 +7,9 @@ import dotenv from "dotenv";
 // Ensure environment variables are loaded
 dotenv.config();
 
-// 1. Initialize Gemini Client (Vertex AI mode to utilize Google Cloud Credits)
+// 1. Initialize Gemini Client (Google AI Studio Developer Mode)
 export const ai = new GoogleGenAI({
-  project: process.env.GCP_PROJECT_ID,
-  location: process.env.GCP_LOCATION,
-  vertexai: true,
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 // 2. Initialize Google Cloud Text-to-Speech Client
