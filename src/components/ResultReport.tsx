@@ -60,7 +60,7 @@ export function ResultReport({
 
         <div className="space-y-1">
           <h3 className="text-2xl font-bold text-slate-900">
-            테스트 결과: 임의 암기 격파 성적 {scoreData.percentage}점!
+            테스트 결과: 연상 암기 마스터 성적 {scoreData.percentage}점!
           </h3>
           <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
             {scoreData.percentage === 100
@@ -229,7 +229,7 @@ export function ResultReport({
                   <div className="bg-amber-50/80 border-l-4 border-amber-500 rounded-r-xl p-4.5 space-y-2 text-xs">
                     <div className="flex items-center gap-1 text-amber-900 font-bold">
                       <Sparkles className="w-4 h-4 text-amber-500" />
-                      <span>연상 기억 구원해설: 이렇게 연상해서 외우면 쉽습니다!</span>
+                      <span>연상 암기 복습 해설: 이렇게 연상해서 외우면 쉽습니다!</span>
                     </div>
                     {q.vocabItem ? (
                       <div className="space-y-2.5 bg-white/75 p-3 rounded-lg border border-amber-200/50">

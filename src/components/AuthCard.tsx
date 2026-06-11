@@ -85,7 +85,7 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
           </h2>
           <p className="text-xs text-slate-500">
             {isLogin
-              ? "학습 기록을 DB에 저장하여 언제든 이어 공부할 수 있습니다."
+              ? "학습 기록이 자동으로 저장되어 언제든 이어서 공부할 수 있습니다."
               : "비밀번호는 암호화되어 안전하게 보관됩니다."}
           </p>
         </div>
