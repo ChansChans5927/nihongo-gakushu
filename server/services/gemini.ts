@@ -81,20 +81,38 @@ export const QUIZ_SCHEMA = {
 
 // Unified helper for Gemini calls expecting JSON
 export async function callGeminiJSON(prompt: string, systemInstruction: string, schema: any) {
-  const startTime = Date.now();
-  const response = await ai.models.generateContent({
-    model: "gemini-3.5-flash",
-    contents: prompt,
-    config: {
-      systemInstruction,
-      responseMimeType: "application/json",
-      responseSchema: schema
+  const maxRetries = 3;
+  let attempt = 0;
+
+  while (attempt < maxRetries) {
+    try {
+      const startTime = Date.now();
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          systemInstruction,
+          responseMimeType: "application/json",
+          responseSchema: schema
+        }
+      });
+
+      const durationMs = Date.now() - startTime;
+      console.log(`[Gemini API] Call took ${durationMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+
+      const bodyText = response.text || "[]";
+      return JSON.parse(bodyText.trim());
+    } catch (err: any) {
+      attempt++;
+      console.warn(`[Gemini API] Attempt ${attempt} failed: ${err.message || err}`);
+      
+      if (attempt >= maxRetries) {
+        throw err;
+      }
+      
+      const delayMs = 2000 * attempt;
+      console.log(`[Gemini API] Retrying in ${delayMs}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
-  });
-
-  const durationMs = Date.now() - startTime;
-  console.log(`[Gemini API] Call took ${durationMs}ms`);
-
-  const bodyText = response.text || "[]";
-  return JSON.parse(bodyText.trim());
+  }
 }
