@@ -2,6 +2,8 @@ import express from "express";
 import { getDB } from "../db.ts";
 import { callGeminiJSON, KANJI_BREAKDOWN_SCHEMA, RELATED_WORDS_SCHEMA, EXAMPLE_SENTENCE_SCHEMA } from "../services/gemini.ts";
 import { Type } from "@google/genai";
+import fs from "fs";
+import path from "path";
 
 const router = express.Router();
 
@@ -45,27 +47,60 @@ router.post("/generate", async (req, res) => {
       return res.json({ success: true, source: "mongodb_cache", data: selectedKanjis });
     }
 
-    const missingCount = hasTargets 
-      ? targetKanjis.length 
-      : (forceGenerate ? numCount : Math.max(0, numCount - cachedKanjis.length));
-
     let allDbKanjis: string[] = [];
-    if (!hasTargets && db) {
+    if (db) {
       try {
         const dbKanjis = await db.collection("kanjis").find({}, { projection: { kanji: 1 } }).toArray();
         allDbKanjis = dbKanjis.map((item: any) => item.kanji);
       } catch (err) {
-        console.error("Failed to fetch all DB kanjis for exclusion:", err);
+        console.error("Failed to fetch all DB kanjis:", err);
       }
     }
+
+    let dynamicTargets: string[] = [];
+    if (!hasTargets && db) {
+      const masterPath = path.join(process.cwd(), "server", "data", "kanji_master.json");
+      if (fs.existsSync(masterPath)) {
+        try {
+          const masterKanjiData = JSON.parse(fs.readFileSync(masterPath, "utf8"));
+          const levelKanjis: string[] = targetLevel === "all"
+            ? Object.values(masterKanjiData).flat() as string[]
+            : (masterKanjiData[targetLevel] || []);
+
+          const existingKanjis = new Set(allDbKanjis);
+          const missingMasterKanjis = levelKanjis.filter(k => !existingKanjis.has(k) && !excludedList.includes(k));
+
+          const countToSelect = forceGenerate ? numCount : Math.max(0, numCount - cachedKanjis.length);
+          if (countToSelect > 0) {
+            let selected = missingMasterKanjis.sort(() => 0.5 - Math.random()).slice(0, countToSelect);
+            if (selected.length < countToSelect) {
+              const fallbackPool = levelKanjis.filter(k => !selected.includes(k) && !excludedList.includes(k));
+              const extra = fallbackPool.sort(() => 0.5 - Math.random()).slice(0, countToSelect - selected.length);
+              selected = [...selected, ...extra];
+            }
+            dynamicTargets = selected;
+          }
+        } catch (masterErr) {
+          console.error("Failed to dynamically select target kanjis from master file:", masterErr);
+        }
+      }
+    }
+
+    const finalTargetKanjis = hasTargets ? targetKanjis : dynamicTargets;
+    const finalHasTargets = finalTargetKanjis.length > 0;
+
+    const missingCount = finalHasTargets 
+      ? finalTargetKanjis.length 
+      : (forceGenerate ? numCount : Math.max(0, numCount - cachedKanjis.length));
+
     const fullExcludedList = Array.from(new Set([...excludedList, ...allDbKanjis]));
 
     const targetBatches: string[][] = [];
     const batchSizes: number[] = [];
 
-    if (hasTargets) {
-      for (let i = 0; i < targetKanjis.length; i += 5) {
-        targetBatches.push(targetKanjis.slice(i, i + 5));
+    if (finalHasTargets) {
+      for (let i = 0; i < finalTargetKanjis.length; i += 5) {
+        targetBatches.push(finalTargetKanjis.slice(i, i + 5));
       }
     } else {
       let remaining = missingCount;
@@ -113,7 +148,7 @@ router.post("/generate", async (req, res) => {
 
     const systemInstruction = "You are an expert Japanese and Kanji language professor who specializes in visual mnemonics, associations, and helping Korean learners master Japanese characters with minimal effort.";
 
-    const promises = hasTargets
+    const promises = finalHasTargets
       ? targetBatches.map(async (batch, idx) => {
           const focusHint = batchInstructions[idx % batchInstructions.length];
           const prompt = `
@@ -198,7 +233,7 @@ router.post("/generate", async (req, res) => {
     for (const batch of parsedBatches) {
       if (Array.isArray(batch)) {
         for (const item of batch) {
-          if (item && item.kanji && !seenKanji.has(item.kanji) && !excludedList.includes(item.kanji) && !allDbKanjis.includes(item.kanji)) {
+          if (item && item.kanji && !seenKanji.has(item.kanji) && !excludedList.includes(item.kanji) && (finalTargetKanjis.includes(item.kanji) || !allDbKanjis.includes(item.kanji))) {
             if (item.hunyomi) {
               item.hunyomi = item.hunyomi.replace(/\./g, "");
             }

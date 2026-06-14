@@ -76,8 +76,8 @@ export async function triggerScheduledTask() {
       const masterKanjiData = JSON.parse(fs.readFileSync(MASTER_KANJI_PATH, "utf8"));
       const levelKanjis: string[] = masterKanjiData[step.level] || [];
 
-      // 2. Fetch already cached Kanjis in DB
-      const dbKanjis = await db.collection("kanjis").find({ jlptLevel: step.level }).toArray();
+      // 2. Fetch already cached Kanjis in DB (globally, matching character to prevent level mismatch duplicates)
+      const dbKanjis = await db.collection("kanjis").find({ kanji: { $in: levelKanjis } }).toArray();
       const existingKanjis = new Set(dbKanjis.map((k: any) => k.kanji));
 
       // 3. Find 5 Kanjis not in DB
@@ -103,7 +103,7 @@ export async function triggerScheduledTask() {
         if (result.success) {
           console.log(`[Cron] Successfully generated and stored new kanjis: ${targetKanjis.join(", ")}`);
         } else {
-          console.error(`[Cron] Generation failed:`, result.errorMsg);
+          throw new Error(`Kanji generation API failed: ${result.errorMsg}`);
         }
       }
     } 
@@ -115,8 +115,9 @@ export async function triggerScheduledTask() {
       const masterVocabData = JSON.parse(fs.readFileSync(MASTER_VOCAB_PATH, "utf8"));
       const levelVocabs: { word: string; reading: string }[] = masterVocabData[step.level] || [];
 
-      // 2. Fetch already cached Vocabs in DB
-      const dbVocabs = await db.collection("vocabs").find({ jlptLevel: step.level }).toArray();
+      // 2. Fetch already cached Vocabs in DB (globally, matching word to prevent level mismatch duplicates)
+      const targetWordsOnly = levelVocabs.map(v => v.word);
+      const dbVocabs = await db.collection("vocabs").find({ word: { $in: targetWordsOnly } }).toArray();
       const existingWords = new Set(dbVocabs.map((v: any) => v.word));
 
       // 3. Find 5 Words not in DB
@@ -142,7 +143,7 @@ export async function triggerScheduledTask() {
         if (result.success) {
           console.log(`[Cron] Successfully generated and stored new vocabs: ${targetVocabs.map(v => v.word).join(", ")}`);
         } else {
-          console.error(`[Cron] Generation failed:`, result.errorMsg);
+          throw new Error(`Vocab generation API failed: ${result.errorMsg}`);
         }
       }
     } 
@@ -164,7 +165,7 @@ export async function triggerScheduledTask() {
       if (result.success) {
         console.log(`[Cron] Successfully generated and stored 5 new JLPT questions for ${step.level}.`);
       } else {
-        console.error(`[Cron] Generation failed:`, result.errorMsg);
+        throw new Error(`JLPT generation API failed: ${result.errorMsg}`);
       }
     }
 

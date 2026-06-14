@@ -2,6 +2,8 @@ import express from "express";
 import { getDB } from "../db.ts";
 import { callGeminiJSON, VOCAB_KANJI_BREAKDOWN_SCHEMA, EXAMPLE_SENTENCE_SCHEMA, QUIZ_SCHEMA } from "../services/gemini.ts";
 import { Type } from "@google/genai";
+import fs from "fs";
+import path from "path";
 
 const router = express.Router();
 
@@ -67,27 +69,63 @@ router.post("/generate", async (req, res) => {
       return res.json({ success: true, source: "mongodb_cache", data: selectedVocabs, quiz: formattedQuiz });
     }
 
-    const missingCount = hasTargets
-      ? targetVocabs.length
-      : (forceGenerate ? numCount : Math.max(0, numCount - selectedVocabs.length));
-
     let allDbVocabs: string[] = [];
-    if (!hasTargets && db) {
+    if (db) {
       try {
         const dbVocabs = await db.collection("vocabs").find({}, { projection: { word: 1 } }).toArray();
         allDbVocabs = dbVocabs.map((item: any) => item.word);
       } catch (err) {
-        console.error("Failed to fetch all DB vocabs for exclusion:", err);
+        console.error("Failed to fetch all DB vocabs:", err);
       }
     }
+
+    let dynamicTargets: { word: string; reading?: string }[] = [];
+    if (!hasTargets && db) {
+      const masterPath = path.join(process.cwd(), "server", "data", "vocab_master.json");
+      if (fs.existsSync(masterPath)) {
+        try {
+          const masterVocabData = JSON.parse(fs.readFileSync(masterPath, "utf8"));
+          let levelVocabs: { word: string; reading: string }[] = [];
+          if (targetLevel === "all") {
+            levelVocabs = Object.values(masterVocabData).flat() as { word: string; reading: string }[];
+          } else {
+            levelVocabs = masterVocabData[targetLevel] || [];
+          }
+
+          const existingWords = new Set(allDbVocabs);
+          const missingMasterVocabs = levelVocabs.filter(v => !existingWords.has(v.word) && !excludedList.includes(v.word));
+
+          const countToSelect = forceGenerate ? numCount : Math.max(0, numCount - selectedVocabs.length);
+          if (countToSelect > 0) {
+            let selected = missingMasterVocabs.sort(() => 0.5 - Math.random()).slice(0, countToSelect);
+            if (selected.length < countToSelect) {
+              const fallbackPool = levelVocabs.filter(v => !selected.some(s => s.word === v.word) && !excludedList.includes(v.word));
+              const extra = fallbackPool.sort(() => 0.5 - Math.random()).slice(0, countToSelect - selected.length);
+              selected = [...selected, ...extra];
+            }
+            dynamicTargets = selected;
+          }
+        } catch (masterErr) {
+          console.error("Failed to dynamically select target vocabs from master file:", masterErr);
+        }
+      }
+    }
+
+    const finalTargetVocabs = hasTargets ? targetVocabs : dynamicTargets;
+    const finalHasTargets = finalTargetVocabs.length > 0;
+
+    const missingCount = finalHasTargets
+      ? finalTargetVocabs.length
+      : (forceGenerate ? numCount : Math.max(0, numCount - selectedVocabs.length));
+
     const fullExcludedList = Array.from(new Set([...excludedList, ...allDbVocabs]));
 
     const targetBatches: { word: string; reading?: string }[][] = [];
     const batchSizes: number[] = [];
 
-    if (hasTargets) {
-      for (let i = 0; i < targetVocabs.length; i += 5) {
-        targetBatches.push(targetVocabs.slice(i, i + 5));
+    if (finalHasTargets) {
+      for (let i = 0; i < finalTargetVocabs.length; i += 5) {
+        targetBatches.push(finalTargetVocabs.slice(i, i + 5));
       }
     } else {
       let remaining = missingCount;
@@ -136,7 +174,7 @@ router.post("/generate", async (req, res) => {
 
     const systemInstruction = "You are an expert Japanese and Kanji professor specializing in visual mnemonics, associations, and helping Korean learners master Japanese words and characters.";
 
-    const promises = hasTargets
+    const promises = finalHasTargets
       ? targetBatches.map(async (batch, idx) => {
           const focusHint = batchInstructions[idx % batchInstructions.length];
           const prompt = `
@@ -227,10 +265,11 @@ router.post("/generate", async (req, res) => {
     const newGeneratedQuizzes: any[] = [];
     const seenWords = new Set<string>();
 
+    const finalTargetWords = finalTargetVocabs.map(v => v.word);
     for (const batch of parsedBatches) {
       if (batch && Array.isArray(batch.data)) {
         for (const item of batch.data) {
-          if (item && item.word && !seenWords.has(item.word) && !excludedList.includes(item.word) && !allDbVocabs.includes(item.word)) {
+          if (item && item.word && !seenWords.has(item.word) && !excludedList.includes(item.word) && (finalTargetWords.includes(item.word) || !allDbVocabs.includes(item.word))) {
             seenWords.add(item.word);
             newGeneratedVocabs.push(item);
           }
