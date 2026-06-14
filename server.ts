@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { connectDB } from "./server/db.ts";
 import { startDataGeneratorScheduler } from "./server/schedulers/dataGenerator.ts";
+import { startPushScheduler } from "./server/schedulers/pushScheduler.ts";
 
 
 // Route imports
@@ -40,6 +41,9 @@ async function startServer() {
 
   // Start background data generator scheduler
   startDataGeneratorScheduler();
+
+  // Start background push notification cron jobs
+  startPushScheduler();
 
   // Configure Vite or Serve static built content
   if (process.env.NODE_ENV !== "production") {
