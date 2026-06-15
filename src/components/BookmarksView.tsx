@@ -71,16 +71,16 @@ export function BookmarksView({
   return (
     <div className="space-y-6 w-full max-w-4xl mx-auto">
       {/* Header section with back button */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <button
           onClick={onGoBack}
-          className={`flex items-center gap-2 py-2 px-4 rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${theme.btnSecondary}`}
+          className={`flex items-center justify-center gap-2 py-2 px-3.5 rounded-xl text-xs md:text-sm font-bold shadow-sm transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] w-full md:w-auto ${theme.btnSecondary}`}
         >
           <ArrowLeft className="w-4 h-4" />
           <span>메인 화면으로</span>
         </button>
-        <h2 className="text-xl sm:text-2xl font-display font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-          <Star className="w-6 h-6 text-indigo-500 fill-indigo-500" />
+        <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-display font-extrabold text-slate-900 tracking-tight flex items-center justify-center md:justify-start gap-1.5 sm:gap-2">
+          <Star className="w-4 h-4 sm:w-5 h-5 md:w-6 h-6 text-indigo-500 fill-indigo-500" />
           <span>나만의 단어장</span>
         </h2>
       </div>
@@ -137,37 +137,42 @@ export function BookmarksView({
                   key={idx}
                   className={`${theme.cardContainer} border rounded-2xl overflow-hidden transition-all shadow-sm flex flex-col font-sans`}
                 >
-                  {/* Card Header Panel */}
-                  <div className="p-4 sm:p-5 flex items-center justify-between gap-4 relative z-10">
-                    <div className="flex items-center gap-4 overflow-hidden">
+                  <div className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 relative z-10">
+                    <div className="flex items-start md:items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full">
                       {/* Big Kanji character with pronunciation click */}
                       <div
                         onClick={() => speakJapanese(item.kanji)}
                         lang="ja"
-                        className={`text-4xl sm:text-5xl font-serif font-black rounded-2xl w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center cursor-pointer transition-colors shrink-0 ${theme.wordPanelBg} ${theme.kanjiTextHover}`}
+                        className={`text-2xl sm:text-4xl font-serif font-black rounded-xl w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center cursor-pointer transition-colors shrink-0 ${theme.wordPanelBg} ${theme.kanjiTextHover}`}
                         title="발음 듣기"
                       >
                         {item.kanji}
                       </div>
 
                       {/* Name / Meaning */}
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className={`text-base sm:text-lg font-extrabold ${theme.radicalKanjiMeaning}`}>
                             {item.meaning}
                           </span>
-                          <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${theme.badgeBg}`}>
+                          <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${theme.badgeBg} shrink-0`}>
                             {item.jlptLevel}
                           </span>
                         </div>
-                        <span className="text-xs text-slate-500 font-mono mt-0.5">
-                          음독: {item.onyomi} ({item.onyomiKorean}) | 훈독: {item.hunyomi?.replace(/\./g, "")} ({item.hunyomiKorean})
-                        </span>
+                        <div className="text-xs text-slate-500 font-mono mt-1.5 space-y-1 md:space-y-0">
+                          <span className="block md:inline md:mr-3">
+                            음독: <strong className="text-slate-800 font-semibold">{item.onyomi} ({item.onyomiKorean})</strong>
+                          </span>
+                          <span className="hidden md:inline text-slate-300 mr-3">|</span>
+                          <span className="block md:inline">
+                            훈독: <strong className="text-slate-800 font-semibold">{item.hunyomi?.replace(/\./g, "") || "-"} ({item.hunyomiKorean || "-"})</strong>
+                          </span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Action buttons (Listen, Bookmark, Expand) */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 self-end md:self-auto shrink-0 mt-2 md:mt-0">
                       <button
                         onClick={() => speakJapanese(item.kanji)}
                         className={`p-2 rounded-full border shadow-sm transition-all cursor-pointer ${theme.tableAudioBtn}`}
@@ -291,19 +296,19 @@ export function BookmarksView({
                 className={`${theme.cardContainer} border rounded-2xl overflow-hidden transition-all shadow-sm flex flex-col font-sans`}
               >
                 {/* Card Header Panel */}
-                <div className="p-4 sm:p-5 flex items-center justify-between gap-4 relative z-10">
-                  <div className="flex items-center gap-4 overflow-hidden">
+                <div className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 relative z-10">
+                  <div className="flex items-start md:items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full">
                     {/* Left Icon/Level Panel */}
                     <div
-                      className={`rounded-2xl w-14 h-14 sm:w-16 sm:h-16 flex flex-col items-center justify-center shrink-0 text-center select-none ${theme.wordPanelBg}`}
+                      className={`rounded-2xl w-12 h-12 sm:w-16 sm:h-16 flex flex-col items-center justify-center shrink-0 text-center select-none ${theme.wordPanelBg}`}
                     >
-                      <span className="text-[10px] font-mono font-bold text-slate-400">JLPT</span>
-                      <span className="text-base sm:text-lg font-black text-slate-800">{item.jlptLevel || "N4"}</span>
+                      <span className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-400">JLPT</span>
+                      <span className="text-sm sm:text-lg font-black text-slate-800">{item.jlptLevel || "N4"}</span>
                     </div>
 
                     {/* Name / Meaning */}
-                    <div className="flex flex-col truncate">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span
                           onClick={() => speakJapanese(item.word)}
                           lang="ja"
@@ -316,17 +321,17 @@ export function BookmarksView({
                           {item.pos || "어휘"}
                         </span>
                       </div>
-                      <span className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5 truncate">
-                        뜻: <strong className="text-slate-900">{item.meaning}</strong>
+                      <span className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5 break-words">
+                        뜻: <strong className="text-slate-900 font-bold">{item.meaning}</strong>
                       </span>
-                      <span className="text-xs text-slate-500 font-mono mt-0.5 truncate">
-                        발음: {item.hiragana} ({item.pronunciation})
+                      <span className="text-xs text-slate-500 font-mono mt-0.5 break-words">
+                        발음: <strong className="text-slate-700 font-semibold">{item.hiragana} ({item.pronunciation})</strong>
                       </span>
                     </div>
                   </div>
 
                   {/* Action buttons (Listen, Bookmark, Expand) */}
-                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2 self-end md:self-auto shrink-0 mt-2 md:mt-0">
                     <button
                       onClick={() => speakJapanese(item.word)}
                       className={`p-2 rounded-full border shadow-sm transition-all cursor-pointer ${theme.tableAudioBtn}`}
