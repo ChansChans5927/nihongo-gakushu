@@ -6,7 +6,8 @@ import {
   Volume2,
   CornerDownRight,
   ArrowRight,
-  HelpCircle
+  HelpCircle,
+  Star
 } from "lucide-react";
 import { VocabItem } from "../types";
 
@@ -19,6 +20,8 @@ interface VocabStudyProps {
   handleNextStudy: () => void;
   speakJapanese: (text: string) => void;
   currentTheme?: string;
+  bookmarkedVocabs: string[];
+  onToggleBookmark: (type: "kanji" | "vocab", item: string) => void;
 }
 
 export function VocabStudy({
@@ -27,7 +30,9 @@ export function VocabStudy({
   handlePrevStudy,
   handleNextStudy,
   speakJapanese,
-  currentTheme = 'default'
+  currentTheme = 'default',
+  bookmarkedVocabs,
+  onToggleBookmark
 }: VocabStudyProps) {
   const currentVocab = vocabList[currentVocabIndex];
   const theme = getTheme(currentTheme);
@@ -99,6 +104,22 @@ export function VocabStudy({
             <div
               className={`md:col-span-4 rounded-2xl p-4 sm:p-5 flex flex-col justify-between items-center text-center relative overflow-hidden ${theme.wordPanelBg}`}
             >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleBookmark("vocab", currentVocab.word);
+                }}
+                className="absolute top-2 right-2 p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 active:scale-95 focus:outline-none z-20"
+                title="북마크 토글"
+              >
+                <Star
+                  className={`w-5 h-5 transition-all ${
+                    bookmarkedVocabs.includes(currentVocab.word)
+                      ? "text-amber-500 fill-amber-500 scale-110"
+                      : "text-slate-400 fill-none"
+                  }`}
+                />
+              </button>
               <div className="my-auto py-5 flex flex-col items-center justify-center gap-2">
                 <div
                   className="relative group cursor-pointer inline-block"

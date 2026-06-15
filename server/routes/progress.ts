@@ -22,6 +22,8 @@ router.get("/progress/get", async (req: AuthenticatedRequest, res) => {
       success: true,
       masteredKanjis: progress?.masteredKanjis || [],
       masteredVocabs: progress?.masteredVocabs || [],
+      bookmarkedKanjis: progress?.bookmarkedKanjis || [],
+      bookmarkedVocabs: progress?.bookmarkedVocabs || [],
       points: progress?.points || 0,
       unlockedThemes: progress?.unlockedThemes || ["default"],
       currentTheme: progress?.currentTheme || "default"
@@ -336,6 +338,88 @@ router.post("/progress/review", async (req: AuthenticatedRequest, res) => {
   } catch (err: any) {
     console.error("Review fetching error:", err);
     res.json({ success: false, errorMsg: `복습 단어를 가져오는 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint to toggle bookmark status of kanji or vocab
+router.post("/progress/bookmark", async (req: AuthenticatedRequest, res) => {
+  const username = req.user!.username;
+  const { type, item } = req.body;
+  if (!type || !item) {
+    return res.json({ success: false, errorMsg: "올바르지 않은 요청 데이터입니다." });
+  }
+
+  const db = getDB();
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    const field = type === "kanji" ? "bookmarkedKanjis" : "bookmarkedVocabs";
+
+    const progress = await db.collection("progress").findOne({ username: normalizedUsername });
+    const list = progress?.[field] || [];
+    const isBookmarked = list.includes(item);
+
+    if (isBookmarked) {
+      await db.collection("progress").updateOne(
+        { username: normalizedUsername },
+        { $pull: { [field]: item } as any },
+        { upsert: true }
+      );
+    } else {
+      await db.collection("progress").updateOne(
+        { username: normalizedUsername },
+        { $addToSet: { [field]: item } as any },
+        { upsert: true }
+      );
+    }
+
+    res.json({ success: true, isBookmarked: !isBookmarked });
+  } catch (err: any) {
+    console.error("Toggle bookmark error:", err);
+    res.json({ success: false, errorMsg: `북마크 토글 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// GET Endpoint to fetch detailed list of bookmarked cards
+router.get("/progress/bookmarks/details", async (req: AuthenticatedRequest, res) => {
+  const username = req.user!.username;
+  const { type } = req.query;
+
+  if (type !== "kanji" && type !== "vocab") {
+    return res.json({ success: false, errorMsg: "올바르지 않은 유형입니다." });
+  }
+
+  const db = getDB();
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    const progress = await db.collection("progress").findOne({ username: normalizedUsername });
+    const list: string[] = type === "kanji"
+      ? (progress?.bookmarkedKanjis || [])
+      : (progress?.bookmarkedVocabs || []);
+
+    if (list.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    if (type === "kanji") {
+      const cards = await db.collection("kanjis").find({ kanji: { $in: list } }).toArray();
+      const orderedCards = list.map(k => cards.find((c: any) => c.kanji === k)).filter(Boolean);
+      res.json({ success: true, data: orderedCards });
+    } else {
+      const cards = await db.collection("vocabs").find({ word: { $in: list } }).toArray();
+      const orderedCards = list.map(w => cards.find((c: any) => c.word === w)).filter(Boolean);
+      res.json({ success: true, data: orderedCards });
+    }
+  } catch (err: any) {
+    console.error("Bookmarks details error:", err);
+    res.json({ success: false, errorMsg: `북마크 세부 정보를 가져오는 중 오류가 발생했습니다: ${err.message}` });
   }
 });
 

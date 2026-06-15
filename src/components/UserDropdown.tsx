@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
-import { User, Settings, LogOut, ChevronDown, Sparkles } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, Sparkles, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface UserDropdownProps {
   username: string;
   onNavigateSettings: () => void;
   onNavigateShop: () => void;
+  onNavigateBookmarks: () => void;
   onLogout: () => void;
 }
 
-export function UserDropdown({ username, onNavigateSettings, onNavigateShop, onLogout }: UserDropdownProps) {
+export function UserDropdown({ username, onNavigateSettings, onNavigateShop, onNavigateBookmarks, onLogout }: UserDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -60,6 +61,18 @@ export function UserDropdown({ username, onNavigateSettings, onNavigateShop, onL
               >
                 <Settings className="w-4 h-4 text-slate-400" />
                 설정
+              </button>
+            </div>
+            <div className="py-1 border-t border-slate-100">
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  onNavigateBookmarks();
+                }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors text-left"
+              >
+                <Star className="w-4 h-4 text-indigo-500 fill-indigo-500" />
+                나만의 단어장
               </button>
             </div>
             <div className="py-1 border-t border-slate-100">

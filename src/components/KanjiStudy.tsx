@@ -5,7 +5,8 @@ import {
   Sparkles,
   Volume2,
   CornerDownRight,
-  ArrowRight
+  ArrowRight,
+  Star
 } from "lucide-react";
 import { KanjiItem, RadicalPart } from "../types";
 import { RadicalModal } from "./RadicalModal";
@@ -18,6 +19,8 @@ interface KanjiStudyProps {
   handleNextStudy: () => void;
   speakJapanese: (text: string) => void;
   currentTheme?: string;
+  bookmarkedKanjis: string[];
+  onToggleBookmark: (type: "kanji" | "vocab", item: string) => void;
 }
 
 export function KanjiStudy({
@@ -26,7 +29,9 @@ export function KanjiStudy({
   handlePrevStudy,
   handleNextStudy,
   speakJapanese,
-  currentTheme = 'default'
+  currentTheme = 'default',
+  bookmarkedKanjis,
+  onToggleBookmark
 }: KanjiStudyProps) {
   const [activeRadical, setActiveRadical] = useState<RadicalPart | null>(null);
 
@@ -112,6 +117,23 @@ export function KanjiStudy({
               <div className={`absolute top-2 left-2 text-[10px] font-mono font-bold ${theme.strokeCountText}`}>
                 {currentKanji.strokeCount} 획
               </div>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleBookmark("kanji", currentKanji.kanji);
+                }}
+                className="absolute top-2 right-2 p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 active:scale-95 focus:outline-none z-20"
+                title="북마크 토글"
+              >
+                <Star
+                  className={`w-5 h-5 transition-all ${
+                    bookmarkedKanjis.includes(currentKanji.kanji)
+                      ? "text-amber-500 fill-amber-500 scale-110"
+                      : "text-slate-400 fill-none"
+                  }`}
+                />
+              </button>
 
               <div className="my-auto py-4">
                 <div

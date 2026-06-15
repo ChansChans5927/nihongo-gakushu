@@ -16,10 +16,11 @@ import { NewsStudy } from "./components/NewsStudy";
 import { UserDropdown } from "./components/UserDropdown";
 import { SettingsView } from "./components/SettingsView";
 import { ShopView } from "./components/ShopView";
+import { BookmarksView } from "./components/BookmarksView";
 
 export default function App() {
-  // App Phase States: 'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt' | 'shop'
-  const [phase, setPhase] = useState<'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt' | 'shop'>('config');
+  // App Phase States: 'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt' | 'shop' | 'bookmarks'
+  const [phase, setPhase] = useState<'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt' | 'shop' | 'bookmarks'>('config');
 
   // Configuration Settings
   const [kanjiCount, setKanjiCount] = useState<number>(5);
@@ -53,6 +54,10 @@ export default function App() {
   const [currentVocabIndex, setCurrentVocabIndex] = useState<number>(0);
   const [masteredVocab, setMasteredVocab] = useState<string[]>([]);
   const [vocabQuestions, setVocabQuestions] = useState<Question[]>([]);
+
+  // Bookmark States
+  const [bookmarkedKanjis, setBookmarkedKanjis] = useState<string[]>([]);
+  const [bookmarkedVocabs, setBookmarkedVocabs] = useState<string[]>([]);
 
   // JLPT Past Exam Subsystem States
   const [selectedJlptLevel, setSelectedJlptLevel] = useState<string>("N5");
@@ -188,6 +193,8 @@ export default function App() {
       if (resData.success) {
         setMasteredKanji(resData.masteredKanjis || []);
         setMasteredVocab(resData.masteredVocabs || []);
+        setBookmarkedKanjis(resData.bookmarkedKanjis || []);
+        setBookmarkedVocabs(resData.bookmarkedVocabs || []);
         setPoints(resData.points || 0);
         setUnlockedThemes(resData.unlockedThemes || ["default"]);
         setCurrentTheme(resData.currentTheme || "default");
@@ -242,6 +249,8 @@ export default function App() {
     } else {
       setMasteredKanji([]);
       setMasteredVocab([]);
+      setBookmarkedKanjis([]);
+      setBookmarkedVocabs([]);
       setPoints(0);
       setUnlockedThemes(["default"]);
       setCurrentTheme("default");
@@ -323,6 +332,32 @@ export default function App() {
           console.error("Failed to reset progress in DB:", err);
         }
       }
+    }
+  };
+
+  // Toggle bookmark in DB and local state
+  const handleToggleBookmark = async (type: "kanji" | "vocab", item: string) => {
+    if (!currentUser) return;
+    try {
+      const response = await fetch("/api/progress/bookmark", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, item })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        if (type === "kanji") {
+          setBookmarkedKanjis(prev =>
+            prev.includes(item) ? prev.filter(k => k !== item) : [...prev, item]
+          );
+        } else {
+          setBookmarkedVocabs(prev =>
+            prev.includes(item) ? prev.filter(v => v !== item) : [...prev, item]
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Failed to toggle bookmark:", err);
     }
   };
 
@@ -716,6 +751,7 @@ export default function App() {
                   username={currentUser.username}
                   onNavigateSettings={() => setPhase('settings')}
                   onNavigateShop={() => setPhase('shop')}
+                  onNavigateBookmarks={() => setPhase('bookmarks')}
                   onLogout={handleLogout}
                 />
               </div>
@@ -846,6 +882,8 @@ export default function App() {
                       handleNextStudy={handleNextStudy}
                       speakJapanese={speakJapanese}
                       currentTheme={currentTheme}
+                      bookmarkedVocabs={bookmarkedVocabs}
+                      onToggleBookmark={handleToggleBookmark}
                     />
                   )
                 ) : (
@@ -857,6 +895,8 @@ export default function App() {
                       handleNextStudy={handleNextStudy}
                       speakJapanese={speakJapanese}
                       currentTheme={currentTheme}
+                      bookmarkedKanjis={bookmarkedKanjis}
+                      onToggleBookmark={handleToggleBookmark}
                     />
                   )
                 )
@@ -919,6 +959,18 @@ export default function App() {
                   unlockedThemes={unlockedThemes}
                   currentTheme={currentTheme}
                   onThemeUpdate={() => currentUser && fetchUserProgress(currentUser.username)}
+                  onGoBack={handleGoHome}
+                />
+              )}
+
+              {/* PHASE 8: Bookmarks View */}
+              {phase === 'bookmarks' && currentUser && (
+                <BookmarksView
+                  currentTheme={currentTheme}
+                  bookmarkedKanjis={bookmarkedKanjis}
+                  bookmarkedVocabs={bookmarkedVocabs}
+                  onToggleBookmark={handleToggleBookmark}
+                  speakJapanese={speakJapanese}
                   onGoBack={handleGoHome}
                 />
               )}
