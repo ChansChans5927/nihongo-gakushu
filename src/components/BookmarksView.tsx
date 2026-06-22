@@ -74,7 +74,7 @@ export function BookmarksView({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <button
           onClick={onGoBack}
-          className={`flex items-center justify-center gap-2 py-2 px-3.5 rounded-xl text-xs md:text-sm font-bold shadow-sm transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] w-full md:w-auto ${theme.btnSecondary}`}
+          className={`flex items-center justify-center gap-2 py-2 px-3.5 rounded-xl text-xs md:text-sm font-bold shadow-sm transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] w-full md:w-auto bg-white border border-slate-200 text-slate-700 hover:bg-slate-50`}
         >
           <ArrowLeft className="w-4 h-4" />
           <span>메인 화면으로</span>
@@ -159,13 +159,13 @@ export function BookmarksView({
                             {item.jlptLevel}
                           </span>
                         </div>
-                        <div className="text-xs text-slate-500 font-mono mt-1.5 space-y-1 md:space-y-0">
+                        <div className={`text-xs font-mono mt-1.5 space-y-1 md:space-y-0 ${theme.wordSubText}`}>
                           <span className="block md:inline md:mr-3">
-                            음독: <strong className="text-slate-800 font-semibold">{item.onyomi} ({item.onyomiKorean})</strong>
+                            음독: <strong className={`font-semibold ${theme.breakdownKanjiMeaning}`}>{item.onyomi} ({item.onyomiKorean})</strong>
                           </span>
-                          <span className="hidden md:inline text-slate-300 mr-3">|</span>
+                          <span className="hidden md:inline opacity-50 mr-3">|</span>
                           <span className="block md:inline">
-                            훈독: <strong className="text-slate-800 font-semibold">{item.hunyomi?.replace(/\./g, "") || "-"} ({item.hunyomiKorean || "-"})</strong>
+                            훈독: <strong className={`font-semibold ${theme.breakdownKanjiMeaning}`}>{item.hunyomi?.replace(/\./g, "") || "-"} ({item.hunyomiKorean || "-"})</strong>
                           </span>
                         </div>
                       </div>
@@ -199,7 +199,7 @@ export function BookmarksView({
 
                   {/* Expanded detail box */}
                   {isExpanded && (
-                    <div className={`p-4 sm:p-5 border-t border-slate-100 space-y-4 ${theme.breakdownPanelBg} text-xs sm:text-sm relative z-10`}>
+                    <div className={`p-4 sm:p-5 border-t ${theme.tableBorder} space-y-4 ${theme.breakdownPanelBg} text-xs sm:text-sm relative z-10`}>
                       {/* Mnemonic image */}
                       <div className={`p-3.5 rounded-xl space-y-1 relative ${theme.mnemonicPanelBg}`}>
                         <span className={`text-xs font-bold tracking-wider block ${theme.mnemonicTitleColor}`}>
@@ -302,8 +302,8 @@ export function BookmarksView({
                     <div
                       className={`rounded-2xl w-12 h-12 sm:w-16 sm:h-16 flex flex-col items-center justify-center shrink-0 text-center select-none ${theme.wordPanelBg}`}
                     >
-                      <span className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-400">JLPT</span>
-                      <span className="text-sm sm:text-lg font-black text-slate-800">{item.jlptLevel || "N4"}</span>
+                      <span className={`text-[9px] sm:text-[10px] font-mono font-bold ${theme.wordSubText}`}>JLPT</span>
+                      <span className={`text-sm sm:text-lg font-black ${theme.breakdownKanjiMeaning}`}>{item.jlptLevel || "N4"}</span>
                     </div>
 
                     {/* Name / Meaning */}
@@ -312,7 +312,7 @@ export function BookmarksView({
                         <span
                           onClick={() => speakJapanese(item.word)}
                           lang="ja"
-                          className={`text-xl sm:text-2xl font-serif font-black text-slate-900 cursor-pointer ${theme.wordTextHover}`}
+                          className={`text-xl sm:text-2xl font-serif font-black cursor-pointer ${theme.wordTextHover}`}
                           title="발음 듣기"
                         >
                           {item.word}
@@ -321,11 +321,11 @@ export function BookmarksView({
                           {item.pos || "어휘"}
                         </span>
                       </div>
-                      <span className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5 break-words">
-                        뜻: <strong className="text-slate-900 font-bold">{item.meaning}</strong>
+                      <span className={`text-xs sm:text-sm font-medium mt-0.5 break-words ${theme.wordSubText}`}>
+                        뜻: <strong className={`font-bold ${theme.breakdownKanjiMeaning}`}>{item.meaning}</strong>
                       </span>
-                      <span className="text-xs text-slate-500 font-mono mt-0.5 break-words">
-                        발음: <strong className="text-slate-700 font-semibold">{item.hiragana} ({item.pronunciation})</strong>
+                      <span className={`text-xs font-mono mt-0.5 break-words ${theme.wordSubText}`}>
+                        발음: <strong className={`font-semibold ${theme.examplePronunciationText}`}>{item.hiragana} ({item.pronunciation})</strong>
                       </span>
                     </div>
                   </div>
@@ -358,7 +358,7 @@ export function BookmarksView({
 
                 {/* Expanded detail box */}
                 {isExpanded && (
-                  <div className={`p-4 sm:p-5 border-t border-slate-100 space-y-4 ${theme.breakdownPanelBg} text-xs sm:text-sm relative z-10`}>
+                  <div className={`p-4 sm:p-5 border-t ${theme.tableBorder} space-y-4 ${theme.breakdownPanelBg} text-xs sm:text-sm relative z-10`}>
                     {/* Kanji breakdowns */}
                     <div className="space-y-2">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">

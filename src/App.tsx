@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAppState } from "./store/useAppState";
 import { NativeBridge } from "./nativeBridge";
 import { AnimatePresence, motion } from "motion/react";
 import { BookMarked, BookOpen, CheckCircle2, User, LogOut } from "lucide-react";
@@ -19,68 +20,20 @@ import { ShopView } from "./components/ShopView";
 import { BookmarksView } from "./components/BookmarksView";
 
 export default function App() {
-  // App Phase States: 'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt' | 'shop' | 'bookmarks'
-  const [phase, setPhase] = useState<'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt' | 'shop' | 'bookmarks'>('config');
-
-  // Configuration Settings
-  const [kanjiCount, setKanjiCount] = useState<number>(5);
-  const [difficulty, setDifficulty] = useState<string>("all");
-  const [jlptCount, setJlptCount] = useState<number>(5);
-
-  // Quiz and Study lists
-  const [kanjiList, setKanjiList] = useState<KanjiItem[]>([]);
-  const [currentKanjiIndex, setCurrentKanjiIndex] = useState<number>(0);
-
-  // Testing States
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
-  const [userAnswers, setUserAnswers] = useState<{ [questionId: number]: number }>({});
-  const [isGraded, setIsGraded] = useState<boolean>(false);
-
-  // Mastered Kanji List
-  const [masteredKanji, setMasteredKanji] = useState<string[]>([]);
-
-  // Study Mode State: 'kanji' | 'vocab'
-  const [studyMode, setStudyMode] = useState<'kanji' | 'vocab'>('kanji');
-
-  // Economy & Theme States
-  const [points, setPoints] = useState<number>(0);
-  const [unlockedThemes, setUnlockedThemes] = useState<string[]>(["default"]);
-  const [currentTheme, setCurrentTheme] = useState<string>("default");
-
-  // Vocab States
-  const [vocabCount, setVocabCount] = useState<number>(5);
-  const [vocabList, setVocabList] = useState<VocabItem[]>([]);
-  const [currentVocabIndex, setCurrentVocabIndex] = useState<number>(0);
-  const [masteredVocab, setMasteredVocab] = useState<string[]>([]);
-  const [vocabQuestions, setVocabQuestions] = useState<Question[]>([]);
-
-  // Bookmark States
-  const [bookmarkedKanjis, setBookmarkedKanjis] = useState<string[]>([]);
-  const [bookmarkedVocabs, setBookmarkedVocabs] = useState<string[]>([]);
-
-  // JLPT Past Exam Subsystem States
-  const [selectedJlptLevel, setSelectedJlptLevel] = useState<string>("N5");
-  const [jlptQuestions, setJlptQuestions] = useState<JlptQuestion[]>([]);
-  const [currentJlptIndex, setCurrentJlptIndex] = useState<number>(0);
-  const [jlptAnswers, setJlptAnswers] = useState<{ [questionId: string]: number }>({});
-  const [isJlptGraded, setIsJlptGraded] = useState<boolean>(false);
-  const [isJlptLoading, setIsJlptLoading] = useState<boolean>(false);
-  const [jlptErrorMsg, setJlptErrorMsg] = useState<string | null>(null);
-
-  // News Study States
-  const [newsLesson, setNewsLesson] = useState<NewsLesson | null>(null);
-  const [isNewsLoading, setIsNewsLoading] = useState<boolean>(false);
-  const [newsErrorMsg, setNewsErrorMsg] = useState<string | null>(null);
-
-  // Loading & Error boundary states
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [apiSource, setApiSource] = useState<string>("gemini");
-
-  // User Authentication & Review States
-  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
-  const [isReviewMode, setIsReviewMode] = useState<boolean>(false);
+  const {
+    phase, setPhase, kanjiCount, setKanjiCount, difficulty, setDifficulty, jlptCount, setJlptCount,
+    kanjiList, setKanjiList, currentKanjiIndex, setCurrentKanjiIndex, questions, setQuestions,
+    currentQuestionIndex, setCurrentQuestionIndex, userAnswers, setUserAnswers, isGraded, setIsGraded,
+    masteredKanji, setMasteredKanji, studyMode, setStudyMode, points, setPoints, unlockedThemes,
+    setUnlockedThemes, currentTheme, setCurrentTheme, vocabCount, setVocabCount, vocabList, setVocabList,
+    currentVocabIndex, setCurrentVocabIndex, masteredVocab, setMasteredVocab, vocabQuestions, setVocabQuestions,
+    bookmarkedKanjis, setBookmarkedKanjis, bookmarkedVocabs, setBookmarkedVocabs, selectedJlptLevel,
+    setSelectedJlptLevel, jlptQuestions, setJlptQuestions, currentJlptIndex, setCurrentJlptIndex,
+    jlptAnswers, setJlptAnswers, isJlptGraded, setIsJlptGraded, isJlptLoading, setIsJlptLoading,
+    jlptErrorMsg, setJlptErrorMsg, newsLesson, setNewsLesson, isNewsLoading, setIsNewsLoading,
+    newsErrorMsg, setNewsErrorMsg, isLoading, setIsLoading, errorMsg, setErrorMsg, apiSource, setApiSource,
+    currentUser, setCurrentUser, isReviewMode, setIsReviewMode
+  } = useAppState();
 
   // Hook for speech synthesis
   const { textToSpeechSupported, speakJapanese } = useSpeech(currentUser?.username);

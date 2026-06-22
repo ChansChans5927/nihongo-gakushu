@@ -142,7 +142,7 @@ export function VocabStudy({
                       e.stopPropagation();
                       speakJapanese(currentVocab.word);
                     }}
-                    className={`absolute -top-3 -right-12 p-1.5 rounded-full shadow-sm transition-all cursor-pointer flex items-center justify-center ${theme.wordAudioBtn}`}
+                    className={`absolute -top-4 -right-8 p-1.5 rounded-full shadow-sm transition-all cursor-pointer flex items-center justify-center ${theme.wordAudioBtn}`}
                     title="단어 발음 듣기"
                   >
                     <Volume2 className="w-3.5 h-3.5" />

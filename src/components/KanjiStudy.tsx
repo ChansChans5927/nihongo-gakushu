@@ -149,7 +149,7 @@ export function KanjiStudy({
                       e.stopPropagation();
                       speakJapanese(currentKanji.kanji);
                     }}
-                    className={`absolute -top-2 -right-10 p-1.5 rounded-full shadow-sm transition-all opacity-100 cursor-pointer flex items-center justify-center ${theme.kanjiAudioBtn}`}
+                    className={`absolute -top-4 -right-6 p-1.5 rounded-full shadow-sm transition-all opacity-100 cursor-pointer flex items-center justify-center ${theme.kanjiAudioBtn}`}
                     title="한자 발음 듣기"
                   >
                     <Volume2 className="w-4 h-4" />
