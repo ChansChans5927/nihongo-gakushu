@@ -49,7 +49,18 @@ router.post("/register", async (req, res) => {
       createdAt: new Date()
     });
 
-    res.json({ success: true, user: { username: username.trim() } });
+    // Sign JWT token
+    const token = jwt.sign(
+      { username: normalizedUsername },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      success: true,
+      token,
+      user: { username: username.trim() }
+    });
   } catch (err: any) {
     console.error("Registration error:", err);
     res.json({ success: false, errorMsg: `회원가입 중 오류가 발생했습니다: ${err.message}` });
