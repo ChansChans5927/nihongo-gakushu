@@ -26,25 +26,43 @@ window.fetch = async function (input, init) {
   }
 
   if (token && isApiCall) {
-    if (input instanceof Request) {
-      const headers = new Headers(input.headers);
-      headers.set("Authorization", `Bearer ${token}`);
-      input = new Request(input, { headers });
-    } else {
-      init = init || {};
-      let headers: Headers;
-      if (init.headers instanceof Headers) {
-        headers = init.headers;
-      } else if (Array.isArray(init.headers)) {
-        headers = new Headers(init.headers);
-      } else {
-        headers = new Headers(init.headers as Record<string, string> || {});
+    try {
+      // Validate that token only contains valid JWT characters to prevent Headers.set from throwing
+      if (!/^[A-Za-z0-9\-_=\.]+$/.test(token)) {
+        throw new Error("Invalid characters in token");
       }
-      headers.set("Authorization", `Bearer ${token}`);
-      init.headers = headers;
+
+      if (input instanceof Request) {
+        const headers = new Headers(input.headers);
+        headers.set("Authorization", `Bearer ${token}`);
+        input = new Request(input, { headers });
+      } else {
+        init = init || {};
+        let headers: Headers;
+        if (init.headers instanceof Headers) {
+          headers = init.headers;
+        } else if (Array.isArray(init.headers)) {
+          headers = new Headers(init.headers);
+        } else {
+          headers = new Headers(init.headers as Record<string, string> || {});
+        }
+        headers.set("Authorization", `Bearer ${token}`);
+        init.headers = headers;
+      }
+    } catch (err) {
+      console.warn("Invalid token detected in interceptor:", err);
+      localStorage.removeItem("user");
+      localStorage.removeItem("nihongo_token");
+      window.dispatchEvent(new Event("unauthorized"));
     }
   }
-  return originalFetch(input, init);
+  const response = await originalFetch(input, init);
+  if (response.status === 401 && token) {
+    localStorage.removeItem("user");
+    localStorage.removeItem("nihongo_token");
+    window.dispatchEvent(new Event("unauthorized"));
+  }
+  return response;
 };
 
 createRoot(document.getElementById('root')!).render(

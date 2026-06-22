@@ -133,6 +133,23 @@ export default function App() {
     }
   }, []);
 
+  // Handle unauthorized event (e.g. token expired) for auto-logout
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      if (!(window as any).unauthorizedAlerted) {
+        (window as any).unauthorizedAlerted = true;
+        setCurrentUser(null);
+        setPhase('config');
+        alert("로그인 세션이 만료되었습니다. 다시 로그인해 주세요.");
+        setTimeout(() => {
+          (window as any).unauthorizedAlerted = false;
+        }, 1000);
+      }
+    };
+    window.addEventListener("unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("unauthorized", handleUnauthorized);
+  }, []);
+
   // Sync push token if notifications are enabled
   useEffect(() => {
     if (currentUser) {
