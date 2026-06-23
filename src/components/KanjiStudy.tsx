@@ -138,10 +138,8 @@ export function KanjiStudy({
               <div className="my-auto py-4">
                 <div
                   key={`kanji-${currentKanji.kanji}`}
-                  onClick={() => speakJapanese(currentKanji.kanji)}
                   lang="ja"
-                  className={`text-7xl sm:text-8xl font-serif font-semibold leading-none select-none select-all relative group cursor-pointer transition-colors ${theme.kanjiTextHover}`}
-                  title="클릭하여 발음 듣기"
+                  className={`text-7xl sm:text-8xl font-serif font-semibold leading-none select-none select-all relative group transition-colors ${theme.kanjiTextHover}`}
                 >
                   {currentKanji.kanji}
                   <button

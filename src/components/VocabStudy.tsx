@@ -122,13 +122,11 @@ export function VocabStudy({
               </button>
               <div className="my-auto py-5 flex flex-col items-center justify-center gap-2">
                 <div
-                  className="relative group cursor-pointer inline-block"
-                  onClick={() => speakJapanese(currentVocab.word)}
+                  className="relative group inline-block"
                 >
                   <h1
                     lang="ja"
-                    className={`${currentVocab.word.length >= 8 ? "text-xl sm:text-3xl" : currentVocab.word.length >= 6 ? "text-2xl sm:text-4xl" : currentVocab.word.length >= 4 ? "text-3xl sm:text-5xl" : "text-4xl sm:text-6xl"} font-serif font-semibold leading-none select-none select-all relative group cursor-pointer transition-colors ${theme.wordTextHover}`}
-                    title="클릭하여 발음 듣기"
+                    className={`${currentVocab.word.length >= 8 ? "text-xl sm:text-3xl" : currentVocab.word.length >= 6 ? "text-2xl sm:text-4xl" : currentVocab.word.length >= 4 ? "text-3xl sm:text-5xl" : "text-4xl sm:text-6xl"} font-serif font-semibold leading-none select-none select-all relative group transition-colors ${theme.wordTextHover}`}
                   >
                     {currentVocab.word}
                   </h1>
