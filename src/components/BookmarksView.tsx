@@ -50,7 +50,7 @@ export function BookmarksView({
     };
 
     fetchDetails();
-  }, [activeTab, bookmarkedKanjis, bookmarkedVocabs]);
+  }, [activeTab]);
 
   const toggleExpand = (key: string) => {
     setExpandedItems(prev =>
