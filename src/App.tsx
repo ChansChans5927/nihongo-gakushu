@@ -248,7 +248,6 @@ export default function App() {
               <AuthCard
                 onAuthSuccess={(user) => {
                   setCurrentUser(user);
-                  localStorage.setItem("user", JSON.stringify(user));
                 }}
               />
             </motion.div>
@@ -372,9 +371,7 @@ export default function App() {
                   username={currentUser.username}
                   onGoBack={handleGoHome}
                   onLogout={() => {
-                    setCurrentUser(null);
-                    localStorage.removeItem("user");
-                    setIsReviewMode(false);
+                    logout();
                     setPhase('config');
                   }}
                 />
