@@ -45,12 +45,7 @@ export default function App() {
   // Handle Back Button natively via WebView bridge
   useEffect(() => {
     const handleHardwareBack = () => {
-      if (phase === 'studying' || phase === 'testing' || phase === 'news-study' || (phase === 'jlpt' && !isJlptGraded)) {
-        const confirmExit = window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?");
-        if (confirmExit) {
-          handleGoHome();
-        }
-      } else if (phase !== 'config') {
+      if (phase !== 'config') {
         handleGoHome();
       } else {
         // 홈 화면(config)일 경우 네이티브 앱 종료 요청
