@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
-import { useAppState } from "./store/useAppState";
+import { useEffect } from "react";
+import { useStudyStore } from "./stores/studyStore";
+import { useAuthStore } from "./stores/authStore";
 import { NativeBridge } from "./nativeBridge";
 import { AnimatePresence, motion } from "motion/react";
-import { BookMarked, BookOpen, CheckCircle2, User, LogOut } from "lucide-react";
-import { KanjiItem, Question, JlptQuestion, VocabItem, UserSession, NewsLesson } from "./types";
-import { generateQuiz, generateVocabQuiz } from "./utils";
+import { BookMarked, CheckCircle2 } from "lucide-react";
 import { useSpeech } from "./hooks/useSpeech";
 import { MainConfig } from "./components/MainConfig";
 import { KanjiStudy } from "./components/KanjiStudy";
@@ -22,21 +21,26 @@ import { BookmarksView } from "./components/BookmarksView";
 export default function App() {
   const {
     phase, setPhase, kanjiCount, setKanjiCount, difficulty, setDifficulty, jlptCount, setJlptCount,
-    kanjiList, setKanjiList, currentKanjiIndex, setCurrentKanjiIndex, questions, setQuestions,
-    currentQuestionIndex, setCurrentQuestionIndex, userAnswers, setUserAnswers, isGraded, setIsGraded,
-    masteredKanji, setMasteredKanji, studyMode, setStudyMode, points, setPoints, unlockedThemes,
-    setUnlockedThemes, currentTheme, setCurrentTheme, vocabCount, setVocabCount, vocabList, setVocabList,
-    currentVocabIndex, setCurrentVocabIndex, masteredVocab, setMasteredVocab, vocabQuestions, setVocabQuestions,
-    bookmarkedKanjis, setBookmarkedKanjis, bookmarkedVocabs, setBookmarkedVocabs, selectedJlptLevel,
-    setSelectedJlptLevel, jlptQuestions, setJlptQuestions, currentJlptIndex, setCurrentJlptIndex,
-    jlptAnswers, setJlptAnswers, isJlptGraded, setIsJlptGraded, isJlptLoading, setIsJlptLoading,
-    jlptErrorMsg, setJlptErrorMsg, newsLesson, setNewsLesson, isNewsLoading, setIsNewsLoading,
-    newsErrorMsg, setNewsErrorMsg, isLoading, setIsLoading, errorMsg, setErrorMsg, apiSource, setApiSource,
-    currentUser, setCurrentUser, isReviewMode, setIsReviewMode
-  } = useAppState();
+    kanjiList, currentKanjiIndex, questions, currentQuestionIndex, userAnswers, isGraded,
+    masteredKanji, studyMode, setStudyMode, points, unlockedThemes, currentTheme,
+    vocabCount, setVocabCount, vocabList, currentVocabIndex, masteredVocab, vocabQuestions,
+    bookmarkedKanjis, bookmarkedVocabs, selectedJlptLevel, setSelectedJlptLevel, jlptQuestions,
+    currentJlptIndex, jlptAnswers, isJlptGraded, isJlptLoading, jlptErrorMsg, newsLesson,
+    isNewsLoading, newsErrorMsg, isLoading, errorMsg, apiSource,
+    fetchUserProgress, resetProgressState, saveMasteredKanji, handleResetMastery, saveMasteredVocab,
+    handleResetVocabMastery, handleToggleBookmark, startKanjiStudy, startVocabStudy,
+    startJlptQuiz, startNewsStudy, handleSelectAnswer, handleNextStudy, handlePrevStudy,
+    handleNextQuestion, handlePrevQuestion, handleGradeQuiz, handleSelectJlptAnswer,
+    handleNextJlptQuestion, handlePrevJlptQuestion, handleGradeJlptQuiz, handleGoHomeJlpt,
+    handleGoHome
+  } = useStudyStore();
+
+  const {
+    currentUser, setCurrentUser, isReviewMode, setIsReviewMode, loadSession, logout
+  } = useAuthStore();
 
   // Hook for speech synthesis
-  const { textToSpeechSupported, speakJapanese } = useSpeech(currentUser?.username);
+  const { speakJapanese } = useSpeech(currentUser?.username);
 
   // Handle Back Button natively via WebView bridge
   useEffect(() => {
@@ -44,22 +48,10 @@ export default function App() {
       if (phase === 'studying' || phase === 'testing' || phase === 'news-study' || (phase === 'jlpt' && !isJlptGraded)) {
         const confirmExit = window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?");
         if (confirmExit) {
-          if (phase === 'jlpt') {
-            setIsJlptGraded(false);
-            setJlptQuestions([]);
-            setJlptAnswers({});
-            setJlptErrorMsg(null);
-          }
-          setPhase('config');
+          handleGoHome();
         }
       } else if (phase !== 'config') {
-        if (phase === 'jlpt') {
-          setIsJlptGraded(false);
-          setJlptQuestions([]);
-          setJlptAnswers({});
-          setJlptErrorMsg(null);
-        }
-        setPhase('config');
+        handleGoHome();
       } else {
         // 홈 화면(config)일 경우 네이티브 앱 종료 요청
         if (NativeBridge.isMobileApp()) {
@@ -72,26 +64,28 @@ export default function App() {
 
     window.addEventListener('hardwareBackPress', handleHardwareBack as EventListener);
     return () => window.removeEventListener('hardwareBackPress', handleHardwareBack as EventListener);
-  }, [phase, isJlptGraded]);
+  }, [phase, isJlptGraded, handleGoHome]);
 
   // Load session from localStorage on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      try {
-        setCurrentUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error("Failed to parse user session", e);
-      }
+    loadSession();
+  }, [loadSession]);
+
+  // Load progress when user signs in or restore session
+  useEffect(() => {
+    if (currentUser) {
+      fetchUserProgress(currentUser.username);
+    } else {
+      resetProgressState();
     }
-  }, []);
+  }, [currentUser, fetchUserProgress, resetProgressState]);
 
   // Handle unauthorized event (e.g. token expired) for auto-logout
   useEffect(() => {
     const handleUnauthorized = () => {
       if (!(window as any).unauthorizedAlerted) {
         (window as any).unauthorizedAlerted = true;
-        setCurrentUser(null);
+        logout();
         setPhase('config');
         alert("로그인 세션이 만료되었습니다. 다시 로그인해 주세요.");
         setTimeout(() => {
@@ -101,7 +95,7 @@ export default function App() {
     };
     window.addEventListener("unauthorized", handleUnauthorized);
     return () => window.removeEventListener("unauthorized", handleUnauthorized);
-  }, []);
+  }, [logout, setPhase]);
 
   // Sync push token if notifications are enabled
   useEffect(() => {
@@ -155,541 +149,10 @@ export default function App() {
     }
   };
 
-  // Fetch progress from MongoDB and sync with localStorage data if any
-  const fetchUserProgress = async (username: string) => {
-    try {
-      const response = await fetch(`/api/progress/get?username=${encodeURIComponent(username)}`);
-      const resData = await response.json();
-      if (resData.success) {
-        setMasteredKanji(resData.masteredKanjis || []);
-        setMasteredVocab(resData.masteredVocabs || []);
-        setBookmarkedKanjis(resData.bookmarkedKanjis || []);
-        setBookmarkedVocabs(resData.bookmarkedVocabs || []);
-        setPoints(resData.points || 0);
-        setUnlockedThemes(resData.unlockedThemes || ["default"]);
-        setCurrentTheme(resData.currentTheme || "default");
-
-        // Sync local storage data if user previously worked offline/without account
-        const localKanji = localStorage.getItem("mastered_kanji");
-        const localVocab = localStorage.getItem("mastered_vocab");
-        let syncKanjis: string[] = [];
-        let syncVocabs: string[] = [];
-
-        if (localKanji) {
-          try {
-            const parsed = JSON.parse(localKanji);
-            syncKanjis = parsed.filter((item: string) => !(resData.masteredKanjis || []).includes(item));
-          } catch (e) { }
-        }
-        if (localVocab) {
-          try {
-            const parsed = JSON.parse(localVocab);
-            syncVocabs = parsed.filter((item: string) => !(resData.masteredVocabs || []).includes(item));
-          } catch (e) { }
-        }
-
-        if (syncKanjis.length > 0) {
-          await fetch("/api/progress/save", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, type: "kanji", items: syncKanjis })
-          });
-          setMasteredKanji(prev => Array.from(new Set([...prev, ...syncKanjis])));
-          localStorage.removeItem("mastered_kanji");
-        }
-        if (syncVocabs.length > 0) {
-          await fetch("/api/progress/save", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, type: "vocab", items: syncVocabs })
-          });
-          setMasteredVocab(prev => Array.from(new Set([...prev, ...syncVocabs])));
-          localStorage.removeItem("mastered_vocab");
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch user progress from DB:", err);
-    }
-  };
-
-  // Load progress when user signs in
-  useEffect(() => {
-    if (currentUser) {
-      fetchUserProgress(currentUser.username);
-    } else {
-      setMasteredKanji([]);
-      setMasteredVocab([]);
-      setBookmarkedKanjis([]);
-      setBookmarkedVocabs([]);
-      setPoints(0);
-      setUnlockedThemes(["default"]);
-      setCurrentTheme("default");
-    }
-  }, [currentUser]);
-
-  const saveMasteredKanji = async (list: string[], newlyLearned: string[] = []) => {
-    setMasteredKanji(list);
-    if (currentUser && newlyLearned.length > 0) {
-      try {
-        const masteredDetails = kanjiList.filter(item => newlyLearned.includes(item.kanji));
-        await fetch("/api/progress/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: currentUser.username,
-            type: "kanji",
-            items: newlyLearned,
-            cardDetails: masteredDetails
-          })
-        });
-      } catch (err) {
-        console.error("Failed to save mastered kanji to DB:", err);
-      }
-    }
-  };
-
-  const handleResetMastery = async () => {
-    if (confirm("외운 한자 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?")) {
-      setMasteredKanji([]);
-      if (currentUser) {
-        try {
-          await fetch("/api/progress/reset", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: currentUser.username, type: "kanji" })
-          });
-        } catch (err) {
-          console.error("Failed to reset progress in DB:", err);
-        }
-      }
-    }
-  };
-
-  const saveMasteredVocab = async (list: string[], newlyLearned: string[] = []) => {
-    setMasteredVocab(list);
-    if (currentUser && newlyLearned.length > 0) {
-      try {
-        const masteredDetails = vocabList.filter(item => newlyLearned.includes(item.word));
-        const masteredQuizzes = vocabQuestions.filter(q => newlyLearned.includes(q.targetWord));
-        await fetch("/api/progress/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: currentUser.username,
-            type: "vocab",
-            items: newlyLearned,
-            cardDetails: masteredDetails,
-            quizDetails: masteredQuizzes
-          })
-        });
-      } catch (err) {
-        console.error("Failed to save mastered vocab to DB:", err);
-      }
-    }
-  };
-
-  const handleResetVocabMastery = async () => {
-    if (confirm("외운 단어 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?")) {
-      setMasteredVocab([]);
-      if (currentUser) {
-        try {
-          await fetch("/api/progress/reset", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: currentUser.username, type: "vocab" })
-          });
-        } catch (err) {
-          console.error("Failed to reset progress in DB:", err);
-        }
-      }
-    }
-  };
-
-  // Toggle bookmark in DB and local state
-  const handleToggleBookmark = async (type: "kanji" | "vocab", item: string) => {
-    if (!currentUser) return;
-    try {
-      const response = await fetch("/api/progress/bookmark", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, item })
-      });
-      const resData = await response.json();
-      if (resData.success) {
-        if (type === "kanji") {
-          setBookmarkedKanjis(prev =>
-            prev.includes(item) ? prev.filter(k => k !== item) : [...prev, item]
-          );
-        } else {
-          setBookmarkedVocabs(prev =>
-            prev.includes(item) ? prev.filter(v => v !== item) : [...prev, item]
-          );
-        }
-      }
-    } catch (err) {
-      console.error("Failed to toggle bookmark:", err);
-    }
-  };
-
-  // Trigger Study Generation from server Express + Gemini API
-  const startKanjiStudy = async (isReviewOverride?: boolean) => {
-    const isReview = typeof isReviewOverride === 'boolean' ? isReviewOverride : isReviewMode;
-    setIsLoading(true);
-    setErrorMsg(null);
-    setCurrentKanjiIndex(0);
-    setCurrentQuestionIndex(0);
-    setUserAnswers({});
-    setIsGraded(false);
-    setIsReviewMode(isReview);
-    setStudyMode('kanji');
-
-    try {
-      let response;
-      if (isReview) {
-        if (!currentUser) {
-          throw new Error("로그인이 필요한 서비스입니다.");
-        }
-        response = await fetch("/api/progress/review", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: currentUser.username,
-            type: "kanji"
-          })
-        });
-      } else {
-        response = await fetch("/api/kanji/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            count: kanjiCount,
-            level: difficulty,
-            excludeKanji: masteredKanji
-          }),
-        });
-      }
-
-      const resData = await response.json();
-
-      if (resData.success && resData.data && resData.data.length > 0) {
-        setKanjiList(resData.data);
-        setApiSource(resData.source || "mongodb_cache");
-        setPhase('studying');
-      } else {
-        throw new Error(resData.errorMsg || resData.message || "한자를 불러오는 데 실패했습니다.");
-      }
-    } catch (err: any) {
-      console.error("Failed to load kanji sets:", err);
-      setErrorMsg(err.message || "서버 통신에 오류가 발생했거나 한자 데이터를 받아오지 못했습니다. 잠시 후 다시 시도해 주세요.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Trigger Vocab Study Generation from server Express + Gemini API
-  const startVocabStudy = async (isReviewOverride?: boolean) => {
-    const isReview = typeof isReviewOverride === 'boolean' ? isReviewOverride : isReviewMode;
-    setIsLoading(true);
-    setErrorMsg(null);
-    setCurrentVocabIndex(0);
-    setCurrentQuestionIndex(0);
-    setUserAnswers({});
-    setIsGraded(false);
-    setIsReviewMode(isReview);
-    setStudyMode('vocab');
-
-    try {
-      let response;
-      if (isReview) {
-        if (!currentUser) {
-          throw new Error("로그인이 필요한 서비스입니다.");
-        }
-        response = await fetch("/api/progress/review", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: currentUser.username,
-            type: "vocab"
-          })
-        });
-      } else {
-        response = await fetch("/api/vocab/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            count: vocabCount,
-            level: difficulty,
-            excludeVocab: masteredVocab
-          }),
-        });
-      }
-
-      const resData = await response.json();
-
-      if (resData.success && resData.data && resData.data.length > 0) {
-        setVocabList(resData.data);
-        setVocabQuestions(resData.quiz || []);
-        setApiSource(resData.source || "mongodb_cache");
-        setPhase('studying');
-      } else {
-        throw new Error(resData.errorMsg || resData.message || "단어를 불러오는 데 실패했습니다.");
-      }
-    } catch (err: any) {
-      console.error("Failed to load vocab sets:", err);
-      setErrorMsg(err.message || "서버 통신에 오류가 발생했거나 단어 데이터를 받아오지 못했습니다. 잠시 후 다시 시도해 주세요.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // JLPT Past Exam Study Initializer
-  const startJlptQuiz = async () => {
-    setIsJlptLoading(true);
-    setJlptErrorMsg(null);
-    setCurrentJlptIndex(0);
-    setJlptAnswers({});
-    setIsJlptGraded(false);
-
-    try {
-      const response = await fetch("/api/jlpt/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ level: selectedJlptLevel, count: jlptCount }),
-      });
-      const resData = await response.json();
-
-      if (resData.success && resData.data && resData.data.length > 0) {
-        const uniqueQs = resData.data.map((q: any, index: number) => ({ ...q, id: `jlpt_${index}` }));
-        setJlptQuestions(uniqueQs);
-        setPhase('jlpt');
-      } else {
-        throw new Error(resData.errorMsg || "JLPT 기출문제를 불러오는 데 실패했습니다.");
-      }
-    } catch (err: any) {
-      console.error("Failed to load JLPT questions:", err);
-      setJlptErrorMsg(err.message || "JLPT 기출문제를 가져오는 도중 연결 오류가 발생했습니다. 다시 시도해 주세요.");
-    } finally {
-      setIsJlptLoading(false);
-    }
-  };
-
-  // News Study Initializer
-  const startNewsStudy = async () => {
-    setIsNewsLoading(true);
-    setNewsErrorMsg(null);
-
-    try {
-      const response = await fetch("/api/news/random");
-      const resData = await response.json();
-
-      if (resData.success && resData.data) {
-        setNewsLesson(resData.data);
-        setPhase('news-study');
-      } else {
-        throw new Error(resData.errorMsg || "뉴스 정보를 불러오지 못했습니다.");
-      }
-    } catch (err: any) {
-      console.error("Failed to load news lesson:", err);
-      setNewsErrorMsg(err.message || "서버 통신에 오류가 발생했거나 뉴스 데이터를 받아오지 못했습니다.");
-    } finally {
-      setIsNewsLoading(false);
-    }
-  };
-
-  // Navigates study slides
-  const handleNextStudy = () => {
-    if (studyMode === 'vocab') {
-      if (currentVocabIndex < vocabList.length - 1) {
-        setCurrentVocabIndex(prev => prev + 1);
-      } else {
-        const nextQuestions = vocabQuestions.length > 0 ? vocabQuestions : generateVocabQuiz(vocabList);
-        setQuestions(nextQuestions);
-        setUserAnswers({});
-        setCurrentQuestionIndex(0);
-        setIsGraded(false);
-        setPhase('testing');
-      }
-    } else {
-      if (currentKanjiIndex < kanjiList.length - 1) {
-        setCurrentKanjiIndex(prev => prev + 1);
-      } else {
-        // Completed last study item -> Generate quiz questions from current list
-        const generatedQuiz = generateQuiz(kanjiList);
-        setQuestions(generatedQuiz);
-        setUserAnswers({});
-        setCurrentQuestionIndex(0);
-        setIsGraded(false);
-        setPhase('testing');
-      }
-    }
-  };
-
-  const handlePrevStudy = () => {
-    if (studyMode === 'vocab') {
-      if (currentVocabIndex > 0) {
-        setCurrentVocabIndex(prev => prev - 1);
-      }
-    } else {
-      if (currentKanjiIndex > 0) {
-        setCurrentKanjiIndex(prev => prev - 1);
-      }
-    }
-  };
-
-  // Handle quiz answer selection
-  const handleSelectAnswer = (choiceIndex: number) => {
-    if (isGraded) return; // Prevent change after grading
-    const currentQuestion = questions[currentQuestionIndex];
-    setUserAnswers(prev => ({
-      ...prev,
-      [currentQuestion.id]: choiceIndex
-    }));
-  };
-
-  // Navigate to Next Quiz / Grade quiz
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-    }
-  };
-
-  const handlePrevQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-    }
-  };
-
-  // Complete & Grade Quiz
-  const handleGradeQuiz = () => {
-    // Check if all answered
-    const unansweredCount = questions.length - Object.keys(userAnswers).length;
-    if (unansweredCount > 0) {
-      if (!confirm(`아직 풀지 않은 문제가 ${unansweredCount}개 있습니다. 이대로 채점하시겠습니까?`)) {
-        return;
-      }
-    }
-    setIsGraded(true);
-    setPhase('result');
-
-    if (studyMode === 'vocab') {
-      const correctVocabList = questions
-        .filter(q => userAnswers[q.id] === q.correctIndex && q.vocabItem)
-        .map(q => q.vocabItem!.word as string);
-      const correctCount = correctVocabList.length;
-      if (correctCount > 0 && currentUser) {
-        fetch("/api/progress/addPoints", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ points: correctCount * 10 })
-        }).then(() => fetchUserProgress(currentUser.username)).catch(err => console.error(err));
-      }
-      const finishedVocab = Array.from(new Set<string>(correctVocabList));
-      const updated = Array.from(new Set<string>([...masteredVocab, ...finishedVocab]));
-      saveMasteredVocab(updated, finishedVocab);
-    } else {
-      // Add learned Kanji to masteredKanji and save so they don't appear in "새로운 한자 코스 풀기"
-      const correctKanjiList = questions
-        .filter(q => userAnswers[q.id] === q.correctIndex && q.kanjiItem)
-        .map(q => q.kanjiItem!.kanji as string);
-      const correctCount = correctKanjiList.length;
-      if (correctCount > 0 && currentUser) {
-        fetch("/api/progress/addPoints", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ points: correctCount * 10 })
-        }).then(() => fetchUserProgress(currentUser.username)).catch(err => console.error(err));
-      }
-      const finishedKanjis = Array.from(new Set<string>(correctKanjiList));
-      const updated = Array.from(new Set<string>([...masteredKanji, ...finishedKanjis]));
-      saveMasteredKanji(updated, finishedKanjis);
-    }
-  };
-
-  // JLPT state handlers
-  const handleSelectJlptAnswer = (choiceIndex: number) => {
-    if (isJlptGraded) return;
-    const currentQ = jlptQuestions[currentJlptIndex];
-    setJlptAnswers(prev => ({
-      ...prev,
-      [currentQ.id]: choiceIndex
-    }));
-  };
-
-  const handleNextJlptQuestion = () => {
-    if (currentJlptIndex < jlptQuestions.length - 1) {
-      setCurrentJlptIndex(prev => prev + 1);
-    }
-  };
-
-  const handlePrevJlptQuestion = () => {
-    if (currentJlptIndex > 0) {
-      setCurrentJlptIndex(prev => prev - 1);
-    }
-  };
-
-  const handleGradeJlptQuiz = () => {
-    const unansweredCount = jlptQuestions.length - Object.keys(jlptAnswers).length;
-    if (unansweredCount > 0) {
-      if (!confirm(`아직 풀지 않은 문제가 ${unansweredCount}개 있습니다. 이대로 채점하시겠습니까?`)) {
-        return;
-      }
-    }
-    const correctCount = jlptQuestions.filter(q => jlptAnswers[q.id] === q.correctIndex).length;
-    if (correctCount > 0 && currentUser) {
-      fetch("/api/progress/addPoints", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ points: correctCount * 10 })
-      }).then(() => fetchUserProgress(currentUser.username)).catch(err => console.error(err));
-    }
-    setIsJlptGraded(true);
-  };
-
-  const handleGoHomeJlpt = () => {
-    if (!isJlptGraded && phase === 'jlpt') {
-      if (!window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?")) {
-        return;
-      }
-    }
-    setPhase('config');
-    setIsJlptGraded(false);
-    setJlptQuestions([]);
-    setJlptAnswers({});
-    setJlptErrorMsg(null);
-  };
-
-  // Reset progress and go to main landing
-  const handleGoHome = () => {
-    if (phase === 'studying' || phase === 'testing' || phase === 'news-study') {
-      if (!window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?")) {
-        return;
-      }
-    }
-    if (!isJlptGraded && phase === 'jlpt') {
-      if (!window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?")) {
-        return;
-      }
-    }
-
-    setPhase('config');
-    setKanjiList([]);
-    setVocabList([]);
-    setQuestions([]);
-    setNewsLesson(null);
-    setNewsErrorMsg(null);
-
-    setIsJlptGraded(false);
-    setJlptQuestions([]);
-    setJlptAnswers({});
-    setJlptErrorMsg(null);
-  };
-
   const handleLogout = () => {
     if (confirm("로그아웃 하시겠습니까?")) {
-      setCurrentUser(null);
-      localStorage.removeItem("user");
-      localStorage.removeItem("nihongo_token");
-      setIsReviewMode(false);
+      logout();
+      setPhase('config');
     }
   };
 

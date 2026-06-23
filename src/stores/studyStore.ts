@@ -50,6 +50,7 @@ interface StudyState {
   setCurrentTheme: (theme: string) => void;
   setUnlockedThemes: (themes: string[]) => void;
   setPoints: (points: number) => void;
+  setStudyMode: (mode: StudyState['studyMode']) => void;
   
   // Actions
   fetchUserProgress: (username: string) => Promise<void>;
@@ -124,6 +125,7 @@ export const useStudyStore = create<StudyState>((set, get) => ({
   setCurrentTheme: (currentTheme) => set({ currentTheme }),
   setUnlockedThemes: (unlockedThemes) => set({ unlockedThemes }),
   setPoints: (points) => set({ points }),
+  setStudyMode: (studyMode) => set({ studyMode }),
 
   fetchUserProgress: async (username: string) => {
     try {
