@@ -143,7 +143,7 @@ export function BookmarksView({
                       <div
                         onClick={() => speakJapanese(item.kanji)}
                         lang="ja"
-                        className={`text-2xl sm:text-4xl font-serif font-black rounded-xl w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center cursor-pointer transition-colors shrink-0 ${theme.wordPanelBg} ${theme.kanjiTextHover}`}
+                        className={`text-2xl sm:text-4xl font-serif font-black rounded-xl w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center cursor-pointer transition-colors shrink-0 select-all ${theme.wordPanelBg} ${theme.kanjiTextHover}`}
                         title="발음 듣기"
                       >
                         {item.kanji}
@@ -222,7 +222,7 @@ export function BookmarksView({
                               className={`border rounded-xl p-3 space-y-1 ${theme.relatedWordCard}`}
                             >
                               <div className="flex justify-between items-center gap-2">
-                                <span lang="ja" className={`font-bold text-base font-mono ${theme.relatedWordJapText}`}>
+                                <span lang="ja" className={`font-bold text-base font-mono select-all ${theme.relatedWordJapText}`}>
                                   {wordObj.word}
                                 </span>
                                 <button
@@ -256,7 +256,7 @@ export function BookmarksView({
                             <span>듣기</span>
                           </button>
                         </div>
-                        <p lang="ja" className={`text-base sm:text-lg font-bold tracking-wide ${theme.exampleJapText}`}>
+                        <p lang="ja" className={`text-base sm:text-lg font-bold tracking-wide select-all ${theme.exampleJapText}`}>
                           {item.exampleSentence.japanese}
                         </p>
                         <p lang="ja" className={`text-xs font-mono ${theme.exampleHiraText}`}>
@@ -312,7 +312,7 @@ export function BookmarksView({
                         <span
                           onClick={() => speakJapanese(item.word)}
                           lang="ja"
-                          className={`text-xl sm:text-2xl font-serif font-black cursor-pointer ${theme.wordTextHover}`}
+                          className={`text-xl sm:text-2xl font-serif font-black cursor-pointer select-all ${theme.wordTextHover}`}
                           title="발음 듣기"
                         >
                           {item.word}
@@ -406,7 +406,7 @@ export function BookmarksView({
                           <span>듣기</span>
                         </button>
                       </div>
-                      <p lang="ja" className={`text-sm sm:text-base font-bold tracking-wide ${theme.exampleJapText}`}>
+                      <p lang="ja" className={`text-sm sm:text-base font-bold tracking-wide select-all ${theme.exampleJapText}`}>
                         {item.exampleSentence.japanese}
                       </p>
                       <p lang="ja" className={`text-[10px] font-mono ${theme.exampleHiraText}`}>

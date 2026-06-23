@@ -600,3 +600,20 @@
     opacity: 0;
   }
 }
+
+/* App-wide text selection/drag prevention for hybrid mobile look */
+body {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Allow text selection specifically for study elements */
+.select-all {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* Prevent double-tap zoom delay on buttons */
+button, [role="button"] {
+  touch-action: manipulation;
+}
