@@ -138,7 +138,10 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="사용자 아이디 입력"
                 disabled={isLoading}
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-slate-900"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-slate-900"
                 required
               />
             </div>
@@ -158,7 +161,10 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="비밀번호 입력"
                 disabled={isLoading}
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-slate-900"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-slate-900"
                 required
               />
             </div>
@@ -185,7 +191,10 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="비밀번호 확인 입력"
                   disabled={isLoading}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-slate-900"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-slate-900"
                   required
                 />
               </div>
