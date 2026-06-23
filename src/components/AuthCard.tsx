@@ -14,6 +14,7 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [agreePrivacy, setAgreePrivacy] = useState<boolean>(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +38,11 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
 
     if (!isLogin && trimmedPass !== confirmPassword.trim()) {
       setErrorMsg("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    if (!isLogin && !agreePrivacy) {
+      setErrorMsg("개인정보처리방침에 동의해 주세요.");
       return;
     }
 
@@ -73,6 +79,7 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
     setErrorMsg(null);
     setPassword("");
     setConfirmPassword("");
+    setAgreePrivacy(false);
   };
 
   return (
@@ -214,9 +221,40 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
             </motion.div>
           )}
 
+          {/* Privacy Policy Consent (only for Registration) */}
+          {!isLogin && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex items-start gap-2 pt-1.5 overflow-hidden"
+            >
+              <input
+                id="agree-privacy"
+                type="checkbox"
+                checked={agreePrivacy}
+                onChange={(e) => setAgreePrivacy(e.target.checked)}
+                disabled={isLoading}
+                className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 cursor-pointer"
+                required
+              />
+              <label htmlFor="agree-privacy" className="text-xs text-slate-500 leading-tight select-none">
+                <a
+                  href="/privacy.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-600 hover:text-amber-700 font-semibold underline underline-offset-2"
+                >
+                  개인정보처리방침
+                </a>
+                에 동의합니다. (필수)
+              </label>
+            </motion.div>
+          )}
+
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || (!isLogin && !agreePrivacy)}
             className={`w-full py-3.5 px-4 bg-gradient-to-r ${isLogin ? "from-slate-900 to-slate-800" : "from-amber-500 to-rose-500"
               } text-white font-bold rounded-xl text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:pointer-events-none active:scale-[0.98] mt-2`}
           >
