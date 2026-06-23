@@ -27,6 +27,14 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
       return;
     }
 
+    if (!isLogin) {
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+      if (!passwordRegex.test(trimmedPass)) {
+        setErrorMsg("비밀번호는 영문, 숫자, 특수문자를 혼합하여 8자 이상이어야 합니다.");
+        return;
+      }
+    }
+
     if (!isLogin && trimmedPass !== confirmPassword.trim()) {
       setErrorMsg("비밀번호가 일치하지 않습니다.");
       return;
@@ -168,6 +176,11 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
                 required
               />
             </div>
+            {!isLogin && (
+              <p className="text-[10px] text-slate-400 mt-1 pl-1">
+                * 영문, 숫자, 특수문자 조합 8자 이상
+              </p>
+            )}
           </div>
 
           {/* Confirm Password (only for Registration) */}

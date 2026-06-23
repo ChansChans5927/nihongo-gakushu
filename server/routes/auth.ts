@@ -22,11 +22,21 @@ function verifyPassword(password: string, storedHash: string): boolean {
   }
 }
 
+function isPasswordComplex(password: string): boolean {
+  // Minimum 8 chars, at least one letter, one number, and one special char
+  const regex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+  return regex.test(password);
+}
+
 // POST Endpoint for User Registration
 router.post("/register", async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password || username.trim() === "" || password.trim() === "") {
     return res.json({ success: false, errorMsg: "아이디와 비밀번호를 모두 입력해 주세요." });
+  }
+
+  if (!isPasswordComplex(password.trim())) {
+    return res.json({ success: false, errorMsg: "비밀번호는 영문, 숫자, 특수문자를 혼합하여 8자 이상이어야 합니다." });
   }
 
   const db = getDB();
