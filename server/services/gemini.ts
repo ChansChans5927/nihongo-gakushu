@@ -81,14 +81,17 @@ export const QUIZ_SCHEMA = {
 
 // Unified helper for Gemini calls expecting JSON
 export async function callGeminiJSON(prompt: string, systemInstruction: string, schema: any) {
+  const models = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.5-flash"];
   const maxRetries = 3;
   let attempt = 0;
 
   while (attempt < maxRetries) {
+    const currentModel = models[attempt] || "gemini-2.5-flash";
     try {
       const startTime = Date.now();
+      console.log(`[Gemini API] Calling ${currentModel} (attempt ${attempt + 1}/${maxRetries})...`);
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: currentModel,
         contents: prompt,
         config: {
           systemInstruction,
@@ -98,20 +101,20 @@ export async function callGeminiJSON(prompt: string, systemInstruction: string, 
       });
 
       const durationMs = Date.now() - startTime;
-      console.log(`[Gemini API] Call took ${durationMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+      console.log(`[Gemini API] Call to ${currentModel} took ${durationMs}ms`);
 
       const bodyText = response.text || "[]";
       return JSON.parse(bodyText.trim());
     } catch (err: any) {
       attempt++;
-      console.warn(`[Gemini API] Attempt ${attempt} failed: ${err.message || err}`);
+      console.warn(`[Gemini API] Call to ${currentModel} failed: ${err.message || err}`);
       
       if (attempt >= maxRetries) {
         throw err;
       }
       
       const delayMs = 2000 * attempt;
-      console.log(`[Gemini API] Retrying in ${delayMs}ms...`);
+      console.log(`[Gemini API] Retrying with next model in ${delayMs}ms...`);
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
