@@ -104,7 +104,7 @@ export function MainConfig({
       <div className="text-center pt-5 pb-6 sm:py-8 space-y-3 relative overflow-hidden rounded-3xl bg-radial from-amber-500/10 via-rose-500/5 to-transparent border border-slate-200/30">
         <div className="absolute top-4 left-4 text-slate-200 text-6xl font-display font-extrabold select-none pointer-events-none opacity-20 hidden sm:block">日</div>
         <div className="absolute bottom-4 right-4 text-slate-200 text-6xl font-display font-extrabold select-none pointer-events-none opacity-20 font-serif hidden sm:block">見</div>
-        
+
         {currentUser && (
           <div className="flex justify-center sm:absolute sm:top-4 sm:right-4 mb-3 sm:mb-0 z-10 relative">
             <div className="inline-flex bg-white/90 backdrop-blur border border-amber-200 shadow-sm px-3 py-1.5 rounded-2xl items-center gap-2 cursor-pointer transition-transform hover:scale-105" onClick={onOpenShop}>
@@ -118,7 +118,7 @@ export function MainConfig({
           <Sparkles className="w-3.5 h-3.5" />
           지루한 암기 없는 스토리텔링 학습법
         </div>
-        
+
         <h2 className="text-2xl sm:text-4xl font-display font-extrabold text-slate-950 tracking-tight leading-tight break-keep relative z-10">
           한 번 보면 평생 기억하는<br className="block sm:hidden" /> 일본어 한자 연상 암기
         </h2>
@@ -561,7 +561,7 @@ export function MainConfig({
                 JLPT 기출문제 풀기
               </h4>
               <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
-                단어 표기부터 요미가나 문맥 빈칸 완성까지 엄선된 JLPT 기출 문제로 진짜 실력을 검증하세요. 실제 시험 유형이 완벽하게 반영됩니다.
+                엄선된 JLPT 기출 문제로 진짜 실력을 검증하세요.
               </p>
             </div>
 
@@ -664,8 +664,8 @@ export function MainConfig({
                 유튜브 뉴스 자막과 어휘 퀴즈
               </h4>
               <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed bg-black/20 p-4 rounded-2xl backdrop-blur-sm border border-white/5">
-                일본 주요 뉴스 채널(TBS, ANN, FNN, 니혼TV, 요미우리TV)의 쇼츠 영상 중 <strong className="text-rose-300 font-bold">시청 가능한 뉴스가 무작위로</strong> 선정됩니다.
-                실제 원어민 아나운서의 명확한 발음을 들으며 시사 어휘 연상 학습과 사지선다 객관식 퀴즈를 즐겨 보세요!
+                일본 주요 방송사의 뉴스 쇼츠 영상이 매일 무작위로 매칭됩니다.<br />
+                아나운서의 정확한 발음으로 생생한 최신 뉴스를 듣고, 실전 시사 어휘 학습과 연계 퀴즈를 즐겨보세요!
               </p>
             </div>
 

@@ -64,8 +64,8 @@ export function ResultReport({
           </h3>
           <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
             {scoreData.percentage === 100
-              ? "놀랍습니다! 연상 이미지가 머릿속에 완벽하게 기억되었습니다. 장기 기억으로 완벽 이관되었습니다."
-              : "틀린 문제를 복습하면 연상 고리가 더욱 단단해집니다. 아래 연상법 해설을 다시 정독해 보세요."}
+              ? "훌륭합니다! 머릿속에 연상 이미지가 완벽하게 각인되어 장기 기억으로 저장되었습니다."
+              : "틀린 문제를 복습해 볼까요? 아래 연상 비법을 다시 읽어보면 기억의 연결고리가 더 단단해집니다."}
           </p>
         </div>
 
@@ -92,7 +92,7 @@ export function ResultReport({
       <div className="space-y-4">
         <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 px-1">
           <BookOpen className="w-4 h-4 text-amber-500" />
-          <span>진단 테스트 상세 결과 및 오답 해설 리포트</span>
+          <span>테스트 결과 상세 오답 해설 리포트</span>
         </h4>
 
         <div className="space-y-4">
@@ -229,7 +229,7 @@ export function ResultReport({
                   <div className="bg-amber-50/80 border-l-4 border-amber-500 rounded-r-xl p-4.5 space-y-2 text-xs">
                     <div className="flex items-center gap-1 text-amber-900 font-bold">
                       <Sparkles className="w-4 h-4 text-amber-500" />
-                      <span>연상 암기 복습 해설: 이렇게 연상해서 외우면 쉽습니다!</span>
+                      <span>💡 핵심 연상 비법: 기억을 더 단단하게 만드는 암기 공식</span>
                     </div>
                     {q.vocabItem ? (
                       <div className="space-y-2.5 bg-white/75 p-3 rounded-lg border border-amber-200/50">
@@ -271,7 +271,7 @@ export function ResultReport({
                   <div className="bg-emerald-50/50 border-l-4 border-emerald-500 rounded-r-xl p-4.5 space-y-2 text-xs">
                     <div className="flex items-center gap-1 text-emerald-950 font-bold">
                       <Sparkles className="w-4 h-4 text-emerald-500" />
-                      <span>연상 기억 비법: 정답을 맞춘 당신을 위한 암기 공식!</span>
+                      <span>💡 핵심 연상 비법: 기억을 더 단단하게 만드는 암기 공식</span>
                     </div>
                     {q.vocabItem ? (
                       <div className="space-y-2.5 bg-white/75 p-3 rounded-lg border border-emerald-200/50">

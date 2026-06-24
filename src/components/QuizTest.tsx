@@ -107,7 +107,7 @@ export function QuizTest({
       </div>
 
       {/* Quiz Card View Component */}
-      <div 
+      <div
         className={`${theme.cardContainer} overflow-hidden p-5 sm:p-6 space-y-6 relative ${isShaking && isSamurai ? "shake-effect" : ""}`}
       >
         {isSamurai && <div className="samurai-embers"></div>}
@@ -142,8 +142,8 @@ export function QuizTest({
           </h3>
           <p className={`text-xs ${theme.questionPromptSubText}`}>
             {currentQuestion.type === 'blank_fill'
-              ? "* 예문의 맥락과 뜻을 파악하고 알맞은 일본어 표기의 단어를 보기에서 선택해 보세요."
-              : "* 위 내용을 꼼꼼하게 기억해 보고, 4개의 보기 중 하나를 마우스로 정성스럽게 선택하여 발음을 체득해 보세요."}
+              ? "* 제시된 예문의 맥락과 뜻을 파악하고 알맞은 일본어 표기의 단어를 보기에서 선택해 보세요."
+              : "* 제시된 내용을 꼼꼼하게 기억해 보고, 4개의 보기 중 하나를 선택해 보세요."}
           </p>
         </div>
 
@@ -245,16 +245,16 @@ export function QuizTest({
                     const rect = e.currentTarget.getBoundingClientRect();
                     const x = e.clientX - rect.left;
                     const y = e.clientY - rect.top;
-                    
+
                     const ripple = document.createElement('div');
                     ripple.className = 'yokai-ripple';
                     ripple.style.left = `${x}px`;
                     ripple.style.top = `${y}px`;
                     ripple.style.width = ripple.style.height = `${Math.max(rect.width, rect.height)}px`;
                     ripple.style.transform = `translate(-50%, -50%) scale(0)`;
-                    
+
                     e.currentTarget.appendChild(ripple);
-                    
+
                     setTimeout(() => {
                       ripple.remove();
                     }, 500);
@@ -280,27 +280,21 @@ export function QuizTest({
                   }
                   onSelect(choiceIdx);
                 }}
-                className={`w-full text-left font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${
-                  isKanjiMatch ? "py-3.5 px-4 sm:py-5 sm:px-6" : "p-3 sm:p-4 text-sm"
-                } ${isSelected ? selectedStyles : baseStyles} ${
-                  customClasses
-                } ${isSlashing ? "samurai-slash-effect scale-[0.98]" : ""}`}
+                className={`w-full text-left font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${isKanjiMatch ? "py-3.5 px-4 sm:py-5 sm:px-6" : "p-3 sm:p-4 text-sm"
+                  } ${isSelected ? selectedStyles : baseStyles} ${customClasses
+                  } ${isSlashing ? "samurai-slash-effect scale-[0.98]" : ""}`}
               >
                 <div className="flex items-center gap-4">
-                  <span className={`w-7 h-7 flex items-center justify-center font-mono text-xs ${
-                    isSelected ? selectedIndexStyles : indexStyles
-                  } ${!isSamurai && "rounded-full"}`}>
+                  <span className={`w-7 h-7 flex items-center justify-center font-mono text-xs ${isSelected ? selectedIndexStyles : indexStyles
+                    } ${!isSamurai && "rounded-full"}`}>
                     {choiceIdx + 1}
                   </span>
-                  <span lang="ja" className={`leading-none ${
-                    isKanjiMatch
-                      ? `text-xl sm:text-2xl font-serif font-extrabold tracking-normal pl-2 ${
-                          isSelected ? theme.choiceTextSelected : theme.choiceTextNormal
-                        }`
-                      : `text-sm sm:text-base font-semibold ${
-                          isSelected ? theme.choiceTextSelected : theme.choiceTextNormal
-                        }`
-                  }`}>
+                  <span lang="ja" className={`leading-none ${isKanjiMatch
+                      ? `text-xl sm:text-2xl font-serif font-extrabold tracking-normal pl-2 ${isSelected ? theme.choiceTextSelected : theme.choiceTextNormal
+                      }`
+                      : `text-sm sm:text-base font-semibold ${isSelected ? theme.choiceTextSelected : theme.choiceTextNormal
+                      }`
+                    }`}>
                     {choice}
                   </span>
                 </div>

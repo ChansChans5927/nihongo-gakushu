@@ -180,7 +180,7 @@ export function KanjiStudy({
               {currentKanji.radicalsBreakdown && currentKanji.radicalsBreakdown.length > 0 && (
                 <div className={`rounded-2xl p-4 space-y-3 z-10 relative ${theme.radicalsBoxBg}`}>
                   <span className={`text-[10px] font-bold tracking-wider block uppercase ${theme.questionInstructionColor}`}>
-                    🧩 초보자를 위한 한자 파해 (부수 구성요소 클릭해서 쉽게 외우기)
+                    🧩 구성 자형 분해 (각 부수를 클릭하여 어원과 의미를 확인해 보세요)
                   </span>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                     {currentKanji.radicalsBreakdown.map((rad, radIdx) => {

@@ -385,7 +385,7 @@ export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps
               <div>
                 <h4 className="text-base font-bold text-red-800 mb-1">계정 삭제</h4>
                 <p className="text-sm text-red-600/80 leading-relaxed max-w-[280px]">
-                  지금까지의 모든 학습 기록과 설정 데이터가 영구적으로 삭제됩니다.
+                  회원 탈퇴 시 지금까지 쌓아온 모든 학습 기록과 커스텀 설정이 영구 삭제되며, 복구할 수 없습니다.
                 </p>
               </div>
               <button

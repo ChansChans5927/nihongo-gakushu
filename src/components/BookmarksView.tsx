@@ -125,7 +125,7 @@ export function BookmarksView({
             </div>
             <h3 className="text-lg font-bold text-slate-800">북마크한 한자가 없습니다</h3>
             <p className="text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
-              한자 학습 중에 외우기 어렵거나 나중에 다시 보고 싶은 한자는 별표 버튼을 눌러 이곳에 추가해 보세요!
+              암기하기 어려운 한자는 학습 중 별표(★)를 눌러 나만의 단어장에 담아보세요.
             </p>
           </div>
         ) : (
@@ -283,7 +283,7 @@ export function BookmarksView({
           </div>
           <h3 className="text-lg font-bold text-slate-800">북마크한 단어가 없습니다</h3>
           <p className="text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
-            단어 학습 중에 헷갈리거나 어려운 단어는 별표 버튼을 눌러 이곳에 추가해 보세요!
+            헷갈리거나 자주 틀리는 단어는 학습 중 별표(★)를 눌러 나만의 단어장에 저장해보세요.
           </p>
         </div>
       ) : (

@@ -181,7 +181,7 @@ export function generateVocabQuiz(vocabList: VocabItem[]): Question[] {
         .map((v) => v.meaning);
       choices = shuffle([correctValue, ...getDistinctValues(decoys, 3, correctValue, levelDecoy.wordMeanings)]);
     } else if (type === 'reading') {
-      questionText = `일본어 단어 '${item.word}'의 올바른 요미가나(읽기)와 발음은 무엇일까요?`;
+      questionText = `일본어 단어 '${item.word}'의 올바른 읽기(히라가나)는 무엇일까요?`;
       correctValue = `${item.hiragana} (${item.pronunciation})`;
 
       const decoys = vocabList

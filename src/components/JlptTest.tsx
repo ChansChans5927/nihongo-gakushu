@@ -167,7 +167,7 @@ export function JlptTest({
             <div className="space-y-4 relative z-10">
               <h3 className={`text-xs font-bold uppercase tracking-widest flex items-center gap-1 ${theme.questionInstructionColor}`}>
                 <CornerDownRight className={`w-3.5 h-3.5 ${theme.questionInstructionIcon}`} />
-                다음 JLPT 지문을 읽고 물음에 답하십시오
+                제시된 문제를 읽고 올바른 정답을 선택해 보세요
               </h3>
 
               {/* Split sentence logic */}
@@ -196,7 +196,7 @@ export function JlptTest({
                   Q. {jlptQuestions[currentJlptIndex].questionText.replace(/__/g, "")}
                 </p>
                 <p className={`text-xs ${theme.questionPromptSubText}`}>
-                  * 제시된 한자어 혹은 밑줄 단어에 어울리는 최적의 독음, 표기, 또는 한국어 뜻을 보기에서 하나만 선택하십시오.
+                  * 제시된 단어에 가장 알맞은 독음, 한자 표기, 또는 한국어 뜻을 보기에서 선택해 보세요.
                 </p>
               </div>
             </div>
@@ -339,8 +339,8 @@ export function JlptTest({
                   </h3>
                   <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
                     {ratio === 100
-                      ? "경이롭습니다! 해당 레벨의 핵심 어휘 요건을 모두 갖추셨습니다. 다음 등급에 도전하십시오!"
-                      : "해설을 통해 문제를 짚어보세요. JLPT 고빈도 단어는 독해와 청해의 필수 기초가 됩니다."}
+                      ? "대단합니다! 해당 레벨의 핵심 어휘를 완벽히 마스터하셨습니다. 다음 등급에도 도전해 보세요!"
+                      : "오답 해설을 통해 헷갈렸던 어휘를 정리해 보세요. 고빈도 단어는 합격의 가장 든든한 기초가 됩니다."}
                   </p>
                 </div>
 
@@ -369,7 +369,7 @@ export function JlptTest({
           <div className="space-y-4">
             <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 px-1">
               <HelpCircle className="w-4 h-4 text-amber-500" />
-              <span>기출전문가 심층 오답 및 구체적 문법해설 리포트</span>
+              <span>틀린 문제 상세 분석 및 맞춤형 오답 해설 리포트</span>
             </h4>
 
             {jlptQuestions.map((q, idx) => {

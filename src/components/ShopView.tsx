@@ -84,7 +84,7 @@ export function ShopView({
             테마 스킨 상점
           </h4>
           <p className="text-xs text-slate-500">
-            퀴즈 정답(1문제 당 10P)을 통해 획득한 포인트로 특별한 퀴즈 스킨을 구매하세요!
+            학습과 퀴즈(문제당 10P)를 통해 모은 포인트로 특별한 퀴즈 테마 스킨을 획득해 보세요!
           </p>
           <div className="inline-block mt-4 bg-amber-50 border border-amber-200 text-amber-900 px-4 py-2 rounded-xl font-mono font-bold text-lg shadow-inner">
             내 포인트: {points.toLocaleString()} P

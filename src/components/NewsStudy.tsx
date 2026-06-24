@@ -329,8 +329,8 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/50">
                   <h3 className="text-sm font-bold text-slate-700 mb-2">📰 뉴스 요약 및 스크립트</h3>
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    위 유튜브 동영상을 시청하면서 자막 리스트를 누르시면 원하는 구간으로 정확히 이동해 반복 청취할 수 있습니다. 
-                    하단의 중요 단어 탭과 퀴즈 탭으로 넘어가기 전, 뉴스의 내용을 여러 번 듣고 발음을 파악해 보세요.
+                    영상을 시청하면서 자막 리스트의 구절을 클릭하면 해당 구간으로 바로 이동하여 집중 반복 학습을 할 수 있습니다. 
+                    하단의 중요 단어와 퀴즈 탭을 풀기 전에 먼저 뉴스의 호흡과 아나운서의 발음을 익혀 보세요!
                   </p>
                 </div>
                 <div ref={subtitleContainerRef} className="border border-slate-100 rounded-2xl overflow-hidden divide-y divide-slate-100 max-h-[500px] overflow-y-auto scrollbar-thin scroll-smooth">
@@ -491,7 +491,7 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
                 {/* 퀴즈 안내 가이드 */}
                 {!quizGraded && (
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/50 flex items-center justify-between text-xs text-slate-500">
-                    <span>💡 방금 학습한 중요 단어들과 뉴스 속 예문을 검증하는 사지선다 객관식 퀴즈입니다.</span>
+                    <span>💡 뉴스 속 핵심 표현과 중요 어휘의 맥락을 점검하는 확인 퀴즈입니다.</span>
                     <span className="font-bold text-rose-500">총 {lesson.quizzes.length}문제</span>
                   </div>
                 )}

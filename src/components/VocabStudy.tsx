@@ -161,7 +161,7 @@ export function VocabStudy({
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <span className={`text-[13px] font-bold tracking-wider block ${theme.breakdownTitleColor}`}>
-                  💡 구성 한자 하나씩 쉽게 외우기
+                  💡 단어 속 한자 하나씩 나누어 외우기
                 </span>
 
                 <div className="space-y-3 pt-2">
