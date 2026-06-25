@@ -103,7 +103,7 @@ export function ShopView({
           <div className={`border rounded-2xl p-5 flex flex-col justify-between ${currentTheme === 'default' ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/30' : 'border-slate-200'}`}>
             <div className="space-y-2">
               <h5 className="font-bold text-slate-800 text-lg">기본 스킨</h5>
-              <p className="text-xs text-slate-500">가장 깔끔하고 심플한 기본 퀴즈 UI입니다.</p>
+              <p className="text-xs text-slate-500">기본 스타일의 깔끔하고 심플한 테마입니다.</p>
             </div>
             <div className="mt-6">
               {currentTheme === 'default' ? (
@@ -129,7 +129,7 @@ export function ShopView({
             <div className="space-y-2 relative z-10">
               <div className="flex items-center justify-between">
                 <h5 className="font-bold text-slate-900 text-lg flex items-center gap-1.5">
-                  사무라이 스킨 ⚔️
+                  사무라이 스킨
                 </h5>
                 {!unlockedThemes.includes('samurai') && (
                   <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-300">
@@ -138,7 +138,7 @@ export function ShopView({
                 )}
               </div>
               <p className="text-xs text-slate-500">
-                정답을 맞힐 때마다 화면을 가르는 날카로운 검격 애니메이션과 함께 통쾌한 <strong>'서걱!'</strong> 효과음이 재생됩니다.
+                보기를 선택할 때 검격 효과음과 슬래시 애니메이션이 나타납니다.
               </p>
             </div>
             <div className="mt-6 relative z-10">
@@ -173,7 +173,7 @@ export function ShopView({
             <div className="space-y-2 relative z-10">
               <div className="flex items-center justify-between">
                 <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'yokai' ? 'text-sky-100' : 'text-slate-900'}`}>
-                  요괴 스킨 👻
+                  요괴 스킨
                 </h5>
                 {!unlockedThemes.includes('yokai') && (
                   <span className="bg-sky-100 text-sky-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-sky-300">
@@ -182,7 +182,7 @@ export function ShopView({
                 )}
               </div>
               <p className={`text-xs ${currentTheme === 'yokai' ? 'text-sky-200/70' : 'text-slate-500'}`}>
-                기묘한 밤의 분위기를 자아내는 다크 테마입니다. 정답을 맞힐 때 도깨비불 애니메이션과 함께 서늘한 <strong>'차링~'</strong> 효과음이 울려 퍼집니다.
+                어두운 배경 톤에 도깨비불 연출과 종소리 효과음이 적용됩니다.
               </p>
             </div>
             <div className="mt-6 relative z-10">
@@ -230,7 +230,7 @@ export function ShopView({
             <div className="space-y-2 relative z-10">
               <div className="flex items-center justify-between">
                 <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'zen' ? 'text-emerald-950 font-black' : 'text-slate-900'}`}>
-                  젠 가든 스킨 🍵
+                  젠 가든 스킨
                 </h5>
                 {!unlockedThemes.includes('zen') && (
                   <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-300">
@@ -239,7 +239,7 @@ export function ShopView({
                 )}
               </div>
               <p className={`text-xs ${currentTheme === 'zen' ? 'text-emerald-800/80' : 'text-slate-500'}`}>
-                마음이 차분해지는 단아한 젠 가든 디자인입니다. 배경에 잎사귀들이 잔잔히 흩날리며, 보기를 클릭할 때마다 맑은 물방울 파동이 일어납니다.
+                잔잔하게 흩날리는 잎사귀 효과와 물방울 소리가 특징입니다.
               </p>
             </div>
             <div className="mt-6 relative z-10">
@@ -261,6 +261,63 @@ export function ShopView({
                   className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   1,000 P로 구매하기
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Chalkboard Theme */}
+          <div className={`border rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
+            currentTheme === 'chalkboard'
+              ? 'chalkboard-theme-base border-emerald-600/40 ring-2 ring-emerald-600/20 shadow-md'
+              : 'border-slate-200 bg-gradient-to-br from-white to-[#edf5f0] hover:border-emerald-300 hover:shadow-sm'
+          }`}>
+            {currentTheme === 'chalkboard' && (
+              <div className="chalkboard-dust-particles">
+                <div className="chalk-dust" style={{ left: '10%', animationDelay: '0s' }}></div>
+                <div className="chalk-dust" style={{ left: '30%', animationDelay: '-3s' }}></div>
+                <div className="chalk-dust" style={{ left: '50%', animationDelay: '-6s' }}></div>
+                <div className="chalk-dust" style={{ left: '70%', animationDelay: '-9s' }}></div>
+                <div className="chalk-dust" style={{ left: '90%', animationDelay: '-12s' }}></div>
+              </div>
+            )}
+            <div className="absolute top-0 right-0 p-3 opacity-15 pointer-events-none z-0">
+              <Sparkles className={`w-16 h-16 ${currentTheme === 'chalkboard' ? 'text-yellow-300' : 'text-slate-400'}`} />
+            </div>
+            <div className="space-y-2 relative z-10">
+              <div className="flex items-center justify-between">
+                <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'chalkboard' ? 'text-yellow-300 font-black' : 'text-slate-900'}`}>
+                  분필 칠판 스킨
+                </h5>
+                {!unlockedThemes.includes('chalkboard') && (
+                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-300">
+                    1,200 P
+                  </span>
+                )}
+              </div>
+              <p className={`text-xs ${currentTheme === 'chalkboard' ? 'text-emerald-100/80' : 'text-slate-500'}`}>
+                초록 칠판 배경에 분필 가루 입자 효과와 사각거리는 효과음이 적용됩니다.
+              </p>
+            </div>
+            <div className="mt-6 relative z-10">
+              {currentTheme === 'chalkboard' ? (
+                <div className="w-full text-center py-2 bg-emerald-800/10 text-yellow-300 border border-emerald-800/20 font-bold rounded-xl text-sm cursor-not-allowed">
+                  현재 장착 중
+                </div>
+              ) : unlockedThemes.includes('chalkboard') ? (
+                <button
+                  onClick={() => equipTheme('chalkboard')}
+                  className="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer"
+                >
+                  장착하기
+                </button>
+              ) : (
+                <button
+                  onClick={() => buyTheme('chalkboard', 1200)}
+                  disabled={points < 1200}
+                  className="w-full py-2 bg-gradient-to-r from-emerald-600 to-yellow-600 hover:from-emerald-700 hover:to-yellow-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  1,200 P로 구매하기
                 </button>
               )}
             </div>

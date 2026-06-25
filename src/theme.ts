@@ -4,6 +4,7 @@ export interface ThemeConfig {
   isYokai: boolean;
   isZen: boolean;
   isDefault: boolean;
+  isChalkboard: boolean;
 
   // Header & Progress Tracker
   headerTextColor: string;
@@ -130,6 +131,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     isYokai: false,
     isZen: false,
     isDefault: true,
+    isChalkboard: false,
 
     headerTextColor: "text-slate-500",
     headerIconColor: "text-emerald-500",
@@ -247,6 +249,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     isYokai: false,
     isZen: false,
     isDefault: false,
+    isChalkboard: false,
 
     headerTextColor: "text-amber-900",
     headerIconColor: "text-amber-800",
@@ -364,6 +367,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     isYokai: true,
     isZen: false,
     isDefault: false,
+    isChalkboard: false,
 
     headerTextColor: "text-[#0ea5e9]",
     headerIconColor: "text-[#0ea5e9]",
@@ -481,6 +485,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     isYokai: false,
     isZen: true,
     isDefault: false,
+    isChalkboard: false,
 
     headerTextColor: "text-emerald-800",
     headerIconColor: "text-emerald-600",
@@ -591,6 +596,124 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     btnNextQuiz: "bg-[#ffffff] hover:bg-emerald-50 text-emerald-800 border border-emerald-600/30 rounded-lg",
     btnGradeQuiz: "zen-button-selected text-white rounded-lg border border-emerald-600 shadow-[0_4px_14px_rgba(74,114,86,0.2)]",
     radicalsBoxBg: "bg-emerald-50/40 border border-emerald-600/10"
+  },
+  chalkboard: {
+    key: "chalkboard",
+    isSamurai: false,
+    isYokai: false,
+    isZen: false,
+    isDefault: false,
+    isChalkboard: true,
+
+    headerTextColor: "text-emerald-300",
+    headerIconColor: "text-yellow-400",
+    progressTrackBg: "bg-[#0e2716] border border-white/10",
+    progressBarBg: "bg-gradient-to-r from-yellow-400 to-amber-500 shadow-[0_0_8px_rgba(250,204,21,0.4)]",
+
+    cardContainer: "chalkboard-theme-base rounded-2xl text-slate-100 border-4 chalkboard-wood-border shadow-[0_15px_30px_rgba(0,0,0,0.3)]",
+    cardHeaderBg: "bg-black/15 border-b border-white/10",
+    cardIndexText: "text-slate-300/70 font-mono",
+    badgeBg: "bg-white/10 text-slate-100 border border-white/15",
+
+    wordPanelBg: "bg-black/10 border border-white/5 shadow-inner",
+    wordTextHover: "text-white hover:text-yellow-300 drop-shadow-[0_2px_4px_rgba(255,255,255,0.2)]",
+    wordSubText: "text-emerald-200/80",
+    wordAudioBtn: "bg-white/10 border border-white/20 text-slate-200 hover:bg-white/20 hover:text-white",
+    meaningBadge: "bg-yellow-400 text-slate-950 font-black shadow-md",
+
+    breakdownPanelBg: "bg-white/5 border border-white/10",
+    breakdownIconColor: "text-yellow-400",
+    breakdownTitleColor: "text-emerald-200 font-bold",
+    breakdownItemBg: "bg-black/20 border-white/10 hover:border-white/30 hover:bg-black/35",
+    breakdownKanjiBox: "text-yellow-300 bg-white/5 border border-white/20 hover:bg-white/10",
+    breakdownKanjiMeaning: "text-slate-100",
+    breakdownMnemonicText: "text-slate-200/90",
+    breakdownEmptyText: "text-slate-450",
+
+    exampleBoxBg: "bg-black/25 border border-white/10 text-slate-100",
+    exampleOverlayText: "text-white/5",
+    exampleTitleColor: "text-yellow-400",
+    exampleAudioBtn: "bg-white/10 hover:bg-white/20 text-slate-200 border border-white/25",
+    exampleJapText: "text-white",
+    exampleHiraText: "text-emerald-200/80",
+    examplePronunciationText: "text-yellow-200",
+    exampleMeaningText: "text-slate-200 border-white/10",
+
+    footerBg: "bg-transparent border-t border-white/10",
+    btnSecondary: "bg-white/5 hover:bg-white/15 text-slate-200 border border-white/20 rounded-xl",
+    btnPrimary: "bg-yellow-400 hover:bg-yellow-500 text-slate-950 font-extrabold rounded-xl border border-yellow-500 shadow-md",
+
+    sealBadgeClass: "chalkboard-seal-badge inline-block px-3 py-1 text-[11px] font-bold uppercase tracking-widest rounded-md border-2 border-dashed border-yellow-400 text-yellow-300 opacity-90 select-none",
+    choiceBtnBase: "chalkboard-button text-slate-200 border-2 border-white/20 hover:border-white/40 hover:bg-white/5 p-3.5 sm:p-4.5 rounded-xl text-sm transition-all duration-200",
+    choiceBtnSelected: "chalkboard-button-selected text-yellow-300 font-black rounded-xl border-2 border-yellow-400 bg-white/5 ring-1 ring-yellow-400/30 shadow-md shadow-yellow-400/5",
+    choiceIdxBase: "bg-white/10 text-slate-300 border border-white/15 rounded-full",
+    choiceIdxSelected: "bg-yellow-400 text-slate-950 font-bold rounded-full shadow-[0_0_10px_rgba(250,204,21,0.5)]",
+    checkIconColor: "text-yellow-400",
+    choiceTextNormal: "text-slate-200",
+    choiceTextSelected: "text-yellow-300",
+
+    // Kanji specific
+    badgeGradeBg: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
+    strokeCountText: "text-emerald-300/60",
+    kanjiTextHover: "text-white hover:text-yellow-300 drop-shadow-[0_2px_4px_rgba(255,255,255,0.2)]",
+    kanjiAudioBtn: "bg-white/10 border border-white/20 text-slate-200 hover:bg-white/20 hover:text-white",
+    kanjiMeaningBadge: "bg-yellow-400 text-slate-950 font-black shadow-md",
+    mnemonicPanelBg: "bg-white/5 border border-white/10",
+    mnemonicIconColor: "text-yellow-400",
+    mnemonicTitleColor: "text-emerald-200",
+    radicalItemBg: "bg-black/20 border border-white/10 hover:border-white/30 hover:bg-black/35 hover:shadow-2xs active:scale-[0.99]",
+    radicalKanjiBox: "text-yellow-300 bg-white/5 border border-white/20 group-hover:bg-white/10",
+    radicalKanjiMeaning: "text-slate-100",
+    radicalItemBadge: "text-yellow-400 bg-white/10 border border-yellow-500/30 group-hover:bg-white/15",
+    radicalItemBadgeIcon: "text-yellow-400",
+    tableBorder: "border-white/10",
+    tableHeaderCol: "bg-black/15 text-slate-200 border-white/10",
+    tableHeaderLabelText: "text-emerald-300/50",
+    tableValueCol: "bg-transparent",
+    tableJapText: "text-white",
+    tableOnyomiKoreanBadge: "bg-yellow-400/20 text-yellow-300 border border-yellow-500/30",
+    tableHunyomiKoreanBadge: "bg-pink-500/20 text-pink-300 border border-pink-500/30",
+    tableAudioBtn: "bg-white/10 border border-white/20 text-slate-200 hover:bg-white/20 hover:text-white",
+    relatedWordCard: "bg-black/10 hover:bg-black/20 border-white/10 hover:border-white/25",
+    relatedWordJapText: "text-white",
+    relatedWordSubText: "text-emerald-200/70",
+    relatedWordPronunciationText: "text-yellow-200/90",
+    relatedWordMeaningText: "text-slate-350 border-white/10",
+    exampleTitleColorKanji: "text-yellow-400",
+    examplePronunciationTextKanji: "text-yellow-200",
+    btnPrimaryKanji: "bg-yellow-400 hover:bg-yellow-500 text-slate-950 font-extrabold rounded-xl border border-yellow-500",
+
+    // JLPT specific
+    headerIconColorKanji: "text-yellow-400",
+    progressTrackBgJlpt: "bg-[#0e2716] border border-white/10",
+    progressBarBgJlpt: "bg-gradient-to-r from-yellow-400 to-amber-500",
+    sealBadgeClassJlpt: "chalkboard-seal-badge inline-block px-3 py-1 text-[11px] font-bold uppercase tracking-widest rounded-md border-2 border-dashed border-yellow-400 text-yellow-300 opacity-90 select-none",
+    abandonLinkColor: "text-slate-300 hover:text-white",
+    questionInstructionColor: "text-emerald-300/70",
+    questionInstructionIcon: "text-yellow-400",
+    questionSentenceBox: "bg-black/20 border-white/10 text-white font-sans",
+    blankFillBlock: "bg-yellow-400/10 border-yellow-400/40 text-yellow-300",
+    highlightWordBlock: "bg-white/15 text-white border-white/20",
+    questionPromptText: "text-slate-150",
+    questionPromptSubText: "text-emerald-300/50",
+    choiceBtnSelectedJlpt: "chalkboard-button-selected text-yellow-300 font-black rounded-xl border-2 border-yellow-400 bg-white/5 ring-1 ring-yellow-400/30",
+    choiceIdxSelectedJlpt: "bg-yellow-400 text-slate-950 font-bold rounded-full shadow-[0_0_10px_rgba(250,204,21,0.5)]",
+    checkIconColorJlpt: "text-yellow-400",
+    choiceTextNormalJlpt: "text-slate-200",
+    choiceTextSelectedJlpt: "text-yellow-300",
+    btnSecondaryJlpt: "bg-white/5 hover:bg-white/15 text-slate-200 border border-white/20 rounded-xl",
+    btnNextJlpt: "bg-slate-100 hover:bg-white text-slate-950 font-bold",
+    btnGradeJlpt: "bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-extrabold",
+
+    // Quiz specific
+    headerIconColorQuiz: "text-yellow-400",
+    progressBarBgQuiz: "bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]",
+    quizDisplayBox: "bg-black/15 border border-white/10 rounded-2xl",
+    blankFillBlockQuiz: "bg-yellow-400/15 border-yellow-400/40 text-yellow-300",
+    quizBigDisplayHint: "text-slate-100",
+    btnNextQuiz: "bg-slate-100 hover:bg-white text-slate-950 font-bold rounded-xl",
+    btnGradeQuiz: "bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-extrabold rounded-xl",
+    radicalsBoxBg: "bg-black/10 border border-white/10"
   }
 };
 

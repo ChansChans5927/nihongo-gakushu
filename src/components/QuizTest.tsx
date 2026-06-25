@@ -31,6 +31,7 @@ export function QuizTest({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const yokaiAudioRef = useRef<HTMLAudioElement | null>(null);
   const zenAudioRef = useRef<HTMLAudioElement | null>(null);
+  const chalkboardAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initialize audio once
   if (typeof window !== 'undefined') {
@@ -45,6 +46,10 @@ export function QuizTest({
     if (!zenAudioRef.current) {
       zenAudioRef.current = new Audio("/sounds/water.mp3");
       zenAudioRef.current.volume = 0.65;
+    }
+    if (!chalkboardAudioRef.current) {
+      chalkboardAudioRef.current = new Audio("/sounds/chalk.wav");
+      chalkboardAudioRef.current.volume = 0.7;
     }
   }
 
@@ -74,6 +79,11 @@ export function QuizTest({
       if (zenAudioRef.current) {
         zenAudioRef.current.currentTime = 0;
         zenAudioRef.current.play().catch(e => console.log("Audio play failed:", e));
+      }
+    } else if (theme.isChalkboard) {
+      if (chalkboardAudioRef.current) {
+        chalkboardAudioRef.current.currentTime = 0;
+        chalkboardAudioRef.current.play().catch(e => console.log("Audio play failed:", e));
       }
     }
     handleSelectAnswer(choiceIdx);
@@ -126,6 +136,15 @@ export function QuizTest({
             <div className="leaf-3"></div>
             <div className="leaf-4"></div>
             <div className="leaf-5"></div>
+          </div>
+        )}
+        {theme.isChalkboard && (
+          <div className="chalkboard-dust-particles">
+            <div className="chalk-dust" style={{ left: '10%', animationDelay: '0s' }}></div>
+            <div className="chalk-dust" style={{ left: '30%', animationDelay: '-3s' }}></div>
+            <div className="chalk-dust" style={{ left: '50%', animationDelay: '-6s' }}></div>
+            <div className="chalk-dust" style={{ left: '70%', animationDelay: '-9s' }}></div>
+            <div className="chalk-dust" style={{ left: '90%', animationDelay: '-12s' }}></div>
           </div>
         )}
         {/* Visual badge - Hanko style */}
@@ -206,7 +225,7 @@ export function QuizTest({
             </div>
           ) : (
             <>
-              <div lang="ja" className={`text-4xl sm:text-5xl font-extrabold select-none text-center ${isSamurai ? "font-serif text-amber-950 drop-shadow-sm" : isYokai ? "font-serif text-[#f8f9fa] drop-shadow-md shadow-[#48cae4]" : isZen ? "font-serif text-emerald-950 drop-shadow-xs" : "font-serif text-slate-800"}`}>
+              <div lang="ja" className={`text-4xl sm:text-5xl font-extrabold select-none text-center ${isSamurai ? "font-serif text-amber-950 drop-shadow-sm" : isYokai ? "font-serif text-[#f8f9fa] drop-shadow-md shadow-[#48cae4]" : isZen ? "font-serif text-emerald-950 drop-shadow-xs" : theme.isChalkboard ? "font-serif text-slate-100 drop-shadow-[0_2px_4px_rgba(255,255,255,0.15)]" : "font-serif text-slate-800"}`}>
                 {currentQuestion.type === 'kanji_match' ? (
                   <span className={`font-sans tracking-widest animate-pulse ${theme.quizBigDisplayHint}`}>?</span>
                 ) : (
@@ -277,6 +296,37 @@ export function QuizTest({
                         }, 900);
                       }
                     }, 150);
+                  } else if (theme.isChalkboard) {
+                    const buttonEl = e.currentTarget;
+                    const rect = buttonEl.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    // Create chalk dust particles on click coordinates
+                    const particleCount = 15;
+                    for (let i = 0; i < particleCount; i++) {
+                      const particle = document.createElement('div');
+                      particle.className = 'chalk-click-particle';
+                      particle.style.left = `${x}px`;
+                      particle.style.top = `${y}px`;
+
+                      const angle = Math.random() * Math.PI * 2;
+                      const velocity = 20 + Math.random() * 60; // Spread distance
+                      const tx = Math.cos(angle) * velocity;
+                      const ty = Math.sin(angle) * velocity;
+                      const size = 2.5 + Math.random() * 4; // Particle size
+
+                      particle.style.width = `${size}px`;
+                      particle.style.height = `${size}px`;
+                      particle.style.setProperty('--tx', `${tx}px`);
+                      particle.style.setProperty('--ty', `${ty}px`);
+
+                      buttonEl.appendChild(particle);
+
+                      setTimeout(() => {
+                        particle.remove();
+                      }, 800);
+                    }
                   }
                   onSelect(choiceIdx);
                 }}

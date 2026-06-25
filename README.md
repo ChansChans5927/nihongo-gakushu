@@ -57,3 +57,14 @@ https://nihongo-gakushu.onrender.com
 
 ### 📊 결과 리포트 페이지
 ![결과 리포트 페이지](image-4.png)
+
+---
+
+## 📜 라이선스 및 출처 (Credits)
+
+본 프로젝트에서 사용된 외부 에셋 및 효과음의 출처는 다음과 같습니다.
+
+* **Chalk Sound Effect (분필 효과음)**:
+  * [writing-chalk-med-03.wav](https://freesound.org/s/377836/) by [newagesoup](https://freesound.org/users/newagesoup/)
+  * Licensed under [Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
+
