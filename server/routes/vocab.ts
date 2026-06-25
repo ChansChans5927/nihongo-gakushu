@@ -310,7 +310,8 @@ router.post("/generate", async (req, res) => {
     const mergedData = [...selectedVocabs, ...newGeneratedVocabs];
     let mergedQuiz = [...selectedQuizzes, ...keptQuizzes];
 
-    mergedQuiz = mergedQuiz.filter(q => seenWords.has(q.targetWord));
+    const mergedWords = new Set(mergedData.map(v => v.word));
+    mergedQuiz = mergedQuiz.filter(q => mergedWords.has(q.targetWord));
 
     mergedQuiz = mergedQuiz.map((q, idx) => {
       const associatedItem = mergedData.find(item => item.word === q.targetWord);

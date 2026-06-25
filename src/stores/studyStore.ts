@@ -153,12 +153,14 @@ export const useStudyStore = create<StudyState>((set, get) => ({
             const parsed = JSON.parse(localKanji);
             syncKanjis = parsed.filter((item: string) => !(resData.masteredKanjis || []).includes(item));
           } catch (e) { }
+          localStorage.removeItem("mastered_kanji");
         }
         if (localVocab) {
           try {
             const parsed = JSON.parse(localVocab);
             syncVocabs = parsed.filter((item: string) => !(resData.masteredVocabs || []).includes(item));
           } catch (e) { }
+          localStorage.removeItem("mastered_vocab");
         }
 
         if (syncKanjis.length > 0) {
@@ -168,7 +170,6 @@ export const useStudyStore = create<StudyState>((set, get) => ({
             body: JSON.stringify({ username, type: "kanji", items: syncKanjis })
           });
           set({ masteredKanji: Array.from(new Set([...get().masteredKanji, ...syncKanjis])) });
-          localStorage.removeItem("mastered_kanji");
         }
         if (syncVocabs.length > 0) {
           await fetch("/api/progress/save", {
@@ -177,7 +178,6 @@ export const useStudyStore = create<StudyState>((set, get) => ({
             body: JSON.stringify({ username, type: "vocab", items: syncVocabs })
           });
           set({ masteredVocab: Array.from(new Set([...get().masteredVocab, ...syncVocabs])) });
-          localStorage.removeItem("mastered_vocab");
         }
       }
     } catch (err) {
