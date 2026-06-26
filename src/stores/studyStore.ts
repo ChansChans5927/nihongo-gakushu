@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { KanjiItem, VocabItem, Question, JlptQuestion, NewsLesson } from "../types";
 import { generateQuiz, generateVocabQuiz } from "../utils";
 import { useAuthStore } from "./authStore";
+import { useConfirmStore } from "./confirmStore";
 
 interface StudyState {
   phase: 'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt' | 'shop' | 'bookmarks';
@@ -221,7 +222,8 @@ export const useStudyStore = create<StudyState>((set, get) => ({
   },
 
   handleResetMastery: async () => {
-    if (window.confirm("외운 한자 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?")) {
+    const confirmed = await useConfirmStore.getState().showConfirm("외운 한자 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?");
+    if (confirmed) {
       set({ masteredKanji: [] });
       const authStore = useAuthStore.getState();
       const currentUser = authStore.currentUser;
@@ -265,7 +267,8 @@ export const useStudyStore = create<StudyState>((set, get) => ({
   },
 
   handleResetVocabMastery: async () => {
-    if (window.confirm("외운 단어 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?")) {
+    const confirmed = await useConfirmStore.getState().showConfirm("외운 단어 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?");
+    if (confirmed) {
       set({ masteredVocab: [] });
       const authStore = useAuthStore.getState();
       const currentUser = authStore.currentUser;
@@ -565,7 +568,8 @@ export const useStudyStore = create<StudyState>((set, get) => ({
   handleGradeQuiz: async () => {
     const unansweredCount = get().questions.length - Object.keys(get().userAnswers).length;
     if (unansweredCount > 0) {
-      if (!window.confirm(`아직 풀지 않은 문제가 ${unansweredCount}개 있습니다. 이대로 채점하시겠습니까?`)) {
+      const confirmed = await useConfirmStore.getState().showConfirm(`아직 풀지 않은 문제가 ${unansweredCount}개 있습니다. 이대로 채점하시겠습니까?`);
+      if (!confirmed) {
         return;
       }
     }
@@ -646,7 +650,8 @@ export const useStudyStore = create<StudyState>((set, get) => ({
   handleGradeJlptQuiz: async () => {
     const unansweredCount = get().jlptQuestions.length - Object.keys(get().jlptAnswers).length;
     if (unansweredCount > 0) {
-      if (!window.confirm(`아직 풀지 않은 문제가 ${unansweredCount}개 있습니다. 이대로 채점하시겠습니까?`)) {
+      const confirmed = await useConfirmStore.getState().showConfirm(`아직 풀지 않은 문제가 ${unansweredCount}개 있습니다. 이대로 채점하시겠습니까?`);
+      if (!confirmed) {
         return;
       }
     }
@@ -669,9 +674,10 @@ export const useStudyStore = create<StudyState>((set, get) => ({
     set({ isJlptGraded: true });
   },
 
-  handleGoHomeJlpt: () => {
+  handleGoHomeJlpt: async () => {
     if (!get().isJlptGraded && get().phase === 'jlpt') {
-      if (!window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?")) {
+      const confirmed = await useConfirmStore.getState().showConfirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?");
+      if (!confirmed) {
         return;
       }
     }
@@ -684,15 +690,17 @@ export const useStudyStore = create<StudyState>((set, get) => ({
     });
   },
 
-  handleGoHome: () => {
+  handleGoHome: async () => {
     const p = get().phase;
     if (p === 'studying' || p === 'testing' || p === 'news-study') {
-      if (!window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?")) {
+      const confirmed = await useConfirmStore.getState().showConfirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?");
+      if (!confirmed) {
         return;
       }
     }
     if (!get().isJlptGraded && p === 'jlpt') {
-      if (!window.confirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?")) {
+      const confirmed = await useConfirmStore.getState().showConfirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?");
+      if (!confirmed) {
         return;
       }
     }

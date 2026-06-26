@@ -17,6 +17,8 @@ import { UserDropdown } from "./components/UserDropdown";
 import { SettingsView } from "./components/SettingsView";
 import { ShopView } from "./components/ShopView";
 import { BookmarksView } from "./components/BookmarksView";
+import { ConfirmModal } from "./components/ConfirmModal";
+import { useConfirmStore } from "./stores/confirmStore";
 
 export default function App() {
   const {
@@ -82,7 +84,7 @@ export default function App() {
         (window as any).unauthorizedAlerted = true;
         logout();
         setPhase('config');
-        alert("로그인 세션이 만료되었습니다. 다시 로그인해 주세요.");
+        useConfirmStore.getState().showAlert("로그인 세션이 만료되었습니다. 다시 로그인해 주세요.");
         setTimeout(() => {
           (window as any).unauthorizedAlerted = false;
         }, 1000);
@@ -144,8 +146,9 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
-    if (confirm("로그아웃 하시겠습니까?")) {
+  const handleLogout = async () => {
+    const confirmed = await useConfirmStore.getState().showConfirm("로그아웃 하시겠습니까?");
+    if (confirmed) {
       logout();
       setPhase('config');
     }
@@ -427,6 +430,8 @@ export default function App() {
       <footer className="bg-white border-t border-slate-200/80 p-4 text-center text-xs text-slate-400 space-y-1">
         <p className="font-medium">일본어 한자 & 단어 마스터 © {new Date().getFullYear()} Japanese Kanji & Word Workspace</p>
       </footer>
+
+      <ConfirmModal />
     </div>
   );
 }
