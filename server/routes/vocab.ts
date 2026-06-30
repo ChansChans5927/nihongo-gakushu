@@ -45,7 +45,14 @@ router.post("/generate", async (req, res) => {
 
     if (!hasTargets && cachedVocabs.length >= numCount) {
       const shuffled = cachedVocabs.sort(() => 0.5 - Math.random());
-      selectedVocabs = shuffled.slice(0, numCount);
+      // word 기준으로 중복 제거: 같은 단어가 한 세트에 2번 이상 출제되지 않도록 필터링
+      const seenWords = new Set<string>();
+      const deduplicated = shuffled.filter((v: any) => {
+        if (seenWords.has(v.word)) return false;
+        seenWords.add(v.word);
+        return true;
+      });
+      selectedVocabs = deduplicated.slice(0, numCount);
 
       const vocabWords = selectedVocabs.map(item => item.word);
       try {

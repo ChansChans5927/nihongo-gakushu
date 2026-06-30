@@ -42,8 +42,15 @@ router.post("/generate", async (req, res) => {
 
     if (!hasTargets && !forceGenerate && cachedKanjis.length >= numCount) {
       const shuffled = cachedKanjis.sort(() => 0.5 - Math.random());
-      const selectedKanjis = shuffled.slice(0, numCount);
-      console.log(`[Kanji Gen] Served ${numCount} cards instantly from MongoDB cache.`);
+      // kanji 기준으로 중복 제거: 같은 한자가 한 세트에 2번 이상 출제되지 않도록 필터링
+      const seenKanjis = new Set<string>();
+      const deduplicated = shuffled.filter((k: any) => {
+        if (seenKanjis.has(k.kanji)) return false;
+        seenKanjis.add(k.kanji);
+        return true;
+      });
+      const selectedKanjis = deduplicated.slice(0, numCount);
+      console.log(`[Kanji Gen] Served ${selectedKanjis.length} cards instantly from MongoDB cache.`);
       return res.json({ success: true, source: "mongodb_cache", data: selectedKanjis });
     }
 

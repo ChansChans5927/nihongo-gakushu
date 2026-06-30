@@ -32,8 +32,16 @@ router.post("/generate", async (req, res) => {
 
     if (!forceGenerate && cachedQuestions.length >= numQuestions) {
       const shuffled = cachedQuestions.sort(() => 0.5 - Math.random());
-      const selected = shuffled.slice(0, numQuestions);
-      console.log(`[JLPT Gen] Served ${numQuestions} questions instantly from MongoDB cache.`);
+      // targetWord 기준으로 중복 제거: 같은 단어의 문제가 한 세트에 2번 이상 출제되지 않도록 필터링
+      const seenTargetWords = new Set<string>();
+      const deduplicated = shuffled.filter((q: any) => {
+        const key = q.targetWord || q.questionSentence;
+        if (seenTargetWords.has(key)) return false;
+        seenTargetWords.add(key);
+        return true;
+      });
+      const selected = deduplicated.slice(0, numQuestions);
+      console.log(`[JLPT Gen] Served ${selected.length} questions instantly from MongoDB cache.`);
       return res.json({ success: true, source: "mongodb_cache", data: selected });
     }
 
@@ -156,7 +164,16 @@ router.post("/generate", async (req, res) => {
       }
     }
 
-    const finalData = forceGenerate ? mergedData : [...cachedQuestions, ...mergedData].slice(0, numQuestions);
+    // 캐시 데이터 + 신규 생성 데이터 합칠 때도 targetWord 기준 중복 제거 적용
+    const combined = forceGenerate ? mergedData : [...cachedQuestions, ...mergedData];
+    const seenFinalWords = new Set<string>();
+    const deduplicatedFinal = combined.filter((q: any) => {
+      const key = q.targetWord || q.questionSentence;
+      if (seenFinalWords.has(key)) return false;
+      seenFinalWords.add(key);
+      return true;
+    });
+    const finalData = deduplicatedFinal.slice(0, numQuestions);
     res.json({ success: true, source: mergedData.length > 0 ? "gemini_parallel" : "mongodb_cache", data: finalData });
   } catch (err: any) {
     console.error("Gemini API JLPT generation error:", err);
