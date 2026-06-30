@@ -1,28 +1,33 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  BookOpen,
-  Sparkles,
-  Volume2,
-  CornerDownRight,
-  ArrowRight,
-  Star
-} from "lucide-react";
 import { KanjiItem, RadicalPart } from "../types";
 import { RadicalModal } from "./RadicalModal";
 import { getTheme } from "../theme";
 
+// 분리한 하위 컴포넌트 임포트
+import { KanjiProgressBar } from "./kanji/KanjiProgressBar";
+import { KanjiCardHeader } from "./kanji/KanjiCardHeader";
+import { KanjiVisualPanel } from "./kanji/KanjiVisualPanel";
+import { KanjiMnemonicPanel } from "./kanji/KanjiMnemonicPanel";
+import { KanjiRadicalsBreakdown } from "./kanji/KanjiRadicalsBreakdown";
+import { KanjiReadingsTable } from "./kanji/KanjiReadingsTable";
+import { KanjiRelatedWords } from "./kanji/KanjiRelatedWords";
+import { KanjiExampleSentence } from "./kanji/KanjiExampleSentence";
+import { KanjiNavigation } from "./kanji/KanjiNavigation";
+
+// KanjiStudyProps 인터페이스 정의
 interface KanjiStudyProps {
-  kanjiList: KanjiItem[];
-  currentKanjiIndex: number;
-  handlePrevStudy: () => void;
-  handleNextStudy: () => void;
-  speakJapanese: (text: string) => void;
-  currentTheme?: string;
-  bookmarkedKanjis: string[];
-  onToggleBookmark: (type: "kanji" | "vocab", item: string) => void;
+  kanjiList: KanjiItem[];                                               // 학습용 한자 리스트
+  currentKanjiIndex: number;                                            // 현재 한자 인덱스 번호 (0-based)
+  handlePrevStudy: () => void;                                          // 이전 한자 핸들러
+  handleNextStudy: () => void;                                          // 다음 한자 핸들러
+  speakJapanese: (text: string) => void;                                // 일어 TTS 음성 함수
+  currentTheme?: string;                                                // 활성화된 디자인 테마 키
+  bookmarkedKanjis: string[];                                           // 사용자가 북마크한 한자 배열
+  onToggleBookmark: (type: "kanji" | "vocab", item: string) => void;    // 북마크 토글 API 연동 함수
 }
 
+// 메인 한자 학습 화면 컴포넌트 (조립식 구조)
 export function KanjiStudy({
   kanjiList,
   currentKanjiIndex,
@@ -33,15 +38,12 @@ export function KanjiStudy({
   bookmarkedKanjis,
   onToggleBookmark
 }: KanjiStudyProps) {
+  // 현재 부수 팝업 상세 모달 창을 띄울 상태 정보
   const [activeRadical, setActiveRadical] = useState<RadicalPart | null>(null);
 
   const theme = getTheme(currentTheme);
-  const isSamurai = theme.isSamurai;
-  const isYokai = theme.isYokai;
-  const isZen = theme.isZen;
-  const isChalkboard = theme.isChalkboard;
-
   const currentKanji = kanjiList[currentKanjiIndex];
+  const isBookmarked = bookmarkedKanjis.includes(currentKanji.kanji);
 
   return (
     <motion.div
@@ -52,29 +54,17 @@ export function KanjiStudy({
       transition={{ duration: 0.25 }}
       className="space-y-5 w-full"
     >
-      {/* Progress Tracker Slider Header */}
-      <div className="space-y-2">
-        <div className={`flex items-center justify-between text-xs font-semibold ${theme.headerTextColor}`}>
-          <span className="flex items-center gap-1">
-            <BookOpen className={`w-4 h-4 ${theme.headerIconColorKanji}`} />
-            <span>한자 암기 진행률</span>
-          </span>
-          <span className="font-mono">
-            {currentKanjiIndex + 1} / {kanjiList.length} 한자 ({Math.round(((currentKanjiIndex + 1) / kanjiList.length) * 100)}%)
-          </span>
-        </div>
-        <div className={`w-full h-2 rounded-full overflow-hidden ${theme.progressTrackBg}`}>
-          <div
-            className={`h-full rounded-full transition-all duration-300 ${theme.progressBarBg}`}
-            style={{ width: `${((currentKanjiIndex + 1) / kanjiList.length) * 100}%` }}
-          />
-        </div>
-      </div>
+      {/* 1. 상단 한자 암기 진행률 게이지 바 */}
+      <KanjiProgressBar
+        currentIndex={currentKanjiIndex}
+        totalCount={kanjiList.length}
+        theme={theme}
+      />
 
-      {/* TEXTBOOK CORE CARD: Realizing Book-Aesthetic Page */}
       <div className={`${theme.cardContainer} overflow-hidden flex flex-col shrink-0 relative font-sans`}>
-        {isSamurai && <div className="samurai-embers"></div>}
-        {isYokai && (
+        {/* 테마별 특수 시각 효과 백그라운드 렌더링 */}
+        {theme.isSamurai && <div className="samurai-embers"></div>}
+        {theme.isYokai && (
           <div className="yokai-wisps-container">
             <div className="yokai-wisp yokai-wisp-1"></div>
             <div className="yokai-wisp yokai-wisp-2"></div>
@@ -82,7 +72,7 @@ export function KanjiStudy({
             <div className="yokai-wisp yokai-wisp-4"></div>
           </div>
         )}
-        {isZen && (
+        {theme.isZen && (
           <div className="zen-leaves">
             <div className="leaf-1"></div>
             <div className="leaf-2"></div>
@@ -91,7 +81,7 @@ export function KanjiStudy({
             <div className="leaf-5"></div>
           </div>
         )}
-        {isChalkboard && (
+        {theme.isChalkboard && (
           <div className="chalkboard-dust-particles">
             <div className="chalk-dust" style={{ left: '10%', animationDelay: '0s' }}></div>
             <div className="chalk-dust" style={{ left: '30%', animationDelay: '-3s' }}></div>
@@ -101,371 +91,81 @@ export function KanjiStudy({
           </div>
         )}
 
-        {/* Book style index header */}
-        <div className={`px-5 py-3.5 flex items-center justify-between z-10 relative ${theme.cardHeaderBg}`}>
-          <span className={`font-mono text-xs font-bold ${theme.cardIndexText}`}>
-            INDEX #{String(currentKanjiIndex + 1).padStart(4, '0')}
-          </span>
-          <div className="flex items-center gap-1.5">
-            <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${theme.badgeGradeBg}`}>
-              GRADE: {currentKanji.grade}
-            </span>
-            <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${theme.badgeBg}`}>
-              JLPT: {currentKanji.jlptLevel}
-            </span>
-        </div>
-        </div>
+        {/* 2. 카드 헤더 영역 (인덱스 번호 및 등급 정보 배지) */}
+        <KanjiCardHeader
+          currentIndex={currentKanjiIndex}
+          grade={currentKanji.grade}
+          jlptLevel={currentKanji.jlptLevel}
+          theme={theme}
+        />
 
         <div className="p-5 sm:p-6 space-y-5">
-
-          {/* Outer grid matching photo content */}
+          {/* 주요 레이아웃 격자 (Grid) 구성 */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-            {/* Character Card Visual Panel (Left side in Book page) */}
-            <div
-              className={`md:col-span-4 rounded-2xl p-5 flex flex-col justify-between items-center text-center relative overflow-hidden ${theme.wordPanelBg}`}
-            >
-              <div className={`absolute top-2 left-2 text-[10px] font-mono font-bold ${theme.strokeCountText}`}>
-                {currentKanji.strokeCount} 획
-              </div>
+            {/* 3. 좌측 메인 한자 비주얼 패널 */}
+            <KanjiVisualPanel
+              kanji={currentKanji.kanji}
+              meaning={currentKanji.meaning}
+              strokeCount={currentKanji.strokeCount}
+              isBookmarked={isBookmarked}
+              onToggleBookmark={() => onToggleBookmark("kanji", currentKanji.kanji)}
+              speakJapanese={speakJapanese}
+              theme={theme}
+            />
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleBookmark("kanji", currentKanji.kanji);
-                }}
-                className="absolute top-2 right-2 p-1.5 rounded-full transition-all cursor-pointer hover:scale-110 active:scale-95 focus:outline-none z-20"
-                title="북마크 토글"
-              >
-                <Star
-                  className={`w-5 h-5 transition-all ${
-                    bookmarkedKanjis.includes(currentKanji.kanji)
-                      ? "text-amber-500 fill-amber-500 scale-110"
-                      : "text-slate-400 fill-none"
-                  }`}
-                />
-              </button>
-
-              <div className="my-auto py-4">
-                <div
-                  key={`kanji-${currentKanji.kanji}`}
-                  lang="ja"
-                  className={`text-7xl sm:text-8xl font-serif font-semibold leading-none select-none select-all relative group transition-colors ${theme.kanjiTextHover}`}
-                >
-                  {currentKanji.kanji}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      speakJapanese(currentKanji.kanji);
-                    }}
-                    className={`absolute -top-4 -right-6 p-1.5 rounded-full shadow-sm transition-all opacity-100 cursor-pointer flex items-center justify-center ${theme.kanjiAudioBtn}`}
-                    title="한자 발음 듣기"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className={`mt-4 px-3 py-1 rounded-full text-base font-bold ${theme.kanjiMeaningBadge}`}>
-                  {currentKanji.meaning}
-                </div>
-              </div>
-
-            </div>
-
-            {/* STORYBOARD & MEMORIZATION EXPLANATION PANEL */}
+            {/* 우측 연상 암기 스토리 및 한자/독음 풀이 영역 */}
             <div className="md:col-span-8 flex flex-col justify-between space-y-4">
+              {/* 4. 이미지 연상 암기 키워드 패널 */}
+              <KanjiMnemonicPanel
+                mnemonic={currentKanji.mnemonic}
+                theme={theme}
+              />
 
-              {/* Associative 스토리 보드 */}
-              <div className={`rounded-2xl p-4 space-y-2 relative z-10 ${theme.mnemonicPanelBg}`}>
-                <div className={`absolute top-2.5 right-2 ${theme.mnemonicIconColor}`}>
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <span className={`text-[10px] font-bold tracking-wider block ${theme.mnemonicTitleColor}`}>
-                  💡 핵심 이미지 연상 암기 키워드
-                </span>
-                <p className={`text-sm sm:text-base font-medium leading-relaxed ${theme.radicalKanjiMeaning}`}>
-                  {currentKanji.mnemonic}
-                </p>
-              </div>
+              {/* 5. 부수 해설 조각 리스트 */}
+              <KanjiRadicalsBreakdown
+                radicals={currentKanji.radicalsBreakdown}
+                setActiveRadical={setActiveRadical}
+                theme={theme}
+              />
 
-              {/* Radicals Component Breakdown for absolute beginners */}
-              {currentKanji.radicalsBreakdown && currentKanji.radicalsBreakdown.length > 0 && (
-                <div className={`rounded-2xl p-4 space-y-3 z-10 relative ${theme.radicalsBoxBg}`}>
-                  <span className={`text-[10px] font-bold tracking-wider block uppercase ${theme.questionInstructionColor}`}>
-                    🧩 구성 자형 분해 (각 부수를 클릭하여 어원과 의미를 확인해 보세요)
-                  </span>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                    {currentKanji.radicalsBreakdown.map((rad, radIdx) => {
-                      const hasDetails = !!(rad.mnemonic || rad.onyomi || rad.hunyomi);
-                      return (
-                        <div
-                          key={radIdx}
-                          onClick={() => {
-                            if (hasDetails) {
-                              setActiveRadical(rad);
-                            }
-                          }}
-                          className={`group rounded-xl p-3 transition-all flex items-center justify-between cursor-pointer ${theme.radicalItemBg}`}
-                          title={hasDetails ? "클릭하여 어원 파해 및 상세 연상 암기 비법 보기" : ""}
-                        >
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <span lang="ja" className={`text-lg font-serif font-black rounded-lg w-9 h-9 flex items-center justify-center group-hover:scale-105 transition-all shrink-0 ${theme.radicalKanjiBox}`}>
-                              {rad.component}
-                            </span>
-                            <div className="flex flex-col truncate">
-                              <span className={`text-xs font-bold font-sans ${theme.radicalKanjiMeaning}`}>
-                                {rad.meaning}
-                              </span>
-                              {rad.mnemonic && (
-                                <p className={`text-[10px] font-sans truncate mt-0.5 ${theme.relatedWordSubText}`}>
-                                  {rad.mnemonic}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          {hasDetails && (
-                            <div className={`flex items-center gap-1 text-[9px] font-black rounded-full px-2 py-0.5 shrink-0 transition-colors ${theme.radicalItemBadge}`}>
-                              <Sparkles className={`w-2.5 h-2.5 ${theme.radicalItemBadgeIcon}`} />
-                              <span>파해 보기</span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Reading Table structure inspired accurately from the book screenshot */}
-              <div className={`border rounded-xl overflow-hidden text-xs z-10 relative ${theme.tableBorder}`}>
-                {/* Table row Onyomi */}
-                <div className={`grid grid-cols-12 border-b shrink-0 ${theme.tableBorder}`}>
-                  <div className={`col-span-3 p-2.5 font-bold flex flex-col justify-center items-center text-center border-r gap-0.5 ${theme.tableHeaderCol}`}>
-                    <span>음독</span>
-                    <span className={`text-[10px] font-mono ${theme.tableHeaderLabelText}`}>(音)</span>
-                  </div>
-                  <div className={`col-span-9 p-2.5 space-y-1 ${theme.tableValueCol}`}>
-                    <div className="flex items-center gap-2">
-                      <span lang="ja" className={`text-sm font-bold font-mono ${theme.tableJapText}`}>{currentKanji.onyomi}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold font-mono ${theme.tableOnyomiKoreanBadge}`}>
-                        {currentKanji.onyomiKorean}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          speakJapanese(currentKanji.onyomi);
-                        }}
-                        className={`p-1.5 rounded-full shadow-sm transition-all cursor-pointer flex items-center justify-center ml-1 ${theme.tableAudioBtn}`}
-                        title="음독 발음 듣기"
-                      >
-                        <Volume2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Table row Hunyomi */}
-                <div className="grid grid-cols-12 shrink-0">
-                  <div className={`col-span-3 p-2.5 font-bold flex flex-col justify-center items-center text-center border-r gap-0.5 ${theme.tableHeaderCol}`}>
-                    <span>훈독</span>
-                    <span className={`text-[10px] font-mono ${theme.tableHeaderLabelText}`}>(訓)</span>
-                  </div>
-                  <div className={`col-span-9 p-2.5 space-y-1 ${theme.tableValueCol}`}>
-                    <div className="flex items-center gap-2">
-                      <span lang="ja" className={`text-sm font-bold font-mono ${theme.tableJapText}`}>{currentKanji.hunyomi?.replace(/\./g, "")}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold font-mono ${theme.tableHunyomiKoreanBadge}`}>
-                        {currentKanji.hunyomiKorean}
-                      </span>
-                      {currentKanji.hunyomi && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            speakJapanese(currentKanji.hunyomi!.replace(/\./g, ""));
-                          }}
-                          className={`p-1.5 rounded-full shadow-sm transition-all cursor-pointer flex items-center justify-center ml-1 ${theme.tableAudioBtn}`}
-                          title="훈독 발음 듣기"
-                        >
-                          <Volume2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* RELATED CONTEXT WORDS SECTION & PRACTICAL STUDY */}
-          <div className="space-y-3 pt-2">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-              <CornerDownRight className="w-3.5 h-3.5 text-amber-500" />
-              연관 핵심 어휘 확장하기
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {currentKanji.relatedWords.map((item, idx) => (
-                <div
-                  key={idx}
-                  className={`border rounded-xl p-3 space-y-1 text-xs transition-colors relative group z-10 ${theme.relatedWordCard}`}
-                >
-                  <div className="flex justify-between items-center gap-2">
-                    <span lang="ja" className={`font-bold text-sm tracking-wide font-mono select-all ${theme.relatedWordJapText}`}>
-                      {item.word}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        speakJapanese(item.word);
-                      }}
-                      className={`p-1.5 rounded-full shadow-sm transition-all cursor-pointer flex items-center justify-center ${theme.tableAudioBtn}`}
-                      title="발음 듣기"
-                    >
-                      <Volume2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className={`flex items-center gap-1 text-[11px] font-mono ${theme.relatedWordSubText}`}>
-                    <span lang="ja">{item.hiragana}</span>
-                    <span> | </span>
-                    <span lang="ko" className={theme.relatedWordPronunciationText}>{item.pronunciation}</span>
-                  </div>
-                  <div className={`font-semibold font-sans border-t pt-1 mt-1 text-[11px] ${theme.relatedWordMeaningText}`}>
-                    뜻: {item.meaning}
-                  </div>
-                </div>
-              ))}
+              {/* 6. 음독/훈독 요미가나 표기 테이블 */}
+              <KanjiReadingsTable
+                onyomi={currentKanji.onyomi}
+                onyomiKorean={currentKanji.onyomiKorean}
+                hunyomi={currentKanji.hunyomi}
+                hunyomiKorean={currentKanji.hunyomiKorean}
+                speakJapanese={speakJapanese}
+                theme={theme}
+              />
             </div>
           </div>
 
-          {/* LOWER EXAMPLE DIALOGUE ACCORDION BOX */}
-          <div className={`rounded-2xl p-4 space-y-2.5 shadow-inner relative overflow-hidden z-10 ${theme.exampleBoxBg}`}>
-            <div className={`absolute -bottom-4 -right-4 text-7xl font-sans font-bold select-none pointer-events-none ${theme.exampleOverlayText}`}>
-              文
-            </div>
-            <div className={`flex items-center justify-between text-[10px] font-bold uppercase tracking-wider gap-2 ${theme.exampleTitleColorKanji}`}>
-              <span>연상 학습 필수 예문 (例文)</span>
-              <button
-                onClick={() => speakJapanese(currentKanji.exampleSentence.japanese)}
-                className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg transition-colors cursor-pointer text-xs font-semibold shrink-0 z-10 ${theme.exampleAudioBtn}`}
-              >
-                <Volume2 className="w-4 h-4" />
-                <span>예문 연속 읽기</span>
-              </button>
-            </div>
+          {/* 7. 연관 핵심 단어 확장 카드 리스트 */}
+          <KanjiRelatedWords
+            relatedWords={currentKanji.relatedWords}
+            speakJapanese={speakJapanese}
+            theme={theme}
+          />
 
-            <div className="space-y-1.5 z-10 relative">
-              <p lang="ja" className={`text-base sm:text-lg font-bold tracking-wide select-all ${theme.exampleJapText}`}>
-                {currentKanji.exampleSentence.japanese}
-              </p>
-              <p lang="ja" className={`text-xs font-mono ${theme.exampleHiraText}`}>
-                {currentKanji.exampleSentence.hiragana}
-              </p>
-              <p className={`text-xs font-sans font-medium ${theme.examplePronunciationTextKanji}`}>
-                [{currentKanji.exampleSentence.pronunciation}]
-              </p>
-              <p className={`text-xs sm:text-sm border-t pt-1.5 mt-1.5 font-sans leading-relaxed ${theme.exampleMeaningText}`}>
-                {currentKanji.exampleSentence.meaning}
-              </p>
-            </div>
-          </div>
-
+          {/* 8. 하단 한자 학습 필수 예문 다이얼로그 박스 */}
+          <KanjiExampleSentence
+            exampleSentence={currentKanji.exampleSentence}
+            speakJapanese={speakJapanese}
+            theme={theme}
+          />
         </div>
 
-        {/* Footer and Navigation Action Controllers */}
-        <div className={`px-5 py-4 flex items-center justify-between z-10 relative ${theme.footerBg}`}>
-          <button
-            onClick={handlePrevStudy}
-            disabled={currentKanjiIndex === 0}
-            className={`py-3 px-5 text-sm font-bold transition-colors disabled:cursor-not-allowed cursor-pointer disabled:opacity-35 ${theme.btnSecondary}`}
-          >
-            이전 한자
-          </button>
-
-          <div className={`text-xs font-mono hidden sm:block ${theme.cardIndexText}`}>
-            {currentKanjiIndex + 1} / {kanjiList.length} 완독 진행
-          </div>
-
-          <button
-            onClick={(e) => {
-              if (isYokai) {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                const ripple = document.createElement('div');
-                ripple.className = 'yokai-ripple';
-                ripple.style.left = `${x}px`;
-                ripple.style.top = `${y}px`;
-                ripple.style.width = ripple.style.height = `${Math.max(rect.width, rect.height)}px`;
-                ripple.style.transform = `translate(-50%, -50%) scale(0)`;
-                
-                e.currentTarget.appendChild(ripple);
-                
-                setTimeout(() => {
-                  ripple.remove();
-                }, 500);
-              } else if (isZen) {
-                const buttonEl = e.currentTarget;
-                const ripple1 = document.createElement('div');
-                ripple1.className = 'zen-ripple';
-                buttonEl.appendChild(ripple1);
-                setTimeout(() => {
-                  ripple1.remove();
-                }, 900);
-
-                setTimeout(() => {
-                  if (buttonEl) {
-                    const ripple2 = document.createElement('div');
-                    ripple2.className = 'zen-ripple';
-                    buttonEl.appendChild(ripple2);
-                    setTimeout(() => {
-                      ripple2.remove();
-                    }, 900);
-                  }
-                }, 150);
-              } else if (isChalkboard) {
-                const buttonEl = e.currentTarget;
-                const rect = buttonEl.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                // Create chalk dust particles on click coordinates
-                const particleCount = 15;
-                for (let i = 0; i < particleCount; i++) {
-                  const particle = document.createElement('div');
-                  particle.className = 'chalk-click-particle';
-                  particle.style.left = `${x}px`;
-                  particle.style.top = `${y}px`;
-
-                  const angle = Math.random() * Math.PI * 2;
-                  const velocity = 20 + Math.random() * 60; // Spread distance
-                  const tx = Math.cos(angle) * velocity;
-                  const ty = Math.sin(angle) * velocity;
-                  const size = 2.5 + Math.random() * 4; // Particle size
-
-                  particle.style.width = `${size}px`;
-                  particle.style.height = `${size}px`;
-                  particle.style.setProperty('--tx', `${tx}px`);
-                  particle.style.setProperty('--ty', `${ty}px`);
-
-                  buttonEl.appendChild(particle);
-
-                  setTimeout(() => {
-                    particle.remove();
-                  }, 800);
-                }
-              }
-              handleNextStudy();
-            }}
-            className={`py-3 px-6 text-sm font-bold shadow-md cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5 overflow-hidden relative ${theme.btnPrimaryKanji}`}
-          >
-            <span className="z-10 relative">이해했음 (다음)</span>
-            <ArrowRight className="w-4 h-4 z-10 relative" />
-          </button>
-        </div>
-
+        {/* 9. 하단 푸터 내비게이션 바 */}
+        <KanjiNavigation
+          currentIndex={currentKanjiIndex}
+          totalCount={kanjiList.length}
+          handlePrevStudy={handlePrevStudy}
+          handleNextStudy={handleNextStudy}
+          theme={theme}
+        />
       </div>
 
-      {/* Radical Modal popup inside the studying screen */}
+      {/* 부수 클릭 상세 정보 모달 팝업 오버레이 */}
       <AnimatePresence>
         {activeRadical && (
           <RadicalModal
