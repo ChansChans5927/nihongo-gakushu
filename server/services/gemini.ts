@@ -79,9 +79,58 @@ export const QUIZ_SCHEMA = {
   }
 };
 
+// Helper to call NVIDIA NIM API (Gemma 2 27B) as a fallback
+async function callNvidiaNIM(prompt: string, systemInstruction: string, schema: any) {
+  const apiKey = process.env.NVIDIA_API_KEY;
+  if (!apiKey) {
+    throw new Error("NVIDIA_API_KEY is not configured in .env");
+  }
+
+  const model = "google/gemma-4-31b-it";
+  console.log(`[NVIDIA NIM API] Calling ${model} as fallback...`);
+
+  const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: "system",
+          content: `${systemInstruction}\nYou MUST return a JSON object that strictly conforms to this JSON Schema:\n${JSON.stringify(schema, null, 2)}`
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.2,
+      top_p: 0.7,
+      max_tokens: 4096,
+      response_format: { type: "json_object" }
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`NVIDIA NIM API failed with status ${response.status}: ${errorText}`);
+  }
+
+  const result = await response.json();
+  const content = result.choices?.[0]?.message?.content;
+  if (!content) {
+    throw new Error("NVIDIA NIM API returned empty content");
+  }
+
+  return JSON.parse(content.trim());
+}
+
 // Unified helper for Gemini calls expecting JSON
 export async function callGeminiJSON(prompt: string, systemInstruction: string, schema: any) {
-  const models = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.5-flash"];
+  const models = ["gemini-3.5-flash", "nvidia-nim", "gemini-2.5-flash"];
   const maxRetries = 3;
   let attempt = 0;
 
@@ -89,6 +138,18 @@ export async function callGeminiJSON(prompt: string, systemInstruction: string, 
     const currentModel = models[attempt] || "gemini-2.5-flash";
     try {
       const startTime = Date.now();
+      if (currentModel === "nvidia-nim") {
+        if (!process.env.NVIDIA_API_KEY) {
+          console.log("[Gemini API] Skipping NVIDIA NIM fallback (NVIDIA_API_KEY not configured).");
+          attempt++;
+          continue;
+        }
+        const data = await callNvidiaNIM(prompt, systemInstruction, schema);
+        const durationMs = Date.now() - startTime;
+        console.log(`[NVIDIA NIM API] Call took ${durationMs}ms`);
+        return data;
+      }
+
       console.log(`[Gemini API] Calling ${currentModel} (attempt ${attempt + 1}/${maxRetries})...`);
       const response = await ai.models.generateContent({
         model: currentModel,

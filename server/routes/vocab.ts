@@ -199,7 +199,10 @@ router.post("/generate", async (req, res) => {
             
             For the "data" array:
             - Generate exactly ${batch.length} vocabulary cards.
-            - 'exampleSentence' MUST be a natural sentence.
+            - 'word' and 'hiragana' MUST NOT contain any Korean characters or particles.
+            - 'pronunciation' MUST be written in 100% Korean Hangul, with no English/romaji or Japanese characters. Represent Japanese 'つ' (tsu) strictly as '쯔' (e.g. 쯔, 쯔레테, 마쯔) and NEVER as '츠'.
+            - 'exampleSentence' MUST be a natural sentence. The 'japanese' field MUST NOT contain any Korean characters. The 'pronunciation' field MUST be 100% Hangul and represent 'つ' strictly as '쯔'.
+
             
             For the "quiz" array:
             - Generate exactly ${batch.length} quizzes. Distribute types: 'meaning', 'reading', 'kanji_match', and 'blank_fill'.
@@ -240,7 +243,10 @@ router.post("/generate", async (req, res) => {
             
             For the "data" array:
             - Generate exactly ${size} vocabulary cards.
-            - 'exampleSentence' MUST be a natural sentence.
+            - 'word' and 'hiragana' MUST NOT contain any Korean characters or particles.
+            - 'pronunciation' MUST be written in 100% Korean Hangul, with no English/romaji or Japanese characters. Represent Japanese 'つ' (tsu) strictly as '쯔' (e.g. 쯔, 쯔레테, 마쯔) and NEVER as '츠'.
+            - 'exampleSentence' MUST be a natural sentence. The 'japanese' field MUST NOT contain any Korean characters. The 'pronunciation' field MUST be 100% Hangul and represent 'つ' strictly as '쯔'.
+
             
             For the "quiz" array:
             - Generate exactly ${size} quizzes. Distribute types: 'meaning', 'reading', 'kanji_match', and 'blank_fill'.

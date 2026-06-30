@@ -173,10 +173,11 @@ router.post("/generate", async (req, res) => {
             - "mnemonic": Create extremely intuitive visual association explanations in Korean (max 1-2 short sentences).
             - "meaning": Format EXACTLY as "뜻 음" (e.g., "볼 견").
             - "onyomi" & "hunyomi": MUST be in Hiragana ONLY.
-            - "onyomiKorean" & "hunyomiKorean": MUST be Korean pronunciations ONLY.
+            - "onyomiKorean" & "hunyomiKorean": MUST be Korean pronunciations ONLY. Represent Japanese 'つ' (tsu) strictly as '쯔' (e.g., 쯔, 쯔레테, 마쯔) and NEVER as '츠'. All characters MUST be 100% Hangul.
             - "radicalsBreakdown": Provide constituent components. For each component, provide "component", "meaning" (in Korean), and "mnemonic" (under 1 sentence, max 15 Korean words).
-            - "relatedWords": Exactly 3 practical words containing the Kanji.
-            - "exampleSentence": 1 natural sentence utilizing the Kanji.
+            - "relatedWords": Exactly 3 practical words containing the Kanji. The Korean pronunciation for these words MUST represent Japanese 'つ' (tsu) strictly as '쯔' and contain no English/romaji or Japanese characters.
+            - "exampleSentence": 1 natural sentence utilizing the Kanji. The 'japanese' field MUST NOT contain any Korean characters or particles. The 'pronunciation' field MUST be 100% Hangul and represent 'つ' strictly as '쯔'.
+
 
             Return absolutely valid JSON matching the responseSchema precisely.
           `;
@@ -210,10 +211,11 @@ router.post("/generate", async (req, res) => {
             - "mnemonic": Create extremely intuitive visual association explanations in Korean (max 1-2 short sentences).
             - "meaning": Format EXACTLY as "뜻 음" (e.g., "볼 견").
             - "onyomi" & "hunyomi": MUST be in Hiragana ONLY.
-            - "onyomiKorean" & "hunyomiKorean": MUST be Korean pronunciations ONLY.
+            - "onyomiKorean" & "hunyomiKorean": MUST be Korean pronunciations ONLY. Represent Japanese 'つ' (tsu) strictly as '쯔' (e.g., 쯔, 쯔레테, 마쯔) and NEVER as '츠'. All characters MUST be 100% Hangul.
             - "radicalsBreakdown": Provide constituent components. For each component, provide "component", "meaning" (in Korean), and "mnemonic" (under 1 sentence, max 15 Korean words).
-            - "relatedWords": Exactly 3 practical words containing the Kanji.
-            - "exampleSentence": 1 natural sentence utilizing the Kanji.
+            - "relatedWords": Exactly 3 practical words containing the Kanji. The Korean pronunciation for these words MUST represent Japanese 'つ' (tsu) strictly as '쯔' and contain no English/romaji or Japanese characters.
+            - "exampleSentence": 1 natural sentence utilizing the Kanji. The 'japanese' field MUST NOT contain any Korean characters or particles. The 'pronunciation' field MUST be 100% Hangul and represent 'つ' strictly as '쯔'.
+
     
             Return absolutely valid JSON matching the responseSchema precisely.
           `;
