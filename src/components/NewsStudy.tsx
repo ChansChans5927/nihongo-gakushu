@@ -1,7 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Play, Pause, RotateCcw, Volume2, BookOpen, HelpCircle, CheckCircle, XCircle, ArrowLeft, ArrowRight, ExternalLink } from "lucide-react";
-import { NewsLesson, SubtitleLine, VocabItem, Question } from "../types";
+import { NewsLesson } from "../types";
+
+// 분리한 하위 컴포넌트 임포트
+import { NewsHeader } from "./news/NewsHeader";
+import { NewsVideoPlayer } from "./news/NewsVideoPlayer";
+import { NewsTabHeader } from "./news/NewsTabHeader";
+import { NewsSubtitlesTab } from "./news/NewsSubtitlesTab";
+import { NewsVocabTab } from "./news/NewsVocabTab";
+import { NewsQuizTab } from "./news/NewsQuizTab";
 
 // YouTube Iframe Player API 타입 임시 선언
 declare global {
@@ -11,23 +18,28 @@ declare global {
   }
 }
 
+// NewsStudyProps 인터페이스 정의
 interface NewsStudyProps {
-  lesson: NewsLesson;
-  handleGoHome: () => void;
-  username?: string;
+  lesson: NewsLesson;            // 뉴스 정보 객체
+  handleGoHome: () => void;      // 홈 대시보드 복귀 함수
+  username?: string;             // 현재 로그인 계정명
 }
 
+// 메인 뉴스 학습 화면 컴포넌트 (조립식 구조)
 export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
+  // 현재 서브 화면 탭 상태
   const [activeTab, setActiveTab] = useState<"subtitles" | "vocab" | "quiz">("subtitles");
+  
+  // 동영상 재생 시간 상태
   const [currentTime, setCurrentTime] = useState<number>(0);
-  const [playerState, setPlayerState] = useState<number>(-1); // -1: 미시작, 1: 재생중, 2: 일시정지
+  const [playerState, setPlayerState] = useState<number>(-1); // -1: 미시작, 1: 재생중, 2: 일시정지 등
   const [activeSubtitleIndex, setActiveSubtitleIndex] = useState<number>(0);
 
-  // 단어장 학습 상태
+  // 중요 어휘 학습 플래시카드 현재 번호
   const [vocabIndex, setVocabIndex] = useState<number>(0);
   const [speechActive, setSpeechActive] = useState<string | null>(null);
 
-  // 퀴즈 풀이 상태
+  // 퀴즈 문제 풀이 저장 상태
   const [quizAnswers, setQuizAnswers] = useState<{ [id: number]: number }>({});
   const [quizGraded, setQuizGraded] = useState<boolean>(false);
   const [quizScore, setQuizScore] = useState<number>(0);
@@ -36,9 +48,8 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
   const subtitleContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<any>(null);
 
-  // 1. YouTube Player API 초기화
+  // 1. YouTube Player API 스크립트 동적 주입 및 플레이어 초기화
   useEffect(() => {
-    // API Script 동적 로드
     if (!window.YT) {
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
@@ -92,7 +103,7 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
     };
   }, [lesson.id]);
 
-  // 2. 재생 시간 추적 타이머
+  // 2. 동영상 재생 시간 모니터링 타이머 가동
   const startTrackingTime = () => {
     stopTrackingTime();
     timerRef.current = setInterval(() => {
@@ -100,7 +111,7 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
         const time = playerRef.current.getCurrentTime();
         setCurrentTime(time);
         
-        // 현재 시간에 해당하는 자막 인덱스 검색 (재생바 오차 및 이전/다음 자막 자연스러운 전환 처리)
+        // 실시간 재생 시간에 해당하는 자막 인덱스 계산
         let foundIdx = -1;
         for (let i = 0; i < lesson.subtitles.length; i++) {
           const sub = lesson.subtitles[i];
@@ -129,7 +140,7 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
     }
   };
 
-  // 3. 자막이 활성화될 때 자동으로 스크롤
+  // 3. 실시간 하이라이트 자막 노출 시 스크롤 자동 동기화 효과
   useEffect(() => {
     if (subtitleContainerRef.current) {
       const activeEl = subtitleContainerRef.current.querySelector(`[data-index="${activeSubtitleIndex}"]`);
@@ -142,19 +153,19 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
     }
   }, [activeSubtitleIndex]);
 
-  // 4. 자막 클릭 시 해당 시간으로 이동
+  // 4. 자막의 특정 줄 클릭 시 비디오 재생 시간 SeekTo 이동 핸들러
   const handleSubtitleClick = (start: number, idx: number) => {
     setActiveSubtitleIndex(idx);
     if (playerRef.current && typeof playerRef.current.seekTo === "function") {
-      playerRef.current.seekTo(start + 0.1, true); // 키프레임 오차 방지를 위해 0.1초 약간 뒤로 이동
+      playerRef.current.seekTo(start + 0.1, true); // 탐색 위치 오차 방지 보정 0.1초 적용
       playerRef.current.playVideo();
     }
   };
 
-  // 단어 하이라이트 텍스트 렌더링 헬퍼
+  // 단어카드 예문 내의 타깃 단어를 찾아서 색상강조(strong)해 주는 포맷 함수
   const renderHighlightedSentence = (text: string, fallbackWord: string) => {
     if (!text) return null;
-    // 1. AI가 __단어__ 로 감싸주었을 경우
+    // '__단어__' 이중 언더바 기반 포맷팅 분기
     if (text.includes('__')) {
       const parts = text.split('__');
       return (
@@ -172,7 +183,7 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
         </>
       );
     }
-    // 2. 감싸주지 않았다면 원시적으로 fallbackWord를 기반으로 분리 시도
+    // 단어 일치 매핑 대체
     if (!fallbackWord) return <>{text}</>;
     const parts = text.split(fallbackWord);
     if (parts.length === 1) return <>{text}</>;
@@ -192,7 +203,7 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
     );
   };
 
-  // TTS 재생 프록시
+  // 단어 읽어주기 TTS API 비동기 재생 호출기
   const handleTTS = async (text: string) => {
     setSpeechActive(text);
     try {
@@ -209,12 +220,13 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
     }
   };
 
-  // 퀴즈 정답 제출 처리
+  // 퀴즈 답안 마킹 처리
   const handleSelectQuizAnswer = (quizId: number, choiceIndex: number) => {
     if (quizGraded) return;
     setQuizAnswers((prev) => ({ ...prev, [quizId]: choiceIndex }));
   };
 
+  // 퀴즈 채점 정오답 개수 합산 및 채점 완료 전환
   const handleGradeQuiz = () => {
     if (quizGraded) return;
     let score = 0;
@@ -227,6 +239,7 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
     setQuizGraded(true);
   };
 
+  // 퀴즈 풀이 상태 초기화
   const handleResetQuiz = () => {
     setQuizAnswers({});
     setQuizGraded(false);
@@ -235,390 +248,83 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
 
   return (
     <div className="max-w-4xl mx-auto w-full space-y-6">
-      {/* 뉴스 상단 바 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm">
-        <div>
-          <span className="text-[10px] uppercase font-bold tracking-wider text-rose-500 bg-rose-50 px-2.5 py-1 rounded-full">
-            NEWS STUDY
-          </span>
-          <h2 className="text-base sm:text-xl font-bold text-slate-800 mt-2 font-display">
-            {lesson.title}
-          </h2>
-        </div>
-        <button
-          onClick={handleGoHome}
-          className="shrink-0 whitespace-nowrap flex items-center gap-1.5 self-start sm:self-center text-xs font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200/80 px-4 py-2 rounded-2xl transition-all cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          대시보드로
-        </button>
-      </div>
+      {/* 1. 상단 바 (뉴스 제목 및 뒤로가기) */}
+      <NewsHeader
+        title={lesson.title}
+        handleGoHome={handleGoHome}
+      />
 
-      {/* 동영상 플레이어 영역 */}
-      <div className="w-full bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="relative aspect-video bg-black">
-          <div id="news-youtube-player" className="absolute top-0 left-0 w-full h-full"></div>
-        </div>
-        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-mono">
-          <div className="flex items-center gap-2">
-            <span className={`inline-block w-2.5 h-2.5 rounded-full ${playerState === 1 ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`}></span>
-            <span>{playerState === 1 ? "뉴스 시청 중" : playerState === 2 ? "일시정지됨" : "준비 완료"}</span>
-          </div>
-          <a
-            href={lesson.videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 hover:text-rose-500 font-medium transition-colors"
-          >
-            YouTube에서 보기 <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        </div>
-      </div>
+      {/* 2. 유튜브 동영상 플레이어 및 모니터링 컨트롤러 */}
+      <NewsVideoPlayer
+        videoUrl={lesson.videoUrl}
+        playerState={playerState}
+      />
 
-      {/* 하단 학습 탭 영역 */}
+      {/* 3. 자막/단어/퀴즈 3단계 학습 탭 보드 */}
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
-        {/* 탭 헤더 */}
-        <div className="flex border-b border-slate-200">
-          <button
-            onClick={() => setActiveTab("subtitles")}
-            className={`flex-1 py-4 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-all cursor-pointer ${
-              activeTab === "subtitles"
-                ? "border-rose-500 text-rose-600 bg-rose-50/10"
-                : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
-            자막 전체 보기
-          </button>
-          <button
-            onClick={() => setActiveTab("vocab")}
-            className={`flex-1 py-4 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-all cursor-pointer ${
-              activeTab === "vocab"
-                ? "border-rose-500 text-rose-600 bg-rose-50/10"
-                : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-            }`}
-          >
-            <Volume2 className="w-4 h-4" />
-            중요 단어 카드 ({lesson.vocabItems.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("quiz")}
-            className={`flex-1 py-4 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-all cursor-pointer ${
-              activeTab === "quiz"
-                ? "border-rose-500 text-rose-600 bg-rose-50/10"
-                : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-            }`}
-          >
-            <HelpCircle className="w-4 h-4" />
-            뉴스 퀴즈 풀기
-          </button>
-        </div>
+        {/* 탭 네비게이션 헤더 */}
+        <NewsTabHeader
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          vocabCount={lesson.vocabItems.length}
+        />
 
-        {/* 탭 콘텐츠 바디 */}
+        {/* 탭 콘텐츠 영역 */}
         <div className="p-6">
           <AnimatePresence mode="wait">
-            {/* 탭 1: 자막 전체 보기 */}
+            {/* 자막 리스트 탭 활성 */}
             {activeTab === "subtitles" && (
               <motion.div
                 key="tab-subtitles"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
-                className="space-y-4"
               >
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/50">
-                  <h3 className="text-sm font-bold text-slate-700 mb-2">📰 뉴스 요약 및 스크립트</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    영상을 시청하면서 자막 리스트의 구절을 클릭하면 해당 구간으로 바로 이동하여 집중 반복 학습을 할 수 있습니다. 
-                    하단의 중요 단어와 퀴즈 탭을 풀기 전에 먼저 뉴스의 호흡과 아나운서의 발음을 익혀 보세요!
-                  </p>
-                </div>
-                <div ref={subtitleContainerRef} className="border border-slate-100 rounded-2xl overflow-hidden divide-y divide-slate-100 max-h-[500px] overflow-y-auto scrollbar-thin scroll-smooth">
-                  {lesson.subtitles.map((sub, idx) => {
-                    const isActive = idx === activeSubtitleIndex;
-                    return (
-                      <div
-                        key={idx}
-                        data-index={idx}
-                        onClick={() => handleSubtitleClick(sub.start, idx)}
-                        className={`p-4 transition-all cursor-pointer flex flex-col gap-1 text-left ${
-                          isActive
-                            ? "bg-rose-50/60"
-                            : "hover:bg-slate-50/50"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${isActive ? 'bg-rose-500 text-white font-bold' : 'text-slate-400 bg-slate-100'}`}>
-                            {Math.floor(sub.start / 60)}:{Math.floor(sub.start % 60).toString().padStart(2, "0")}
-                          </span>
-                        </div>
-                        {/* 원문 (일본어) */}
-                        <p className={`text-sm font-bold mt-1.5 leading-relaxed ${isActive ? "text-rose-600" : "text-slate-800"}`}>
-                          {(sub.japanese || "").split(" / ").map((chunk, ci, arr) => (
-                            <React.Fragment key={ci}>
-                              {chunk}{ci < arr.length - 1 && <span className="text-slate-300 mx-1">/</span>}
-                            </React.Fragment>
-                          ))}
-                        </p>
-                        {/* 한국어 발음 */}
-                        <p className="text-xs text-rose-400 font-mono mt-1 leading-relaxed">
-                          {((sub.pronunciation || sub.hiragana || "")).split(" / ").map((chunk, ci, arr) => (
-                            <React.Fragment key={ci}>
-                              {chunk}{ci < arr.length - 1 && <span className="text-slate-200 mx-1">/</span>}
-                            </React.Fragment>
-                          ))}
-                        </p>
-                        {/* 한국어 번역 */}
-                        <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                          {(sub.korean || "").split(" / ").map((chunk, ci, arr) => (
-                            <React.Fragment key={ci}>
-                              {chunk}{ci < arr.length - 1 && <span className="text-slate-300 mx-1">/</span>}
-                            </React.Fragment>
-                          ))}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
+                <NewsSubtitlesTab
+                  subtitles={lesson.subtitles}
+                  activeSubtitleIndex={activeSubtitleIndex}
+                  handleSubtitleClick={handleSubtitleClick}
+                  subtitleContainerRef={subtitleContainerRef}
+                />
               </motion.div>
             )}
 
-            {/* 탭 2: 중요 단어 카드 */}
+            {/* 중요 단어 탭 활성 */}
             {activeTab === "vocab" && lesson.vocabItems.length > 0 && (
               <motion.div
                 key="tab-vocab"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
-                className="flex flex-col items-center"
               >
-                {/* 단어 플래시 카드 */}
-                <div className="w-full max-w-lg bg-gradient-to-tr from-amber-50/50 to-orange-50/30 border border-orange-200/60 p-6 rounded-3xl shadow-sm text-center space-y-5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-orange-600 bg-orange-100 border border-orange-200/50 px-3 py-1 rounded-full">
-                      {lesson.vocabItems[vocabIndex].jlptLevel || "N1~N3"}
-                    </span>
-                    <button
-                      onClick={() => handleTTS(lesson.vocabItems[vocabIndex].word)}
-                      className={`p-2 rounded-full border shadow-sm transition-all cursor-pointer ${
-                        speechActive === lesson.vocabItems[vocabIndex].word
-                          ? "bg-rose-500 border-rose-500 text-white animate-pulse"
-                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                      }`}
-                      title="단어 발음 듣기"
-                    >
-                      <Volume2 className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <div>
-                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                      {lesson.vocabItems[vocabIndex].word}
-                    </h3>
-                    <p className="text-sm font-mono text-slate-500 mt-1">
-                      {lesson.vocabItems[vocabIndex].pronunciation}
-                    </p>
-                    <p className="text-lg font-bold text-slate-800 mt-2 bg-white/80 border border-slate-200/60 py-1.5 px-4 rounded-full inline-block">
-                      {lesson.vocabItems[vocabIndex].meaning}
-                    </p>
-                  </div>
-
-                  {/* 한자 부수 및 연상 스토리 분해 */}
-                  <div className="text-left bg-white p-4 rounded-2xl border border-slate-200/60 space-y-3">
-                    <h4 className="text-xs font-bold text-slate-700 border-b border-slate-100 pb-1">🧩 한자 연상 기억 스토리</h4>
-                    {lesson.vocabItems[vocabIndex].kanjiBreakdown.map((kb, kIdx) => (
-                      <div key={kIdx} className="text-xs space-y-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <strong className="text-rose-500 font-mono text-sm bg-rose-50 border border-rose-100 w-5 h-5 rounded-md flex items-center justify-center shrink-0">
-                            {kb.kanji}
-                          </strong>
-                          <span className="font-semibold text-slate-800">({kb.meaning})</span>
-                        </div>
-                        <p className="text-slate-500 text-[11px] leading-relaxed pl-6">
-                          {kb.mnemonic}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* 예문 정보 */}
-                  <div className="text-left bg-rose-50/20 p-4 rounded-2xl border border-rose-100/50 space-y-1">
-                    <h4 className="text-xs font-bold text-rose-600 mb-1">💬 뉴스 문맥 예문</h4>
-                    <p className="text-sm font-bold text-slate-800 leading-relaxed mb-1">
-                      {renderHighlightedSentence(lesson.vocabItems[vocabIndex].exampleSentence.japanese, lesson.vocabItems[vocabIndex].word)}
-                    </p>
-                    <p className="text-[10px] text-slate-400 font-mono">
-                      {lesson.vocabItems[vocabIndex].exampleSentence.pronunciation}
-                    </p>
-                    <p className="text-xs text-slate-600 mt-1">
-                      {lesson.vocabItems[vocabIndex].exampleSentence.meaning}
-                    </p>
-                  </div>
-                </div>
-
-                {/* 카드 내비게이션 */}
-                <div className="flex items-center gap-6 mt-6">
-                  <button
-                    onClick={() => setVocabIndex((prev) => Math.max(0, prev - 1))}
-                    disabled={vocabIndex === 0}
-                    className="p-2 border border-slate-200 text-slate-500 hover:text-slate-800 disabled:opacity-30 rounded-full hover:bg-slate-50 transition-all cursor-pointer"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                  </button>
-                  <span className="text-xs font-mono font-bold text-slate-500">
-                    {vocabIndex + 1} / {lesson.vocabItems.length}
-                  </span>
-                  <button
-                    onClick={() => setVocabIndex((prev) => Math.min(lesson.vocabItems.length - 1, prev + 1))}
-                    disabled={vocabIndex === lesson.vocabItems.length - 1}
-                    className="p-2 border border-slate-200 text-slate-500 hover:text-slate-800 disabled:opacity-30 rounded-full hover:bg-slate-50 transition-all cursor-pointer"
-                  >
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
-                </div>
+                <NewsVocabTab
+                  vocabItems={lesson.vocabItems}
+                  vocabIndex={vocabIndex}
+                  setVocabIndex={setVocabIndex}
+                  handleTTS={handleTTS}
+                  speechActive={speechActive}
+                  renderHighlightedSentence={renderHighlightedSentence}
+                />
               </motion.div>
             )}
 
-            {/* 탭 3: 뉴스 퀴즈 풀기 */}
+            {/* 퀴즈 문제 풀기 탭 활성 */}
             {activeTab === "quiz" && lesson.quizzes.length > 0 && (
               <motion.div
                 key="tab-quiz"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
-                className="space-y-6 text-left"
               >
-                {/* 퀴즈 안내 가이드 */}
-                {!quizGraded && (
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/50 flex items-center justify-between text-xs text-slate-500">
-                    <span>💡 뉴스 속 핵심 표현과 중요 어휘의 맥락을 점검하는 확인 퀴즈입니다.</span>
-                    <span className="font-bold text-rose-500">총 {lesson.quizzes.length}문제</span>
-                  </div>
-                )}
-
-                {/* 퀴즈 채점 결과 요약 */}
-                {quizGraded && (
-                  <div className="bg-gradient-to-tr from-emerald-500 to-teal-600 p-6 rounded-3xl text-white text-center space-y-2 shadow-sm">
-                    <h3 className="text-xl font-bold">🎉 퀴즈 풀이 결과</h3>
-                    <p className="text-2xl font-black">
-                      {quizScore} / {lesson.quizzes.length} 문제 맞춤!
-                    </p>
-                    <p className="text-xs text-emerald-100">
-                      틀린 오답 카드는 아래 해설을 통해 다시 한 번 확인해 보세요.
-                    </p>
-                    <button
-                      onClick={handleResetQuiz}
-                      className="mt-3 bg-white text-emerald-700 hover:bg-emerald-50 px-5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer border-none shadow-sm"
-                    >
-                      다시 풀기
-                    </button>
-                  </div>
-                )}
-
-                {/* 퀴즈 문제 목록 */}
-                <div className="space-y-6">
-                  {lesson.quizzes.map((q, qIdx) => {
-                    const selectedIdx = quizAnswers[q.id];
-                    const isCorrect = selectedIdx === q.correctIndex;
-                    return (
-                      <div
-                        key={q.id}
-                        className={`p-5 rounded-2xl border transition-all ${
-                          quizGraded
-                            ? isCorrect
-                              ? "bg-emerald-50/30 border-emerald-200"
-                              : "bg-red-50/30 border-red-200"
-                            : "bg-white border-slate-200"
-                        }`}
-                      >
-                        {/* 문제 번호 및 타입 */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                            Q {qIdx + 1}
-                          </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                            q.type === 'meaning' 
-                              ? 'text-blue-600 bg-blue-50' 
-                              : 'text-purple-600 bg-purple-50'
-                          }`}>
-                            {q.type === 'meaning' ? '뜻' : '발음'}
-                          </span>
-                        </div>
-
-                        {/* 타깃 단어 표시 */}
-                        {q.targetWord && (
-                          <div className="bg-slate-50/70 p-3 rounded-xl border border-slate-200/50 mb-3 text-center">
-                            <span className="text-xl font-black text-slate-900">{q.targetWord}</span>
-                          </div>
-                        )}
-
-                        {/* 문제 텍스트 */}
-                        <p className="text-sm font-bold text-slate-800 mb-3 leading-relaxed">
-                          {q.questionText}
-                        </p>
-
-                        {/* 사지선다 보기 */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          {q.choices.map((choice, cIdx) => {
-                            const isChoiceSelected = selectedIdx === cIdx;
-                            const isCurrentCorrect = cIdx === q.correctIndex;
-
-                            let btnStyle = "border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 bg-white";
-                            let iconEl = null;
-
-                            if (isChoiceSelected) {
-                              btnStyle = "border-rose-500 bg-rose-50/50 text-rose-700 font-semibold";
-                            }
-
-                            if (quizGraded) {
-                              if (isCurrentCorrect) {
-                                btnStyle = "border-emerald-500 bg-emerald-500 text-white font-bold";
-                                iconEl = <CheckCircle className="w-4 h-4 shrink-0" />;
-                              } else if (isChoiceSelected && !isCorrect) {
-                                btnStyle = "border-red-500 bg-red-500 text-white font-bold";
-                                iconEl = <XCircle className="w-4 h-4 shrink-0" />;
-                              } else {
-                                btnStyle = "border-slate-100 bg-slate-50 text-slate-400 opacity-60";
-                              }
-                            }
-
-                            return (
-                              <button
-                                key={cIdx}
-                                onClick={() => handleSelectQuizAnswer(q.id, cIdx)}
-                                disabled={quizGraded}
-                                className={`p-3 text-xs text-left rounded-xl border transition-all flex items-center justify-between gap-2 cursor-pointer ${btnStyle}`}
-                              >
-                                <span>{choice}</span>
-                                {iconEl}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* 퀴즈 개별 오답 해설 */}
-                        {quizGraded && q.explanation && (
-                          <div className={`mt-3 p-3 rounded-xl text-xs leading-relaxed ${isCorrect ? "bg-emerald-50/50 text-emerald-800" : "bg-red-50/50 text-red-800"}`}>
-                            <strong>💡 정답 해설:</strong> {q.explanation}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* 제출 버튼 */}
-                {!quizGraded && (
-                  <div className="flex justify-end pt-2">
-                    <button
-                      onClick={handleGradeQuiz}
-                      disabled={Object.keys(quizAnswers).length < lesson.quizzes.length}
-                      className="bg-rose-500 hover:bg-rose-600 disabled:opacity-40 text-white text-sm font-bold py-3 px-8 rounded-2xl shadow-md transition-all cursor-pointer border-none"
-                    >
-                      채점 완료
-                    </button>
-                  </div>
-                )}
+                <NewsQuizTab
+                  quizzes={lesson.quizzes}
+                  quizAnswers={quizAnswers}
+                  quizGraded={quizGraded}
+                  quizScore={quizScore}
+                  handleSelectAnswer={handleSelectQuizAnswer}
+                  handleGrade={handleGradeQuiz}
+                  handleReset={handleResetQuiz}
+                />
               </motion.div>
             )}
           </AnimatePresence>
