@@ -80,9 +80,9 @@ router.post("/generate", async (req, res) => {
         - "id": unique string.
         - "type": "reading", "writing", "meaning", or "context_fit".
         - "level": "${targetLevel}".
-        - "questionSentence": A natural Japanese sentence. For context_fit, use "__blank__". Otherwise wrap the target word like "__targetWord__".
+        - "questionSentence": A natural Japanese sentence. For "context_fit" and "writing" types, use "__blank__" to hide the answer. For "reading" and "meaning" types, wrap the actual target word in double underscores (e.g. if the target word is "笑顔", the sentence must contain "__笑顔__"). NEVER output the literal string "__target__" or "__targetWord__".
         - "targetWord": The target word tested.
-        - "questionText": MUST be in Korean. For reading/writing/meaning: format exactly as "빈칸의 [targetWord]의 올바른 뜻/독음/표기를 고르세요.". For context_fit: "문맥상 빈칸에 들어갈 가장 알맞은 단어를 고르세요."
+        - "questionText": MUST be in Korean. For "reading" and "meaning": "빈칸의 [targetWord]의 올바른 독음/뜻을 고르세요.". For "writing": "문맥상 빈칸에 들어갈 단어의 올바른 표기(한자)를 고르세요.". For "context_fit": "문맥상 빈칸에 들어갈 가장 알맞은 단어를 고르세요."
         - "choices": Exactly 4 options. STRICTLY Japanese characters ONLY (NO Romaji, NO Korean).
         - "correctIndex": 0-based integer.
         - "translation": Concise Korean translation.

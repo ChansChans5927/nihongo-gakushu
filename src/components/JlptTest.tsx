@@ -1,34 +1,35 @@
 import { useState, useRef } from "react";
 import { motion } from "motion/react";
-import {
-  Award,
-  CheckCircle2,
-  CornerDownRight,
-  ArrowRight,
-  RefreshCw,
-  HelpCircle,
-  XCircle,
-  Sparkles
-} from "lucide-react";
+import { CornerDownRight } from "lucide-react";
 import { JlptQuestion } from "../types";
 import { getTheme } from "../theme";
 
+// 분리한 하위 컴포넌트 임포트
+import { JlptProgressBar } from "./jlpt/JlptProgressBar";
+import { JlptQuestionSentence } from "./jlpt/JlptQuestionSentence";
+import { JlptChoices } from "./jlpt/JlptChoices";
+import { JlptNavigation } from "./jlpt/JlptNavigation";
+import { JlptResultScore } from "./jlpt/JlptResultScore";
+import { JlptResultList } from "./jlpt/JlptResultList";
+
+// JlptTestProps 인터페이스 정의
 interface JlptTestProps {
-  selectedJlptLevel: string;
-  jlptQuestions: JlptQuestion[];
-  currentJlptIndex: number;
-  jlptAnswers: { [questionId: string]: number };
-  isJlptGraded: boolean;
-  isJlptLoading: boolean;
-  handleSelectJlptAnswer: (choiceIndex: number) => void;
-  handlePrevJlptQuestion: () => void;
-  handleNextJlptQuestion: () => void;
-  handleGradeJlptQuiz: () => void;
-  handleGoHomeJlpt: () => void;
-  startJlptQuiz: () => void;
-  currentTheme?: string;
+  selectedJlptLevel: string;                                          // 선택된 JLPT 레벨 (N1 ~ N5)
+  jlptQuestions: JlptQuestion[];                                      // 시험 문항 배열 목록
+  currentJlptIndex: number;                                           // 현재 문제 번호 (0-based)
+  jlptAnswers: { [questionId: string]: number };                      // 마킹한 답안 목록 맵
+  isJlptGraded: boolean;                                              // 채점 완료 여부
+  isJlptLoading: boolean;                                             // 다시 가져오기 등 로딩 중 여부
+  handleSelectJlptAnswer: (choiceIndex: number) => void;              // 보기 체크 함수
+  handlePrevJlptQuestion: () => void;                                 // 이전 문항 이동 함수
+  handleNextJlptQuestion: () => void;                                 // 다음 문항 이동 함수
+  handleGradeJlptQuiz: () => void;                                    // 시험지 채점 제출 함수
+  handleGoHomeJlpt: () => void;                                       // 홈(기출 등급 목록)으로 이동 함수
+  startJlptQuiz: () => void;                                          // 시험 시작/초기화 함수
+  currentTheme?: string;                                              // 디자인 테마 명칭
 }
 
+// 메인 JLPT 모의고사 평가 컴포넌트 (조립식 구조)
 export function JlptTest({
   selectedJlptLevel,
   jlptQuestions,
@@ -44,14 +45,17 @@ export function JlptTest({
   startJlptQuiz,
   currentTheme = 'default'
 }: JlptTestProps) {
+  // 사무라이 테마 가로베기 모션 및 전체 흔들림 모션 제어 상태
   const [slashingChoice, setSlashingChoice] = useState<number | null>(null);
   const [isShaking, setIsShaking] = useState(false);
+
+  // 테마별 오디오 재생용 Ref 설정
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const yokaiAudioRef = useRef<HTMLAudioElement | null>(null);
   const zenAudioRef = useRef<HTMLAudioElement | null>(null);
   const chalkboardAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Initialize audio once
+  // 클라이언트 환경에서 효과음 오디오 객체 싱글톤 성격 초기화
   if (typeof window !== 'undefined') {
     if (!audioRef.current) {
       audioRef.current = new Audio("/sounds/slash.mp3");
@@ -71,6 +75,7 @@ export function JlptTest({
     }
   }
 
+  // 문항 데이터가 없으면 출력 안 함
   if (jlptQuestions.length === 0) return null;
 
   const theme = getTheme(currentTheme);
@@ -78,6 +83,7 @@ export function JlptTest({
   const isYokai = theme.isYokai;
   const isZen = theme.isZen;
 
+  // 보기 선택 클릭 시 테마 이펙트 오디오 플레이 및 상태 전파 함수
   const onSelect = (choiceIdx: number) => {
     if (isSamurai) {
       if (audioRef.current) {
@@ -109,6 +115,10 @@ export function JlptTest({
     handleSelectJlptAnswer(choiceIdx);
   };
 
+  // 계산용 변수 매핑
+  const currentQuestion = jlptQuestions[currentJlptIndex];
+  const selectedAnswerIdx = jlptAnswers[currentQuestion.id];
+
   return (
     <motion.div
       key="jlpt-screen"
@@ -119,29 +129,20 @@ export function JlptTest({
       className="space-y-6 w-full"
     >
       {!isJlptGraded ? (
-        /* 1. JLPT QUESTION SOLVING CARD */
+        /* 1. JLPT 실전 시험지 풀이 모드 */
         <div className="space-y-5">
-          <div className="space-y-2">
-            <div className={`flex items-center justify-between text-xs font-semibold ${theme.headerTextColor}`}>
-              <span className="flex items-center gap-1">
-                <Award className={`w-4 h-4 ${theme.headerIconColorKanji}`} />
-                <span>JLPT {selectedJlptLevel} 실전 기출 평가</span>
-              </span>
-              <span className="font-mono">
-                진행률: {currentJlptIndex + 1} / {jlptQuestions.length} 문제 ({Math.round(((currentJlptIndex + 1) / jlptQuestions.length) * 100)}%)
-              </span>
-            </div>
-            <div className={`w-full h-2 rounded-full overflow-hidden ${theme.progressTrackBgJlpt}`}>
-              <div
-                className={`h-full rounded-full transition-all duration-300 ${theme.progressBarBgJlpt}`}
-                style={{ width: `${((currentJlptIndex + 1) / jlptQuestions.length) * 100}%` }}
-              />
-            </div>
-          </div>
+          {/* 상단 진행률 프로그레스 바 */}
+          <JlptProgressBar
+            currentIndex={currentJlptIndex}
+            totalCount={jlptQuestions.length}
+            level={selectedJlptLevel}
+            theme={theme}
+          />
 
           <div 
             className={`${theme.cardContainer} overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-6 relative ${isShaking && isSamurai ? "shake-effect" : ""}`}
           >
+            {/* 테마 백그라운드 특수 시각 효과 */}
             {isSamurai && <div className="samurai-embers"></div>}
             {isYokai && (
               <div className="yokai-wisps-container">
@@ -170,6 +171,7 @@ export function JlptTest({
               </div>
             )}
 
+            {/* 문항 번호 표기 및 나가기 컨트롤 바 */}
             <div className="flex items-center justify-between border-b border-slate-100/20 pb-3 relative z-10">
               <span className={theme.sealBadgeClassJlpt}>
                 기출 문항 #{currentJlptIndex + 1}
@@ -182,37 +184,23 @@ export function JlptTest({
               </button>
             </div>
 
-            {/* Question Content */}
+            {/* 문제 질문 설명 및 핵심 문장 영역 */}
             <div className="space-y-4 relative z-10">
               <h3 className={`text-xs font-bold uppercase tracking-widest flex items-center gap-1 ${theme.questionInstructionColor}`}>
                 <CornerDownRight className={`w-3.5 h-3.5 ${theme.questionInstructionIcon}`} />
                 제시된 문제를 읽고 올바른 정답을 선택해 보세요
               </h3>
 
-              {/* Split sentence logic */}
-              {(() => {
-                const q = jlptQuestions[currentJlptIndex];
-                const parts = q.questionSentence.split("__");
-                return (
-                  <div lang="ja" className={`text-lg sm:text-2xl font-semibold tracking-wide leading-relaxed text-center py-4 sm:py-6 px-3 border rounded-xl sm:rounded-2xl select-all ${theme.questionSentenceBox}`}>
-                    {parts.map((p, idx) => idx % 2 === 1 ? (
-                      p.toLowerCase() === "blank" ? (
-                        <span key={idx} lang="ko" className={`inline-flex items-center border-2 border-dashed px-3 py-1 rounded-xl text-xs tracking-widest font-bold mx-1 animate-pulse select-none ${theme.blankFillBlock}`}>
-                          ( 빈칸에 들어갈 말 )
-                        </span>
-                      ) : (
-                        <span key={idx} className={`font-bold px-2 py-0.5 rounded-lg border shadow-xs mx-1 ${theme.highlightWordBlock}`}>
-                          {p}
-                        </span>
-                      )
-                    ) : p)}
-                  </div>
-                );
-              })()}
+              {/* 빈칸/강조 일본어 원문 문장 출력 컴포넌트 */}
+              <JlptQuestionSentence
+                questionSentence={currentQuestion.questionSentence}
+                theme={theme}
+              />
 
+              {/* 한글 질문 프롬프트 가이드 */}
               <div className="space-y-1">
                 <p className={`text-base sm:text-lg font-bold ${theme.questionPromptText}`}>
-                  Q. {jlptQuestions[currentJlptIndex].questionText.replace(/__/g, "")}
+                  Q. {currentQuestion.questionText.replace(/__/g, "")}
                 </p>
                 <p className={`text-xs ${theme.questionPromptSubText}`}>
                   * 제시된 단어에 가장 알맞은 독음, 한자 표기, 또는 한국어 뜻을 보기에서 선택해 보세요.
@@ -220,301 +208,57 @@ export function JlptTest({
               </div>
             </div>
 
-            {/* Output Choice Buttons */}
-            <div className="grid grid-cols-1 gap-3 relative z-10">
-              {jlptQuestions[currentJlptIndex].choices.map((choice, choiceIdx) => {
-                const isSelected = jlptAnswers[jlptQuestions[currentJlptIndex].id] === choiceIdx;
-                const isSlashing = slashingChoice === choiceIdx;
+            {/* 객관식 보기 리스트 컴포넌트 */}
+            <JlptChoices
+              choices={currentQuestion.choices}
+              selectedChoiceIdx={selectedAnswerIdx}
+              slashingChoice={slashingChoice}
+              onSelect={onSelect}
+              theme={theme}
+            />
 
-                let baseStyles = theme.choiceBtnBase;
-                let selectedStyles = theme.choiceBtnSelectedJlpt;
-                let indexStyles = theme.choiceIdxBase;
-                let selectedIndexStyles = theme.choiceIdxSelectedJlpt;
-                let checkIconColor = theme.checkIconColorJlpt;
-                let customClasses = isSamurai ? "border-2 rounded-none sword-glint" : theme.isDefault ? "rounded-xl border" : "rounded-xl border-transparent";
-
-                return (
-                  <button
-                    key={choiceIdx}
-                    onClick={(e) => {
-                      if (isYokai) {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const y = e.clientY - rect.top;
-                        
-                        const ripple = document.createElement('div');
-                        ripple.className = 'yokai-ripple';
-                        ripple.style.left = `${x}px`;
-                        ripple.style.top = `${y}px`;
-                        ripple.style.width = ripple.style.height = `${Math.max(rect.width, rect.height)}px`;
-                        ripple.style.transform = `translate(-50%, -50%) scale(0)`;
-                        
-                        e.currentTarget.appendChild(ripple);
-                        
-                        setTimeout(() => {
-                          ripple.remove();
-                        }, 500);
-                      } else if (isZen) {
-                        const buttonEl = e.currentTarget;
-                        const ripple1 = document.createElement('div');
-                        ripple1.className = 'zen-ripple';
-                        buttonEl.appendChild(ripple1);
-                        setTimeout(() => {
-                          ripple1.remove();
-                        }, 900);
-
-                        setTimeout(() => {
-                          if (buttonEl) {
-                            const ripple2 = document.createElement('div');
-                            ripple2.className = 'zen-ripple';
-                            buttonEl.appendChild(ripple2);
-                            setTimeout(() => {
-                              ripple2.remove();
-                            }, 900);
-                          }
-                        }, 150);
-                      } else if (theme.isChalkboard) {
-                        const buttonEl = e.currentTarget;
-                        const rect = buttonEl.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const y = e.clientY - rect.top;
-
-                        // Create chalk dust particles on click coordinates
-                        const particleCount = 15;
-                        for (let i = 0; i < particleCount; i++) {
-                          const particle = document.createElement('div');
-                          particle.className = 'chalk-click-particle';
-                          particle.style.left = `${x}px`;
-                          particle.style.top = `${y}px`;
-
-                          const angle = Math.random() * Math.PI * 2;
-                          const velocity = 20 + Math.random() * 60; // Spread distance
-                          const tx = Math.cos(angle) * velocity;
-                          const ty = Math.sin(angle) * velocity;
-                          const size = 2.5 + Math.random() * 4; // Particle size
-
-                          particle.style.width = `${size}px`;
-                          particle.style.height = `${size}px`;
-                          particle.style.setProperty('--tx', `${tx}px`);
-                          particle.style.setProperty('--ty', `${ty}px`);
-
-                          buttonEl.appendChild(particle);
-
-                          setTimeout(() => {
-                            particle.remove();
-                          }, 800);
-                        }
-                      }
-                      onSelect(choiceIdx);
-                    }}
-                    className={`w-full text-left p-3.5 sm:p-4.5 font-bold transition-all duration-200 flex items-center justify-between cursor-pointer relative overflow-hidden ${customClasses} ${isSelected ? selectedStyles : baseStyles} ${isSlashing ? "samurai-slash-effect scale-[0.98]" : ""}`}
-                  >
-                    <div className="flex items-center gap-4 relative z-10">
-                      <span className={`w-7 h-7 flex items-center justify-center font-mono text-xs ${isSamurai ? "rounded-none" : "rounded-full"} ${isSelected ? selectedIndexStyles : indexStyles}`}>
-                        {choiceIdx + 1}
-                      </span>
-                      <span lang="ja" className={`text-sm sm:text-base font-semibold ${isSelected ? theme.choiceTextSelectedJlpt : theme.choiceTextNormalJlpt}`}>
-                        {choice}
-                      </span>
-                    </div>
-                    {isSelected && (
-                      <CheckCircle2 className={`w-5 h-5 shrink-0 select-none relative z-10 ${checkIconColor}`} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Layout Footer Controls */}
-            <div className={`pt-4 flex items-center justify-between relative z-10 border-t ${theme.footerBg.replace('border-t', '')}`}>
-              <button
-                onClick={handlePrevJlptQuestion}
-                disabled={currentJlptIndex === 0}
-                className={`py-2.5 px-4 disabled:opacity-35 text-xs font-semibold border transition-colors disabled:cursor-not-allowed cursor-pointer ${theme.btnSecondaryJlpt}`}
-              >
-                이전 문제
-              </button>
-
-              <div className="flex items-center gap-2">
-                {currentJlptIndex < jlptQuestions.length - 1 ? (
-                  <button
-                    onClick={handleNextJlptQuestion}
-                    className={`py-2.5 px-5 text-xs font-bold rounded-xl shadow transition-colors flex items-center gap-1 cursor-pointer ${theme.btnNextJlpt}`}
-                  >
-                    <span>다음 문제</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleGradeJlptQuiz}
-                    className={`py-3 px-6 text-sm font-bold rounded-xl shadow-md transition-all scale-100 hover:scale-[1.03] active:scale-[0.98] flex items-center gap-1.5 cursor-pointer ${theme.btnGradeJlpt}`}
-                  >
-                    <Award className={`w-4 h-4 ${isSamurai ? "text-amber-200" : "text-white"}`} />
-                    <span>시험 채점하기</span>
-                  </button>
-                )}
-              </div>
-            </div>
+            {/* 하단 내비게이션 컨트롤 바 */}
+            <JlptNavigation
+              currentIndex={currentJlptIndex}
+              totalCount={jlptQuestions.length}
+              handlePrev={handlePrevJlptQuestion}
+              handleNext={handleNextJlptQuestion}
+              handleGrade={handleGradeJlptQuiz}
+              theme={theme}
+            />
           </div>
         </div>
       ) : (
-        /* 2. JLPT TEST RESULTS & EXPLANATIONS CARD */
+        /* 2. 시험 채점 종료 후 성적 분석 보고서 출력 모드 */
         <div className="space-y-6">
+          {/* 점수 산출 및 결과 헤더 블록 */}
           {(() => {
-            // Calculation score
             let correctCount = 0;
             jlptQuestions.forEach(q => {
               if (jlptAnswers[q.id] === q.correctIndex) {
                 correctCount++;
               }
             });
-            const ratio = Math.round((correctCount / jlptQuestions.length) * 100);
 
             return (
-              <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm text-center space-y-4 relative">
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-rose-400 to-indigo-500" />
-
-                <div className="mx-auto w-24 h-24 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center relative">
-                  <div className="text-3xl font-display font-extrabold text-slate-900 font-mono">
-                    {correctCount} / {jlptQuestions.length}
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 bg-amber-500 rounded-full p-1 text-slate-950 shadow">
-                    <CheckCircle2 className="w-5 h-5" />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <h3 className="text-2xl font-bold text-slate-900">
-                    JLPT {selectedJlptLevel} 기출 실전 성적 : {ratio}점!
-                  </h3>
-                  <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-                    {ratio === 100
-                      ? "대단합니다! 해당 레벨의 핵심 어휘를 완벽히 마스터하셨습니다. 다음 등급에도 도전해 보세요!"
-                      : "오답 해설을 통해 헷갈렸던 어휘를 정리해 보세요. 고빈도 단어는 합격의 가장 든든한 기초가 됩니다."}
-                  </p>
-                </div>
-
-                <div className="pt-2 flex justify-center gap-3">
-                  <button
-                    onClick={startJlptQuiz}
-                    disabled={isJlptLoading}
-                    className="py-2.5 px-5 bg-slate-950 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-45"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isJlptLoading ? "animate-spin" : ""}`} />
-                    <span>한 번 더 응시하기</span>
-                  </button>
-
-                  <button
-                    onClick={handleGoHomeJlpt}
-                    className="py-2.5 px-5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
-                  >
-                    기출 세트 목록으로
-                  </button>
-                </div>
-              </div>
+              <JlptResultScore
+                correctCount={correctCount}
+                totalCount={jlptQuestions.length}
+                level={selectedJlptLevel}
+                isJlptLoading={isJlptLoading}
+                startJlptQuiz={startJlptQuiz}
+                handleGoHome={handleGoHomeJlpt}
+                theme={theme}
+              />
             );
           })()}
 
-          {/* List of answers */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 px-1">
-              <HelpCircle className="w-4 h-4 text-amber-500" />
-              <span>틀린 문제 상세 분석 및 맞춤형 오답 해설 리포트</span>
-            </h4>
-
-            {jlptQuestions.map((q, idx) => {
-              const ansIdx = jlptAnswers[q.id];
-              const isCorrect = ansIdx === q.correctIndex;
-              const parts = q.questionSentence.split("__");
-
-              return (
-                <div
-                  key={q.id}
-                  className={`bg-white border rounded-2xl overflow-hidden p-4 sm:p-5 space-y-4 transition-all ${isCorrect
-                      ? "border-emerald-200/60 shadow-xs"
-                      : "border-red-200 shadow-sm"
-                    }`}
-                >
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-mono font-bold text-slate-400">
-                      기출문제 #{idx + 1}
-                    </span>
-
-                    {isCorrect ? (
-                      <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded font-bold">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        정답
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 bg-red-50 border border-red-200 text-red-800 px-2 py-0.5 rounded font-bold">
-                        <XCircle className="w-3.5 h-3.5" />
-                        정답 오선택
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Sentence render */}
-                  <div className="space-y-2">
-                    <div lang="ja" className="text-lg font-semibold text-slate-850 text-slate-800 tracking-wide font-sans leading-relaxed py-3 bg-slate-50 border border-slate-100 rounded-xl px-4 select-all">
-                      {parts.map((p, pIdx) => pIdx % 2 === 1 ? (
-                        p.toLowerCase() === "blank" ? (
-                          <strong key={pIdx} className="text-emerald-600 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
-                            {q.targetWord}
-                          </strong>
-                        ) : (
-                          <strong key={pIdx} className="text-amber-600 font-extrabold mx-0.5">
-                            {p}
-                          </strong>
-                        )
-                      ) : p)}
-                    </div>
-                    <p className="text-xs text-slate-500 font-medium italic">
-                      * 해석 : {q.translation}
-                    </p>
-                  </div>
-
-                  <div className="space-y-1">
-                    <h5 className="text-sm font-bold text-slate-800">
-                      Q. {q.questionText.replace(/__/g, "")}
-                    </h5>
-                  </div>
-
-                  {/* Selected answer view */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div className="p-3 bg-slate-50 rounded-xl space-y-0.5 border border-slate-100">
-                      <span className="text-slate-400 font-medium block">정답보기</span>
-                      <span lang="ja" className="font-bold text-emerald-800">
-                        {q.choices[q.correctIndex]}
-                      </span>
-                    </div>
-
-                    <div className={`p-3 rounded-xl space-y-0.5 border ${isCorrect
-                        ? "bg-slate-50 border-slate-100"
-                        : "bg-red-50/50 border-red-100"
-                      }`}>
-                      <span className="text-slate-400 font-medium block">내가 고른 답</span>
-                      <span lang="ja" className={`font-semibold ${isCorrect ? "text-slate-800" : "text-red-700 font-bold"}`}>
-                        {ansIdx !== undefined
-                          ? q.choices[ansIdx]
-                          : "응답 없음"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Comprehensive analysis explanation panel */}
-                  <div className="bg-slate-50 border-l-4 border-amber-500 rounded-r-xl p-3 sm:p-4 space-y-2 text-xs leading-relaxed">
-                    <div className="flex items-center gap-1 text-slate-900 font-bold">
-                      <Sparkles className="w-4 h-4 text-amber-500" />
-                      <span>기출 분석 핵심 해설</span>
-                    </div>
-                    <p className="text-slate-700 font-medium bg-white p-3 rounded-lg border border-slate-200">
-                      {q.explanation}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          {/* 오답 및 정답 문항 분석 상세 분석 리스트 리포트 */}
+          <JlptResultList
+            questions={jlptQuestions}
+            answers={jlptAnswers}
+            theme={theme}
+          />
         </div>
       )}
     </motion.div>
