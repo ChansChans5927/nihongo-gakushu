@@ -2,6 +2,7 @@ import express from "express";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { getDB } from "../db.ts";
+import { authMiddleware, AuthenticatedRequest } from "../middlewares/authMiddleware.ts";
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "nihongo_gakushu_secret_key";
@@ -111,6 +112,45 @@ router.post("/login", async (req, res) => {
   } catch (err: any) {
     console.error("Login error:", err);
     res.json({ success: false, errorMsg: `로그인 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint for Changing Password
+router.post("/change-password", authMiddleware as any, async (req: AuthenticatedRequest, res) => {
+  const username = req.user!.username;
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword || currentPassword.trim() === "" || newPassword.trim() === "") {
+    return res.json({ success: false, errorMsg: "현재 비밀번호와 새 비밀번호를 모두 입력해 주세요." });
+  }
+
+  const db = getDB();
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다. 잠시 후 다시 시도해 주세요." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    const user = await db.collection("users").findOne({ username: normalizedUsername });
+    
+    if (!user || !verifyPassword(currentPassword.trim(), user.password)) {
+      return res.json({ success: false, errorMsg: "현재 비밀번호가 일치하지 않습니다." });
+    }
+
+    if (!isPasswordComplex(newPassword.trim())) {
+      return res.json({ success: false, errorMsg: "새 비밀번호는 영문, 숫자, 특수문자를 혼합하여 8자 이상이어야 합니다." });
+    }
+
+    const hashedPassword = hashPassword(newPassword.trim());
+    await db.collection("users").updateOne(
+      { username: normalizedUsername },
+      { $set: { password: hashedPassword } }
+    );
+
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("Change password error:", err);
+    res.json({ success: false, errorMsg: `비밀번호 변경 중 오류가 발생했습니다: ${err.message}` });
   }
 });
 

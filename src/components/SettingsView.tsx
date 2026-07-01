@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ArrowLeft, Bell, BellOff, User, Loader2, Trash2, Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { NativeBridge } from "../nativeBridge";
+import { useConfirmStore } from "../stores/confirmStore";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -31,7 +32,13 @@ export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+  
+  const showAlert = useConfirmStore((state) => state.showAlert);
 
   useEffect(() => {
     fetchSettings();
@@ -210,6 +217,43 @@ export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps
     }
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      showAlert("모든 필드를 입력해 주세요.");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      showAlert("새 비밀번호가 일치하지 않습니다.");
+      return;
+    }
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      showAlert("새 비밀번호는 영문, 숫자, 특수문자를 혼합하여 8자 이상이어야 합니다.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.errorMsg);
+      }
+      await showAlert("비밀번호가 성공적으로 변경되었습니다.\n안전을 위해 다시 로그인해 주세요.");
+      onLogout();
+    } catch (error: any) {
+      console.error(error);
+      showAlert(error.message || "비밀번호 변경 중 오류가 발생했습니다.");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -373,6 +417,58 @@ export function SettingsView({ username, onGoBack, onLogout }: SettingsViewProps
                 </div>
               </div>
             </div>
+          </section>
+
+          {/* Change Password Section */}
+          <section>
+            <h3 className="text-sm font-bold text-slate-500 mb-4 flex items-center gap-2 uppercase tracking-wider">
+              <User className="w-4 h-4" />
+              비밀번호 변경
+            </h3>
+            
+            <form onSubmit={handleChangePassword} className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">현재 비밀번호</label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  disabled={isChangingPassword}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-slate-800"
+                  placeholder="현재 비밀번호를 입력하세요"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">새 비밀번호</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={isChangingPassword}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-slate-800"
+                  placeholder="영문, 숫자, 특수문자 조합 8자 이상"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">새 비밀번호 확인</label>
+                <input
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  disabled={isChangingPassword}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-slate-800"
+                  placeholder="새 비밀번호를 다시 입력하세요"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
+                className="w-full mt-2 bg-indigo-600 text-white rounded-xl py-3 font-bold shadow-md shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isChangingPassword && <Loader2 className="w-5 h-5 animate-spin" />}
+                비밀번호 변경
+              </button>
+            </form>
           </section>
 
           {/* Account Management: Delete Account */}
