@@ -114,7 +114,7 @@ export default function App() {
 
     // Check URL
     const params = new URLSearchParams(window.location.search);
-    const targetItem = params.get('targetItem');
+    const targetItem = params.get('targetItem') || params.get('item');
     const type = params.get('type');
     const level = params.get('level');
     
@@ -139,8 +139,14 @@ export default function App() {
         }
       }
       
-      if (data && data.type === 'DEEP_LINK_STUDY') {
-        handleDeepLink(data.payload);
+      if (data) {
+        if (data.type === 'DEEP_LINK_STUDY' && data.payload) {
+          handleDeepLink(data.payload);
+        } else if (data.type === 'deep_link_study') {
+          handleDeepLink({ type: data.studyMode, targetItem: data.targetItem, level: data.level });
+        } else if (data.type === 'vocab' || data.type === 'kanji') {
+          handleDeepLink(data);
+        }
       }
     };
     
