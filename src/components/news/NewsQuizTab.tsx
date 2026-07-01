@@ -1,4 +1,4 @@
-import { CheckCircle, HelpCircle, XCircle } from "lucide-react";
+import { CheckCircle, HelpCircle, XCircle, Trophy, Lightbulb } from "lucide-react";
 import { Question } from "../../types";
 
 // 퀴즈 탭 Props 인터페이스
@@ -30,16 +30,22 @@ export function NewsQuizTab({
     <div className="space-y-6 text-left">
       {/* 퀴즈 기본 안내 바 */}
       {!quizGraded && (
-        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/50 flex items-center justify-between text-xs text-slate-500">
-          <span>💡 뉴스 속 핵심 표현과 중요 어휘의 맥락을 점검하는 확인 퀴즈입니다.</span>
-          <span className="font-bold text-rose-500">총 {quizzes.length}문제</span>
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/50 flex items-center justify-between text-xs text-slate-500 gap-2">
+          <span className="flex items-center gap-1.5">
+            <Lightbulb className="w-4 h-4 text-amber-500 shrink-0" />
+            <span>뉴스 속 핵심 표현과 중요 어휘의 맥락을 점검하는 확인 퀴즈입니다.</span>
+          </span>
+          <span className="font-bold text-rose-500 shrink-0">총 {quizzes.length}문제</span>
         </div>
       )}
 
       {/* 채점 완료 후 점수 공개 요약 판 */}
       {quizGraded && (
         <div className="bg-gradient-to-tr from-emerald-500 to-teal-600 p-6 rounded-3xl text-white text-center space-y-2 shadow-sm">
-          <h3 className="text-xl font-bold">🎉 퀴즈 풀이 결과</h3>
+          <h3 className="text-xl font-bold flex items-center justify-center gap-1.5">
+            <Trophy className="w-5 h-5 text-yellow-300" />
+            <span>퀴즈 풀이 결과</span>
+          </h3>
           <p className="text-2xl font-black">
             {quizScore} / {quizzes.length} 문제 맞춤!
           </p>
@@ -95,7 +101,13 @@ export function NewsQuizTab({
 
               {/* 한글 질문 텍스트 */}
               <p className="text-sm font-bold text-slate-800 mb-3 leading-relaxed">
-                {q.questionText}
+                {q.targetWord ? (
+                  q.questionText
+                    .replace(new RegExp(`단어 '${q.targetWord}'의`, 'g'), '위 단어의')
+                    .replace(new RegExp(`단어 '${q.targetWord}'`, 'g'), '위 단어')
+                    .replace(new RegExp(`한자 '${q.targetWord}'의`, 'g'), '위 한자의')
+                    .replace(new RegExp(`한자 '${q.targetWord}'`, 'g'), '위 한자')
+                ) : q.questionText}
               </p>
 
               {/* 4지선다 보기 그리드 */}
@@ -144,8 +156,11 @@ export function NewsQuizTab({
 
               {/* 채점 완료 후 기출 해설 텍스트 상자 노출 */}
               {quizGraded && q.explanation && (
-                <div className={`mt-3 p-3 rounded-xl text-xs leading-relaxed ${isCorrect ? "bg-emerald-50/50 text-emerald-800" : "bg-red-50/50 text-red-800"}`}>
-                  <strong>💡 정답 해설:</strong> {q.explanation}
+                <div className={`mt-3 p-3 rounded-xl text-xs leading-relaxed flex items-start gap-1.5 ${isCorrect ? "bg-emerald-50/50 text-emerald-800" : "bg-red-50/50 text-red-800"}`}>
+                  <Lightbulb className={`w-4 h-4 shrink-0 ${isCorrect ? "text-emerald-600" : "text-red-500"}`} />
+                  <div>
+                    <strong>정답 해설:</strong> {q.explanation}
+                  </div>
                 </div>
               )}
             </div>

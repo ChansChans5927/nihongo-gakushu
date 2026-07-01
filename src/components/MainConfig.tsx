@@ -106,10 +106,10 @@ export function MainConfig({
         <div className="absolute bottom-4 right-4 text-slate-200 text-6xl font-display font-extrabold select-none pointer-events-none opacity-20 font-serif hidden sm:block">見</div>
 
         {currentUser && (
-          <div className="flex justify-center sm:absolute sm:top-4 sm:right-4 mb-3 sm:mb-0 z-10 relative">
+          <div className="absolute top-4 right-4 z-10">
             <div className="inline-flex bg-white/90 backdrop-blur border border-amber-200 shadow-sm px-3 py-1.5 rounded-2xl items-center gap-2 cursor-pointer transition-transform hover:scale-105" onClick={onOpenShop}>
               <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Points</span>
-              <strong className="text-slate-800 font-mono font-black text-sm">{points.toLocaleString()} <span className="text-amber-500">P</span></strong>
+              <strong className="text-slate-800 font-mono font-black text-xs sm:text-sm">{points.toLocaleString()} <span className="text-amber-500">P</span></strong>
             </div>
           </div>
         )}

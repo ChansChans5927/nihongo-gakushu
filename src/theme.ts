@@ -122,6 +122,12 @@ export interface ThemeConfig {
   btnNextQuiz: string;
   btnGradeQuiz: string;
   radicalsBoxBg: string;
+
+  // New properties for pronunciation visibility & Quiz hints to keep code clean and decoupled
+  wordPronunciationBlock: string;
+  wordPronunciationText: string;
+  btnHintQuiz: string;
+  hintModalBg: string;
 }
 
 export const THEME_CONFIGS: Record<string, ThemeConfig> = {
@@ -241,7 +247,12 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     quizBigDisplayHint: "text-amber-500",
     btnNextQuiz: "bg-slate-900 hover:bg-slate-800 text-white rounded-xl",
     btnGradeQuiz: "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl",
-    radicalsBoxBg: "bg-slate-50 border border-slate-100"
+    radicalsBoxBg: "bg-slate-50 border border-slate-100",
+
+    wordPronunciationBlock: "bg-slate-50 border border-slate-200",
+    wordPronunciationText: "text-slate-700 font-bold",
+    btnHintQuiz: "border border-dashed border-slate-200 text-slate-600 bg-slate-50 hover:bg-slate-100",
+    hintModalBg: "bg-white/95 backdrop-blur-md border-slate-200/80 text-slate-800 rounded-[28px] shadow-[0_20px_50px_rgba(15,23,42,0.15)]"
   },
   samurai: {
     key: "samurai",
@@ -358,8 +369,13 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     blankFillBlockQuiz: "bg-amber-900/10 border-amber-900/40 text-amber-900",
     quizBigDisplayHint: "text-red-800",
     btnNextQuiz: "bg-[#3e2723] hover:bg-[#2d1b18] text-[#f4e8d1] rounded-none border border-amber-900/50",
-    btnGradeQuiz: "bg-gradient-to-r from-red-800 to-red-955 hover:from-red-900 hover:to-black text-amber-50 rounded-none border-2 border-red-955",
-    radicalsBoxBg: "bg-amber-900/5 border border-amber-900/20"
+    btnGradeQuiz: "bg-gradient-to-r from-red-800 to-amber-900 text-amber-100 rounded-xl",
+    radicalsBoxBg: "bg-amber-900/5 border border-amber-900/20",
+
+    wordPronunciationBlock: "bg-amber-900/10 border border-amber-900/30",
+    wordPronunciationText: "text-amber-950 font-black",
+    btnHintQuiz: "border border-dashed border-amber-900/40 text-amber-955 bg-amber-900/5 hover:bg-amber-900/10 rounded-none",
+    hintModalBg: "bg-[#f5e6ca] border-amber-900/40 text-amber-955 rounded-none shadow-[6px_6px_0px_#5d3a1a] font-serif"
   },
   yokai: {
     key: "yokai",
@@ -477,7 +493,12 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     quizBigDisplayHint: "text-[#38bdf8]",
     btnNextQuiz: "bg-[#0f172a] hover:bg-[#1e293b] text-[#38bdf8] border border-[#0ea5e9]/50 rounded-lg shadow-[0_0_10px_rgba(14,165,233,0.2)]",
     btnGradeQuiz: "yokai-button-selected text-white rounded-lg border border-[#38bdf8] shadow-[0_0_15px_rgba(14,165,233,0.4)]",
-    radicalsBoxBg: "bg-[#0c1322]/80 border border-[#0ea5e9]/20"
+    radicalsBoxBg: "bg-[#0c1322]/80 border border-[#0ea5e9]/20",
+
+    wordPronunciationBlock: "bg-slate-900/60 border border-[#38bdf8]/30 backdrop-blur-sm",
+    wordPronunciationText: "text-sky-300 font-bold",
+    btnHintQuiz: "border border-dashed border-sky-500/40 text-sky-400 bg-sky-500/5 hover:bg-sky-500/15",
+    hintModalBg: "bg-[#0c1322] border-[#38bdf8]/40 text-[#f8f9fa] rounded-[20px] shadow-[0_0_30px_rgba(56,189,248,0.15)]"
   },
   zen: {
     key: "zen",
@@ -595,7 +616,12 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     quizBigDisplayHint: "text-emerald-600",
     btnNextQuiz: "bg-[#ffffff] hover:bg-emerald-50 text-emerald-800 border border-emerald-600/30 rounded-lg",
     btnGradeQuiz: "zen-button-selected text-white rounded-lg border border-emerald-600 shadow-[0_4px_14px_rgba(74,114,86,0.2)]",
-    radicalsBoxBg: "bg-emerald-50/40 border border-emerald-600/10"
+    radicalsBoxBg: "bg-emerald-50/40 border border-emerald-600/10",
+
+    wordPronunciationBlock: "bg-emerald-50 border border-emerald-600/20",
+    wordPronunciationText: "text-emerald-900 font-bold",
+    btnHintQuiz: "border border-dashed border-emerald-600/40 text-emerald-800 bg-emerald-50 hover:bg-emerald-100",
+    hintModalBg: "bg-[#f5f8f6] border-emerald-600/30 text-emerald-955 rounded-[32px] shadow-[0_15px_40px_rgba(74,114,86,0.1)]"
   },
   chalkboard: {
     key: "chalkboard",
@@ -713,7 +739,12 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     quizBigDisplayHint: "text-slate-100",
     btnNextQuiz: "bg-slate-100 hover:bg-white text-slate-950 font-bold rounded-xl",
     btnGradeQuiz: "bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-extrabold rounded-xl",
-    radicalsBoxBg: "bg-black/10 border border-white/10"
+    radicalsBoxBg: "bg-black/10 border border-white/10",
+
+    wordPronunciationBlock: "bg-black/25 border border-white/20",
+    wordPronunciationText: "text-emerald-100 font-bold",
+    btnHintQuiz: "border border-dashed border-white/20 text-yellow-300 bg-white/5 hover:bg-white/10",
+    hintModalBg: "bg-[#163024] border border-white/20 text-slate-100 rounded-[8px] shadow-[0_8px_20px_rgba(0,0,0,0.4)] font-mono"
   }
 };
 

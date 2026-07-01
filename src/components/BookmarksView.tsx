@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Star, Volume2, ArrowLeft, BookOpen, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Star, Volume2, ArrowLeft, BookOpen, Sparkles, ChevronDown, ChevronUp, Lightbulb, Puzzle } from "lucide-react";
 import { KanjiItem, VocabItem } from "../types";
 import { getTheme } from "../theme";
 
@@ -202,8 +202,9 @@ export function BookmarksView({
                     <div className={`p-4 sm:p-5 border-t ${theme.tableBorder} space-y-4 ${theme.breakdownPanelBg} text-xs sm:text-sm relative z-10`}>
                       {/* Mnemonic image */}
                       <div className={`p-3.5 rounded-xl space-y-1 relative ${theme.mnemonicPanelBg}`}>
-                        <span className={`text-xs font-bold tracking-wider block ${theme.mnemonicTitleColor}`}>
-                          💡 연상 암기 비법
+                        <span className={`text-xs font-bold tracking-wider flex items-center gap-1 block ${theme.mnemonicTitleColor}`}>
+                          <Lightbulb className="w-3.5 h-3.5" />
+                          <span>연상 암기 비법</span>
                         </span>
                         <p className={`text-sm sm:text-base font-semibold leading-relaxed ${theme.radicalKanjiMeaning}`}>
                           {item.mnemonic}
@@ -212,8 +213,9 @@ export function BookmarksView({
 
                       {/* Related words grid */}
                       <div className="space-y-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">
-                          📍 연관 어휘 확장
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 block">
+                          <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>연관 어휘 확장</span>
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           {item.relatedWords.map((wordObj, wIdx) => (
@@ -361,8 +363,9 @@ export function BookmarksView({
                   <div className={`p-4 sm:p-5 border-t ${theme.tableBorder} space-y-4 ${theme.breakdownPanelBg} text-xs sm:text-sm relative z-10`}>
                     {/* Kanji breakdowns */}
                     <div className="space-y-2">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                        🧩 구성 한자 암기 팁
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 block">
+                        <Puzzle className="w-3.5 h-3.5 text-teal-500" />
+                        <span>구성 한자 암기 팁</span>
                       </span>
                       <div className="space-y-2">
                         {item.kanjiBreakdown && item.kanjiBreakdown.length > 0 ? (

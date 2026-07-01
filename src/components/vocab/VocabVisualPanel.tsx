@@ -66,18 +66,18 @@ export function VocabVisualPanel({
         </div>
 
         {/* 요미가나 및 한국어 발음 표기 영역 */}
-        <div className="relative">
-          <span lang="ja" className={`text-xs font-mono ${theme.wordSubText}`}>
-            {hiragana} <span lang="ko">({pronunciation})</span>
+        <div className="flex items-center justify-center gap-2.5 mt-1.5">
+          <span lang="ja" className={`text-base font-bold tracking-wide ${theme.wordPronunciationText}`}>
+            {hiragana} <span lang="ko" className="opacity-80 font-semibold">({pronunciation})</span>
           </span>
           
-          {/* 단어 오디오 듣기 스피커 버튼 */}
+          {/* 단어 오디오 듣기 스피커 버튼 (절대값 겹침을 방지하기 위해 Flex로 나란히 배치) */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               speakJapanese(word);
             }}
-            className={`absolute -top-4 -right-8 p-1.5 rounded-full shadow-sm transition-all cursor-pointer flex items-center justify-center ${theme.wordAudioBtn}`}
+            className={`p-1.5 rounded-full shadow-sm transition-all cursor-pointer flex items-center justify-center ${theme.wordAudioBtn}`}
             title="단어 발음 듣기"
           >
             <Volume2 className="w-3.5 h-3.5" />

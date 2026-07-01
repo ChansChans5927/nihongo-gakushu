@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, ArrowRight, Volume2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Volume2, BookOpen, MessageSquare } from "lucide-react";
 import { VocabItem } from "../../types";
 
 // 단어 탭 Props 인터페이스
@@ -63,7 +63,10 @@ export function NewsVocabTab({
         {/* 구성 자형 부수 정보 및 한자 연상 기억 스토리 */}
         {currentVocab.kanjiBreakdown && currentVocab.kanjiBreakdown.length > 0 && (
           <div className="text-left bg-white p-4 rounded-2xl border border-slate-200/60 space-y-3">
-            <h4 className="text-xs font-bold text-slate-700 border-b border-slate-100 pb-1">🧩 한자 연상 기억 스토리</h4>
+            <h4 className="text-xs font-bold text-slate-700 border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-orange-500" />
+              <span>한자 연상 기억 스토리</span>
+            </h4>
             {currentVocab.kanjiBreakdown.map((kb, kIdx) => (
               <div key={kIdx} className="text-xs space-y-0.5">
                 <div className="flex items-center gap-1.5">
@@ -83,7 +86,10 @@ export function NewsVocabTab({
         {/* 예문 및 해석 가이드 박스 */}
         {currentVocab.exampleSentence && (
           <div className="text-left bg-rose-50/20 p-4 rounded-2xl border border-rose-100/50 space-y-1">
-            <h4 className="text-xs font-bold text-rose-600 mb-1">💬 뉴스 문맥 예문</h4>
+            <h4 className="text-xs font-bold text-rose-600 mb-1 flex items-center gap-1.5">
+              <MessageSquare className="w-3.5 h-3.5 text-rose-500" />
+              <span>뉴스 문맥 예문</span>
+            </h4>
             <p className="text-sm font-bold text-slate-800 leading-relaxed mb-1">
               {renderHighlightedSentence(currentVocab.exampleSentence.japanese, currentVocab.word)}
             </p>

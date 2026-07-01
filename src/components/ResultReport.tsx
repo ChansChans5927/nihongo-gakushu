@@ -50,17 +50,17 @@ export function ResultReport({
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-400" />
 
         <div className="mx-auto w-24 h-24 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center relative">
-          <div className="text-3xl font-display font-extrabold text-slate-900 font-mono">
+          <div className="text-2xl font-display font-extrabold text-slate-900 font-mono whitespace-nowrap">
             {scoreData.correctCount} / {scoreData.totalCount}
           </div>
-          <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1 text-white shadow">
+          <div className={`absolute -bottom-1 -right-1 rounded-full p-1 shadow ${scoreData.percentage >= 80 ? 'bg-emerald-500 text-white' : scoreData.percentage >= 40 ? 'bg-amber-500 text-white' : 'bg-red-500 text-white'}`}>
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-2xl font-bold text-slate-900">
-            테스트 결과: 연상 암기 마스터 성적 {scoreData.percentage}점!
+          <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+            연상 암기 마스터 성적 {scoreData.percentage}점!
           </h3>
           <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
             {scoreData.percentage === 100
@@ -229,12 +229,12 @@ export function ResultReport({
                   <div className="bg-amber-50/80 border-l-4 border-amber-500 rounded-r-xl p-4.5 space-y-2 text-xs">
                     <div className="flex items-center gap-1 text-amber-900 font-bold">
                       <Sparkles className="w-4 h-4 text-amber-500" />
-                      <span>💡 핵심 연상 비법: 기억을 더 단단하게 만드는 암기 공식</span>
+                      <span>핵심 연상 비법: 기억을 더 단단하게 만드는 암기 공식</span>
                     </div>
                     {q.vocabItem ? (
                       <div className="space-y-2.5 bg-white/75 p-3 rounded-lg border border-amber-200/50">
                         <p className="text-slate-800 font-bold">
-                          📌 단어: {q.vocabItem.word} ({q.vocabItem.hiragana}) - {q.vocabItem.meaning}
+                          단어: {q.vocabItem.word} ({q.vocabItem.hiragana}) - {q.vocabItem.meaning}
                         </p>
                         <div className="space-y-2.5 pt-1.5 border-t border-slate-200/50">
                           {q.vocabItem.kanjiBreakdown && q.vocabItem.kanjiBreakdown.map((kj, kjIdx) => (
@@ -251,7 +251,7 @@ export function ResultReport({
                       </div>
                     ) : q.kanjiItem ? (
                       <p className="text-amber-950 font-medium leading-relaxed bg-white/75 p-3 rounded-lg border border-amber-200/50">
-                        📌 한자 <strong className="text-sm font-serif text-amber-900 underline underline-offset-3 decoration-amber-500 font-extrabold">{q.kanjiItem.kanji}</strong>의 본래 명칭 : <strong className="text-slate-800 font-bold">{q.kanjiItem.meaning}</strong>
+                        한자 <strong className="text-sm font-serif text-amber-900 underline underline-offset-3 decoration-amber-500 font-extrabold">{q.kanjiItem.kanji}</strong>의 본래 명칭 : <strong className="text-slate-800 font-bold">{q.kanjiItem.meaning}</strong>
                         <br />
                         {q.kanjiItem.mnemonic}
                       </p>
@@ -271,12 +271,12 @@ export function ResultReport({
                   <div className="bg-emerald-50/50 border-l-4 border-emerald-500 rounded-r-xl p-4.5 space-y-2 text-xs">
                     <div className="flex items-center gap-1 text-emerald-950 font-bold">
                       <Sparkles className="w-4 h-4 text-emerald-500" />
-                      <span>💡 핵심 연상 비법: 기억을 더 단단하게 만드는 암기 공식</span>
+                      <span>핵심 연상 비법: 기억을 더 단단하게 만드는 암기 공식</span>
                     </div>
                     {q.vocabItem ? (
                       <div className="space-y-2.5 bg-white/75 p-3 rounded-lg border border-emerald-200/50">
                         <p className="text-slate-800 font-bold">
-                          📌 단어: {q.vocabItem.word} ({q.vocabItem.hiragana}) - {q.vocabItem.meaning}
+                          단어: {q.vocabItem.word} ({q.vocabItem.hiragana}) - {q.vocabItem.meaning}
                         </p>
                         <div className="space-y-2.5 pt-1.5 border-t border-slate-200/50">
                           {q.vocabItem.kanjiBreakdown && q.vocabItem.kanjiBreakdown.map((kj, kjIdx) => (
@@ -293,7 +293,7 @@ export function ResultReport({
                       </div>
                     ) : q.kanjiItem ? (
                       <p className="text-slate-700 leading-relaxed bg-white/75 p-3 rounded-lg border border-emerald-200/50 font-sans">
-                        📌 한자 <strong className="text-sm font-serif text-emerald-900 underline underline-offset-3 decoration-emerald-500 font-extrabold">{q.kanjiItem.kanji}</strong>의 본래 명칭 : <strong className="text-slate-800 font-bold">{q.kanjiItem.meaning}</strong>
+                        한자 <strong className="text-sm font-serif text-emerald-900 underline underline-offset-3 decoration-emerald-500 font-extrabold">{q.kanjiItem.kanji}</strong>의 본래 명칭 : <strong className="text-slate-800 font-bold">{q.kanjiItem.meaning}</strong>
                         <br />
                         <span className="text-slate-600 mt-1 block">
                           {q.kanjiItem.mnemonic}

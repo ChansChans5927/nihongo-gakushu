@@ -75,7 +75,8 @@ export function ShopView({
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <div className="w-20"></div> {/* Spacer for centering */}
+        <span className="text-sm font-bold text-slate-800">테마 상점</span>
+        <div className="w-8"></div> {/* Spacer for centering */}
       </div>
 
       <div className="p-6 sm:p-8">

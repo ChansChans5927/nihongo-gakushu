@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
-import { motion } from "motion/react";
-import { HelpCircle, CheckCircle2, ArrowRight, Award } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { HelpCircle, CheckCircle2, ArrowRight, Award, Sparkles, X, Lightbulb } from "lucide-react";
 import { Question } from "../types";
 import { getTheme } from "../theme";
 
@@ -28,6 +28,7 @@ export function QuizTest({
   const currentQuestion = questions[currentQuestionIndex];
   const [slashingChoice, setSlashingChoice] = useState<number | null>(null);
   const [isShaking, setIsShaking] = useState(false);
+  const [isHintOpen, setIsHintOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const yokaiAudioRef = useRef<HTMLAudioElement | null>(null);
   const zenAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -157,7 +158,9 @@ export function QuizTest({
           <h3 className={`text-lg sm:text-xl font-bold ${theme.questionPromptText}`}>
             {currentQuestion.type === 'blank_fill'
               ? "제시된 일본어 예문의 빈칸에 들어갈 알맞은 단어는 무엇일까요?"
-              : currentQuestion.questionText}
+              : currentQuestion.questionText
+                  .replace(/한자 '[^']+'의/g, '다음 한자의')
+                  .replace(/단어 '[^']+'의/g, '다음 단어의')}
           </h3>
           <p className={`text-xs ${theme.questionPromptSubText}`}>
             {currentQuestion.type === 'blank_fill'
@@ -167,7 +170,7 @@ export function QuizTest({
         </div>
 
         {/* Big Display character for visual hints */}
-        <div className={theme.quizDisplayBox}>
+        <div className={`${theme.quizDisplayBox} flex flex-col items-center justify-center py-6 gap-2`}>
           {currentQuestion.type === 'blank_fill' ? (
             <div lang="ja" className="w-full text-center space-y-3">
               <div className={`text-lg sm:text-2xl font-semibold tracking-wide leading-relaxed ${theme.questionPromptText} ${isSamurai ? "font-serif" : "font-sans"}`}>
@@ -232,11 +235,20 @@ export function QuizTest({
                   currentQuestion.vocabItem ? currentQuestion.vocabItem.word : currentQuestion.kanjiItem?.kanji
                 )}
               </div>
-              <span className={`text-xs font-mono text-center ${theme.questionPromptSubText}`}>
-                {currentQuestion.type === 'kanji_match'
-                  ? "알맞은 표기를 아래 보기에서 선택하세요"
-                  : "연상 학습했던 주요 내용"}
-              </span>
+              {currentQuestion.type === 'kanji_match' ? (
+                <span className={`text-xs font-mono text-center ${theme.questionPromptSubText}`}>
+                  알맞은 표기를 아래 보기에서 선택하세요
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsHintOpen(true)}
+                  className={`text-xs font-bold text-center underline underline-offset-4 cursor-pointer hover:opacity-80 transition-all flex items-center gap-1 justify-center py-1 px-2.5 rounded-lg border border-dashed ${theme.btnHintQuiz}`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>암기 비법 힌트 보기</span>
+                </button>
+              )}
             </>
           )}
         </div>
@@ -339,10 +351,10 @@ export function QuizTest({
                     } ${!isSamurai && "rounded-full"}`}>
                     {choiceIdx + 1}
                   </span>
-                  <span lang="ja" className={`leading-none ${isKanjiMatch
+                  <span lang="ja" className={`leading-snug break-keep ${isKanjiMatch
                       ? `text-xl sm:text-2xl font-serif font-extrabold tracking-normal pl-2 ${isSelected ? theme.choiceTextSelected : theme.choiceTextNormal
                       }`
-                      : `text-sm sm:text-base font-semibold ${isSelected ? theme.choiceTextSelected : theme.choiceTextNormal
+                      : `text-xs sm:text-sm font-semibold ${isSelected ? theme.choiceTextSelected : theme.choiceTextNormal
                       }`
                     }`}>
                     {choice}
@@ -388,6 +400,106 @@ export function QuizTest({
         </div>
 
       </div>
+
+      {/* 연상 암기 비법 힌트 모달 */}
+      <AnimatePresence>
+        {isHintOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              onClick={() => setIsHintOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className={`relative w-full max-w-md p-6 overflow-hidden border z-10 text-left ${theme.hintModalBg}`}
+            >
+              <div className="space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b pb-3 border-slate-200/10">
+                  <h3 className="text-base font-bold flex items-center gap-1.5">
+                    <Sparkles className="w-4.5 h-4.5 opacity-70" />
+                    <span>연상 암기 비법 힌트</span>
+                  </h3>
+                  <button 
+                    onClick={() => setIsHintOpen(false)} 
+                    className="p-1 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 transition-colors text-slate-400 hover:text-slate-600 cursor-pointer"
+                    title="닫기"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="space-y-4">
+                  {currentQuestion.kanjiItem && (
+                    <div className="space-y-3.5">
+                      {/* 가로형 요약 배너 (일관성 통일) */}
+                      <div className="flex items-center gap-4 p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-slate-200/10">
+                        <span className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-serif font-black shadow-inner shrink-0 ${theme.breakdownKanjiBox}`}>
+                          {currentQuestion.kanjiItem.kanji}
+                        </span>
+                        <div>
+                          <p className="text-sm font-bold">한자 암기 힌트</p>
+                          <p className="text-xs text-slate-400 font-medium">자형 연상을 활용해 정답을 맞혀보세요.</p>
+                        </div>
+                      </div>
+                      
+                      {/* 힌트 상세 카드 (눈이 편안한 Soft Card로 디자인 통일) */}
+                      <div className={`p-4.5 border rounded-2xl leading-relaxed text-xs sm:text-sm font-medium shadow-2xs ${theme.breakdownItemBg}`}>
+                        <p className="font-sans">{currentQuestion.kanjiItem.mnemonic}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentQuestion.vocabItem && (
+                    <div className="space-y-4">
+                      {/* 가로형 요약 배너 (일관성 통일) */}
+                      <div className="flex items-center gap-4 p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-slate-200/10">
+                        <div className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 shadow-inner ${theme.radicalsBoxBg}`}>
+                          <span className="text-[8px] font-bold tracking-wider opacity-60 font-mono leading-none">JLPT</span>
+                          <span className="text-xs font-black mt-0.5">{currentQuestion.vocabItem.jlptLevel || "N4"}</span>
+                        </div>
+                        <div>
+                          <p className="text-base font-bold">{currentQuestion.vocabItem.word}</p>
+                          <p className="text-xs text-slate-400 font-medium">구성 한자 스토리를 조합하여 유추해 보세요.</p>
+                        </div>
+                      </div>
+
+                      {currentQuestion.vocabItem.kanjiBreakdown && currentQuestion.vocabItem.kanjiBreakdown.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">구성 한자 암기 스토리</p>
+                          <div className="space-y-2.5 max-h-52 overflow-y-auto pr-1">
+                            {currentQuestion.vocabItem.kanjiBreakdown.map((kb, kbIdx) => (
+                              <div key={kbIdx} className={`p-3.5 rounded-2xl border flex gap-3 shadow-2xs ${theme.breakdownItemBg}`}>
+                                <div className={`w-9 h-9 rounded-lg border text-base font-serif font-black flex items-center justify-center shrink-0 shadow-3xs ${theme.breakdownKanjiBox}`}>
+                                  {kb.kanji}
+                                </div>
+                                <div className="space-y-0.5 flex-1">
+                                  <p className="text-xs font-bold">
+                                    {kb.meaning}
+                                  </p>
+                                  <p className="text-xs leading-relaxed font-sans font-medium opacity-85">
+                                    {kb.mnemonic}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

@@ -31,11 +31,10 @@ export function JlptResultScore({
 
       {/* 점수 텍스트를 담은 동그라미 판 */}
       <div className="mx-auto w-24 h-24 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center relative">
-        <div className="text-3xl font-display font-extrabold text-slate-900 font-mono">
+        <div className="text-2xl font-display font-extrabold text-slate-900 font-mono whitespace-nowrap">
           {correctCount} / {totalCount}
         </div>
-        {/* 우측 하단 녹색 동그라미 체크 배지 */}
-        <div className="absolute -bottom-1 -right-1 bg-amber-500 rounded-full p-1 text-slate-950 shadow">
+        <div className={`absolute -bottom-1 -right-1 rounded-full p-1 shadow ${scorePercent >= 80 ? 'bg-emerald-500 text-white' : scorePercent >= 40 ? 'bg-amber-500 text-white' : 'bg-red-500 text-white'}`}>
           <CheckCircle2 className="w-5 h-5" />
         </div>
       </div>

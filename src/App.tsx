@@ -3,7 +3,7 @@ import { useStudyStore } from "./stores/studyStore";
 import { useAuthStore } from "./stores/authStore";
 import { NativeBridge } from "./nativeBridge";
 import { AnimatePresence, motion } from "motion/react";
-import { BookMarked, CheckCircle2 } from "lucide-react";
+import { BookMarked, CheckCircle2, AlertCircle } from "lucide-react";
 import { useSpeech } from "./hooks/useSpeech";
 import { MainConfig } from "./components/MainConfig";
 import { KanjiStudy } from "./components/KanjiStudy";
@@ -43,6 +43,11 @@ export default function App() {
 
   // Hook for speech synthesis
   const { speakJapanese } = useSpeech(currentUser?.username);
+
+  // Reset scroll to top on any phase or learning index changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [phase, currentKanjiIndex, currentVocabIndex, currentQuestionIndex, currentJlptIndex]);
 
   // Handle Back Button natively via WebView bridge
   useEffect(() => {
@@ -305,7 +310,7 @@ export default function App() {
         {/* Loading error messages for JLPT */}
         {jlptErrorMsg && phase !== 'jlpt' && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-800 text-sm rounded-2xl flex items-start gap-2">
-            <CheckCircle2 className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
             <div>{jlptErrorMsg}</div>
           </div>
         )}
