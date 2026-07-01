@@ -105,14 +105,7 @@ export function MainConfig({
         <div className="absolute top-4 left-4 text-slate-200 text-6xl font-display font-extrabold select-none pointer-events-none opacity-20 hidden sm:block">日</div>
         <div className="absolute bottom-4 right-4 text-slate-200 text-6xl font-display font-extrabold select-none pointer-events-none opacity-20 font-serif hidden sm:block">見</div>
 
-        {currentUser && (
-          <div className="absolute top-4 right-4 z-10">
-            <div className="inline-flex bg-white/90 backdrop-blur border border-amber-200 shadow-sm px-3 py-1.5 rounded-2xl items-center gap-2 cursor-pointer transition-transform hover:scale-105" onClick={onOpenShop}>
-              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Points</span>
-              <strong className="text-slate-800 font-mono font-black text-xs sm:text-sm">{points.toLocaleString()} <span className="text-amber-500">P</span></strong>
-            </div>
-          </div>
-        )}
+
 
         <div className="inline-flex items-center gap-1 bg-amber-100/80 text-amber-800 border border-amber-200/60 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm animate-pulse relative z-10">
           <Sparkles className="w-3.5 h-3.5" />

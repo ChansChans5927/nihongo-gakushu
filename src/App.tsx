@@ -253,7 +253,19 @@ export default function App() {
 
           <div className="flex items-center gap-1.5 sm:gap-2">
             {currentUser && (
-              <div className="flex items-center gap-2 mr-2 border-r border-slate-200 pr-2">
+              <div className="flex items-center gap-2 sm:gap-3 mr-1 sm:mr-2 border-r border-slate-200 pr-2 sm:pr-3">
+                {/* Points GNB Badge */}
+                <div 
+                  className="inline-flex bg-amber-50 hover:bg-amber-100 border border-amber-200/70 shadow-2xs px-2.5 py-1 rounded-xl items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95" 
+                  onClick={() => setPhase('shop')}
+                  title="테마 상점 이동"
+                >
+                  <span className="text-[9px] font-bold text-amber-600 uppercase tracking-widest hidden xs:inline">Points</span>
+                  <strong className="text-slate-800 font-mono font-black text-xs">
+                    {points.toLocaleString()} <span className="text-amber-500">P</span>
+                  </strong>
+                </div>
+
                 <UserDropdown
                   username={currentUser.username}
                   onNavigateSettings={() => setPhase('settings')}
