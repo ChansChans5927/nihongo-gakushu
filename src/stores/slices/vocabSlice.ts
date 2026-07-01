@@ -19,7 +19,7 @@ export const createVocabSlice: StateCreator<StudyState, [], [], VocabSlice> = (s
   setVocabCount: (vocabCount) => set({ vocabCount }),
 
   // 단어 학습 시작 (신규 학습 또는 복습 모드)
-  startVocabStudy: async (isReviewOverride?: boolean) => {
+  startVocabStudy: async (isReviewOverride?: boolean, targetItem?: string, level?: string) => {
     const authStore = useAuthStore.getState();
     const isReview = typeof isReviewOverride === 'boolean' ? isReviewOverride : authStore.isReviewMode;
     const currentUser = authStore.currentUser;
@@ -53,14 +53,19 @@ export const createVocabSlice: StateCreator<StudyState, [], [], VocabSlice> = (s
         });
       } else {
         // 신규 학습 모드: AI가 생성한 새 단어 카드 요청
+        const requestBody: any = {
+          count: get().vocabCount,
+          level: level || get().difficulty,
+          excludeVocab: get().masteredVocab
+        };
+        if (targetItem) {
+          requestBody.deepLinkTarget = { word: targetItem, level: level || get().difficulty };
+        }
+
         response = await fetch("/api/vocab/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            count: get().vocabCount,
-            level: get().difficulty,
-            excludeVocab: get().masteredVocab
-          }),
+          body: JSON.stringify(requestBody),
         });
       }
 

@@ -8,7 +8,7 @@ import path from "path";
 const router = express.Router();
 
 router.post("/generate", async (req, res) => {
-  const { count, level, excludeVocab, forceGenerate, targetVocabs } = req.body;
+  const { count, level, excludeVocab, forceGenerate, targetVocabs, deepLinkTarget } = req.body;
   const numCount = parseInt(count, 10) || 5;
   const targetLevel = level || "all";
   const excludedList = Array.isArray(excludeVocab) ? excludeVocab : [];
@@ -22,9 +22,15 @@ router.post("/generate", async (req, res) => {
 
   try {
     let cachedVocabs: any[] = [];
-    const hasTargets = Array.isArray(targetVocabs) && targetVocabs.length > 0;
+    let explicitTargets = Array.isArray(targetVocabs) ? [...targetVocabs] : [];
+    if (deepLinkTarget && deepLinkTarget.word) {
+      if (!explicitTargets.some(t => t.word === deepLinkTarget.word)) {
+        explicitTargets.unshift({ word: deepLinkTarget.word });
+      }
+    }
+    const hasTargets = explicitTargets.length > 0;
 
-    if (!hasTargets && db) {
+    if (db) {
       const query: any = {};
       if (targetLevel !== "all") {
         query.jlptLevel = targetLevel;
@@ -43,17 +49,31 @@ router.post("/generate", async (req, res) => {
     let selectedQuizzes: any[] = [];
     let hasAllQuizzes = false;
 
-    if (!hasTargets && cachedVocabs.length >= numCount) {
+    // First try to find explicit targets in cache if not forceGenerate
+    let missingTargets = [...explicitTargets];
+    if (!forceGenerate && cachedVocabs.length > 0) {
+      const foundTargets = cachedVocabs.filter(v => explicitTargets.some(t => t.word === v.word));
+      selectedVocabs.push(...foundTargets);
+      missingTargets = explicitTargets.filter(t => !foundTargets.some(f => f.word === t.word));
+      
+      // Remove found targets from cachedVocabs pool
+      cachedVocabs = cachedVocabs.filter(v => !foundTargets.some(f => f.word === v.word));
+    }
+
+    // Then fill remaining slots with random cached vocabs
+    const neededFromCache = numCount - explicitTargets.length;
+    if (!forceGenerate && neededFromCache > 0 && cachedVocabs.length >= neededFromCache) {
       const shuffled = cachedVocabs.sort(() => 0.5 - Math.random());
-      // word 기준으로 중복 제거: 같은 단어가 한 세트에 2번 이상 출제되지 않도록 필터링
       const seenWords = new Set<string>();
       const deduplicated = shuffled.filter((v: any) => {
         if (seenWords.has(v.word)) return false;
         seenWords.add(v.word);
         return true;
       });
-      selectedVocabs = deduplicated.slice(0, numCount);
+      selectedVocabs.push(...deduplicated.slice(0, neededFromCache));
+    }
 
+    if (selectedVocabs.length > 0) {
       const vocabWords = selectedVocabs.map(item => item.word);
       try {
         selectedQuizzes = await db.collection("vocab_quizzes").find({ targetWord: { $in: vocabWords } }).toArray();
@@ -63,7 +83,7 @@ router.post("/generate", async (req, res) => {
       }
     }
 
-    if (!hasTargets && !forceGenerate && hasAllQuizzes && selectedVocabs.length >= numCount) {
+    if (!forceGenerate && hasAllQuizzes && selectedVocabs.length >= numCount && missingTargets.length === 0) {
       const formattedQuiz = selectedQuizzes.map((q, idx) => {
         const associatedItem = selectedVocabs.find(item => item.word === q.targetWord);
         return {
@@ -72,6 +92,10 @@ router.post("/generate", async (req, res) => {
           vocabItem: associatedItem
         };
       });
+      // Sort if deepLinkTarget
+      if (deepLinkTarget && deepLinkTarget.word) {
+        selectedVocabs.sort((a, b) => a.word === deepLinkTarget.word ? -1 : b.word === deepLinkTarget.word ? 1 : 0);
+      }
       console.log(`[Vocab Gen] Served ${numCount} cards & quizzes instantly from MongoDB cache.`);
       return res.json({ success: true, source: "mongodb_cache", data: selectedVocabs, quiz: formattedQuiz });
     }
@@ -87,7 +111,7 @@ router.post("/generate", async (req, res) => {
     }
 
     let dynamicTargets: { word: string; reading?: string }[] = [];
-    if (!hasTargets && db) {
+    if (db) {
       const masterPath = path.join(process.cwd(), "server", "data", "vocab_master.json");
       if (fs.existsSync(masterPath)) {
         try {
@@ -100,13 +124,13 @@ router.post("/generate", async (req, res) => {
           }
 
           const existingWords = new Set(allDbVocabs);
-          const missingMasterVocabs = levelVocabs.filter(v => !existingWords.has(v.word) && !excludedList.includes(v.word));
+          const missingMasterVocabs = levelVocabs.filter(v => !existingWords.has(v.word) && !excludedList.includes(v.word) && !missingTargets.some(t => t.word === v.word));
 
-          const countToSelect = forceGenerate ? numCount : Math.max(0, numCount - selectedVocabs.length);
+          const countToSelect = forceGenerate ? Math.max(0, numCount - missingTargets.length) : Math.max(0, numCount - selectedVocabs.length - missingTargets.length);
           if (countToSelect > 0) {
             let selected = missingMasterVocabs.sort(() => 0.5 - Math.random()).slice(0, countToSelect);
             if (selected.length < countToSelect) {
-              const fallbackPool = levelVocabs.filter(v => !selected.some(s => s.word === v.word) && !excludedList.includes(v.word));
+              const fallbackPool = levelVocabs.filter(v => !selected.some(s => s.word === v.word) && !excludedList.includes(v.word) && !missingTargets.some(t => t.word === v.word));
               const extra = fallbackPool.sort(() => 0.5 - Math.random()).slice(0, countToSelect - selected.length);
               selected = [...selected, ...extra];
             }
@@ -118,12 +142,12 @@ router.post("/generate", async (req, res) => {
       }
     }
 
-    const finalTargetVocabs = hasTargets ? targetVocabs : dynamicTargets;
+    const finalTargetVocabs = [...missingTargets, ...dynamicTargets];
     const finalHasTargets = finalTargetVocabs.length > 0;
 
-    const missingCount = finalHasTargets
-      ? finalTargetVocabs.length
-      : (forceGenerate ? numCount : Math.max(0, numCount - selectedVocabs.length));
+    let remainingRandom = forceGenerate 
+      ? Math.max(0, numCount - finalTargetVocabs.length) 
+      : Math.max(0, numCount - selectedVocabs.length - finalTargetVocabs.length);
 
     const fullExcludedList = Array.from(new Set([...excludedList, ...allDbVocabs]));
 
@@ -134,13 +158,11 @@ router.post("/generate", async (req, res) => {
       for (let i = 0; i < finalTargetVocabs.length; i += 5) {
         targetBatches.push(finalTargetVocabs.slice(i, i + 5));
       }
-    } else {
-      let remaining = missingCount;
-      while (remaining > 0) {
-        const size = Math.min(remaining, 5);
-        batchSizes.push(size);
-        remaining -= size;
-      }
+    }
+    while (remainingRandom > 0) {
+      const size = Math.min(remainingRandom, 5);
+      batchSizes.push(size);
+      remainingRandom -= size;
     }
 
     const batchInstructions = [
@@ -337,6 +359,11 @@ router.post("/generate", async (req, res) => {
 
     if (mergedData.length === 0) {
       return res.json({ success: false, errorMsg: "일본어 단어를 생성하지 못했습니다. 다시 시도해 주세요." });
+    }
+
+    if (deepLinkTarget && deepLinkTarget.word) {
+      mergedData.sort((a, b) => a.word === deepLinkTarget.word ? -1 : b.word === deepLinkTarget.word ? 1 : 0);
+      mergedQuiz.sort((a, b) => a.targetWord === deepLinkTarget.word ? -1 : b.targetWord === deepLinkTarget.word ? 1 : 0);
     }
 
     res.json({ success: true, source: "gemini_parallel", data: mergedData, quiz: mergedQuiz });

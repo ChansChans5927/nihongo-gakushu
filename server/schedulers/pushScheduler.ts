@@ -18,31 +18,54 @@ export function startPushScheduler() {
           { expoPushToken: { $exists: true } }
         ]
       }).toArray();
-      const messages = [
-        { title: "📚 일본어 복습", body: "학습한 단어와 한자를 다시 확인해 보세요." },
-        { title: "📚 일본어 복습", body: "복습할 단어와 한자가 준비되어 있습니다." },
-        { title: "📚 일본어 복습", body: "복습을 통해 기억을 더 오래 유지해 보세요." }
-      ];
-      const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-      const payload = JSON.stringify(randomMessage);
 
       const expoMessages: any[] = [];
 
       for (const user of users) {
+        // Fetch progress to exclude mastered vocabs
+        const progress = await db.collection("progress").findOne({ username: user.username });
+        const masteredVocabs = progress?.masteredVocabs || [];
+        
+        // Find a random vocab from db that is not mastered
+        const randomVocabList = await db.collection("vocabs").aggregate([
+          { $match: { word: { $nin: masteredVocabs } } },
+          { $sample: { size: 1 } }
+        ]).toArray();
+
+        let title = "📚 일본어 복습";
+        let body = "오늘도 잊지 말고 일본어를 학습해 보세요!";
+        let url = "/";
+        let dataPayload: any = { type: "routine_study" };
+
+        if (randomVocabList.length > 0) {
+          const target = randomVocabList[0];
+          title = `오늘의 단어: ${target.word}`;
+          body = `뜻: ${target.meaning} - 지금 바로 세트 학습을 시작하세요!`;
+          url = `/?action=study&type=vocab&item=${encodeURIComponent(target.word)}&level=${target.jlptLevel || 'N5'}`;
+          dataPayload = {
+            type: "deep_link_study",
+            studyMode: "vocab",
+            targetItem: target.word,
+            level: target.jlptLevel || "N5"
+          };
+        }
+
+        const payload = JSON.stringify({ title, body, url });
+
         if (user.expoPushToken && Expo.isExpoPushToken(user.expoPushToken)) {
           expoMessages.push({
             to: user.expoPushToken,
             sound: "default",
-            title: randomMessage.title,
-            body: randomMessage.body,
-            data: { type: "routine_study" }
+            title,
+            body,
+            data: dataPayload
           });
         }
 
         if (user.pushSubscription) {
           try {
             await webpush.sendNotification(user.pushSubscription, payload);
-            console.log(`[Push] Sent Web Push to ${user.username}`);
+            console.log(`[Push] Sent Web Push to ${user.username} with target ${dataPayload.targetItem || 'none'}`);
           } catch (error: any) {
             if (error.statusCode === 410 || error.statusCode === 404) {
               await db.collection("users").updateOne(

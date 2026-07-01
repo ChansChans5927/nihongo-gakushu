@@ -18,7 +18,7 @@ export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (s
   setKanjiCount: (kanjiCount) => set({ kanjiCount }),
 
   // 한자 학습 시작 (신규 학습 또는 복습 모드)
-  startKanjiStudy: async (isReviewOverride?: boolean) => {
+  startKanjiStudy: async (isReviewOverride?: boolean, targetItem?: string, level?: string) => {
     const authStore = useAuthStore.getState();
     const isReview = typeof isReviewOverride === 'boolean' ? isReviewOverride : authStore.isReviewMode;
     const currentUser = authStore.currentUser;
@@ -52,14 +52,19 @@ export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (s
         });
       } else {
         // 신규 학습 모드: AI가 생성한 새 한자 카드 요청
+        const requestBody: any = {
+          count: get().kanjiCount,
+          level: level || get().difficulty,
+          excludeKanji: get().masteredKanji
+        };
+        if (targetItem) {
+          requestBody.deepLinkTarget = { kanji: targetItem, level: level || get().difficulty };
+        }
+
         response = await fetch("/api/kanji/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            count: get().kanjiCount,
-            level: get().difficulty,
-            excludeKanji: get().masteredKanji
-          }),
+          body: JSON.stringify(requestBody),
         });
       }
 

@@ -8,7 +8,7 @@ import path from "path";
 const router = express.Router();
 
 router.post("/generate", async (req, res) => {
-  const { count, level, excludeKanji, forceGenerate, targetKanjis } = req.body;
+  const { count, level, excludeKanji, forceGenerate, targetKanjis, deepLinkTarget } = req.body;
   const numCount = parseInt(count, 10) || 5;
   const targetLevel = level || "all";
   const excludedList = Array.isArray(excludeKanji) ? excludeKanji : [];
@@ -23,9 +23,15 @@ router.post("/generate", async (req, res) => {
 
   try {
     let cachedKanjis: any[] = [];
-    const hasTargets = Array.isArray(targetKanjis) && targetKanjis.length > 0;
+    let explicitTargets = Array.isArray(targetKanjis) ? [...targetKanjis] : [];
+    if (deepLinkTarget && deepLinkTarget.kanji) {
+      if (!explicitTargets.includes(deepLinkTarget.kanji)) {
+        explicitTargets.unshift(deepLinkTarget.kanji);
+      }
+    }
+    const hasTargets = explicitTargets.length > 0;
 
-    if (!hasTargets && db) {
+    if (db) {
       const query: any = {};
       if (targetLevel !== "all") {
         query.jlptLevel = targetLevel;
@@ -40,17 +46,37 @@ router.post("/generate", async (req, res) => {
       }
     }
 
-    if (!hasTargets && !forceGenerate && cachedKanjis.length >= numCount) {
+    let selectedKanjis: any[] = [];
+    
+    // First try to find explicit targets in cache if not forceGenerate
+    let missingTargets = [...explicitTargets];
+    if (!forceGenerate && cachedKanjis.length > 0) {
+      const foundTargets = cachedKanjis.filter(k => explicitTargets.includes(k.kanji));
+      selectedKanjis.push(...foundTargets);
+      missingTargets = explicitTargets.filter(t => !foundTargets.some(f => f.kanji === t));
+      
+      // Remove found targets from cachedKanjis pool
+      cachedKanjis = cachedKanjis.filter(k => !foundTargets.some(f => f.kanji === k.kanji));
+    }
+
+    // Then fill remaining slots with random cached kanjis
+    const neededFromCache = numCount - explicitTargets.length;
+    if (!forceGenerate && neededFromCache > 0 && cachedKanjis.length >= neededFromCache) {
       const shuffled = cachedKanjis.sort(() => 0.5 - Math.random());
-      // kanji 기준으로 중복 제거: 같은 한자가 한 세트에 2번 이상 출제되지 않도록 필터링
       const seenKanjis = new Set<string>();
       const deduplicated = shuffled.filter((k: any) => {
         if (seenKanjis.has(k.kanji)) return false;
         seenKanjis.add(k.kanji);
         return true;
       });
-      const selectedKanjis = deduplicated.slice(0, numCount);
-      console.log(`[Kanji Gen] Served ${selectedKanjis.length} cards instantly from MongoDB cache.`);
+      selectedKanjis.push(...deduplicated.slice(0, neededFromCache));
+    }
+
+    if (!forceGenerate && selectedKanjis.length >= numCount && missingTargets.length === 0) {
+      if (deepLinkTarget && deepLinkTarget.kanji) {
+        selectedKanjis.sort((a, b) => a.kanji === deepLinkTarget.kanji ? -1 : b.kanji === deepLinkTarget.kanji ? 1 : 0);
+      }
+      console.log(`[Kanji Gen] Served ${numCount} cards instantly from MongoDB cache.`);
       return res.json({ success: true, source: "mongodb_cache", data: selectedKanjis });
     }
 
@@ -65,7 +91,7 @@ router.post("/generate", async (req, res) => {
     }
 
     let dynamicTargets: string[] = [];
-    if (!hasTargets && db) {
+    if (db) {
       const masterPath = path.join(process.cwd(), "server", "data", "kanji_master.json");
       if (fs.existsSync(masterPath)) {
         try {
@@ -75,13 +101,13 @@ router.post("/generate", async (req, res) => {
             : (masterKanjiData[targetLevel] || []);
 
           const existingKanjis = new Set(allDbKanjis);
-          const missingMasterKanjis = levelKanjis.filter(k => !existingKanjis.has(k) && !excludedList.includes(k));
+          const missingMasterKanjis = levelKanjis.filter(k => !existingKanjis.has(k) && !excludedList.includes(k) && !missingTargets.includes(k));
 
-          const countToSelect = forceGenerate ? numCount : Math.max(0, numCount - cachedKanjis.length);
+          const countToSelect = forceGenerate ? Math.max(0, numCount - missingTargets.length) : Math.max(0, numCount - selectedKanjis.length - missingTargets.length);
           if (countToSelect > 0) {
             let selected = missingMasterKanjis.sort(() => 0.5 - Math.random()).slice(0, countToSelect);
             if (selected.length < countToSelect) {
-              const fallbackPool = levelKanjis.filter(k => !selected.includes(k) && !excludedList.includes(k));
+              const fallbackPool = levelKanjis.filter(k => !selected.includes(k) && !excludedList.includes(k) && !missingTargets.includes(k));
               const extra = fallbackPool.sort(() => 0.5 - Math.random()).slice(0, countToSelect - selected.length);
               selected = [...selected, ...extra];
             }
@@ -93,12 +119,12 @@ router.post("/generate", async (req, res) => {
       }
     }
 
-    const finalTargetKanjis = hasTargets ? targetKanjis : dynamicTargets;
+    const finalTargetKanjis = [...missingTargets, ...dynamicTargets];
     const finalHasTargets = finalTargetKanjis.length > 0;
 
-    const missingCount = finalHasTargets 
-      ? finalTargetKanjis.length 
-      : (forceGenerate ? numCount : Math.max(0, numCount - cachedKanjis.length));
+    let remainingRandom = forceGenerate 
+      ? Math.max(0, numCount - finalTargetKanjis.length) 
+      : Math.max(0, numCount - selectedKanjis.length - finalTargetKanjis.length);
 
     const fullExcludedList = Array.from(new Set([...excludedList, ...allDbKanjis]));
 
@@ -109,13 +135,11 @@ router.post("/generate", async (req, res) => {
       for (let i = 0; i < finalTargetKanjis.length; i += 5) {
         targetBatches.push(finalTargetKanjis.slice(i, i + 5));
       }
-    } else {
-      let remaining = missingCount;
-      while (remaining > 0) {
-        const size = Math.min(remaining, 5);
-        batchSizes.push(size);
-        remaining -= size;
-      }
+    }
+    while (remainingRandom > 0) {
+      const size = Math.min(remainingRandom, 5);
+      batchSizes.push(size);
+      remainingRandom -= size;
     }
 
     const batchInstructions = [
@@ -269,10 +293,14 @@ router.post("/generate", async (req, res) => {
       }
     }
 
-    const mergedData = [...cachedKanjis, ...newGeneratedCards];
+    const mergedData = [...selectedKanjis, ...newGeneratedCards];
 
     if (mergedData.length === 0) {
       return res.json({ success: false, errorMsg: "한자를 생성하지 못했습니다. 다시 시도해 주세요." });
+    }
+
+    if (deepLinkTarget && deepLinkTarget.kanji) {
+      mergedData.sort((a, b) => a.kanji === deepLinkTarget.kanji ? -1 : b.kanji === deepLinkTarget.kanji ? 1 : 0);
     }
 
     res.json({ success: true, source: newGeneratedCards.length > 0 ? "gemini_parallel" : "mongodb_cache", data: mergedData });

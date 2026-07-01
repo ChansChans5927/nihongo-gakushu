@@ -14,7 +14,7 @@ export interface KanjiSlice {
   currentKanjiIndex: number;                                       // 현재 카드 인덱스
 
   setKanjiCount: (count: number) => void;                          // 한자 개수 설정
-  startKanjiStudy: (isReviewOverride?: boolean) => Promise<void>;  // 한자 학습 시작 (신규/복습)
+  startKanjiStudy: (isReviewOverride?: boolean, targetItem?: string, level?: string) => Promise<void>;  // 한자 학습 시작 (신규/복습/딥링크)
   saveMasteredKanji: (list: string[], newlyLearned?: string[]) => Promise<void>;  // 외운 한자 서버 저장
   handleResetMastery: () => Promise<void>;                         // 한자 암기 초기화
 }
@@ -29,7 +29,7 @@ export interface VocabSlice {
   vocabQuestions: Question[];                                      // 서버에서 받은 단어 퀴즈
 
   setVocabCount: (count: number) => void;                          // 단어 개수 설정
-  startVocabStudy: (isReviewOverride?: boolean) => Promise<void>;  // 단어 학습 시작 (신규/복습)
+  startVocabStudy: (isReviewOverride?: boolean, targetItem?: string, level?: string) => Promise<void>;  // 단어 학습 시작 (신규/복습/딥링크)
   saveMasteredVocab: (list: string[], newlyLearned?: string[]) => Promise<void>;  // 외운 단어 서버 저장
   handleResetVocabMastery: () => Promise<void>;                    // 단어 암기 초기화
 }

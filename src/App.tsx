@@ -94,6 +94,71 @@ export default function App() {
     return () => window.removeEventListener("unauthorized", handleUnauthorized);
   }, [logout, setPhase]);
 
+  // Handle Deep Links via URL Parameters or Service Worker messages
+  useEffect(() => {
+    const handleDeepLink = (data: any) => {
+      if (data && data.targetItem && data.type) {
+        // Must be logged in to save progress properly, but we can still show cards.
+        // If not logged in, auth-card will show, and we'd lose deep link. 
+        // We might need to ensure they are logged in first, or rely on them logging in.
+        // For simplicity, we just trigger study, which handles auth check inside start study.
+        if (data.type === 'vocab') {
+          setStudyMode('vocab');
+          startVocabStudy(false, data.targetItem, data.level);
+        } else if (data.type === 'kanji') {
+          setStudyMode('kanji');
+          startKanjiStudy(false, data.targetItem, data.level);
+        }
+      }
+    };
+
+    // Check URL
+    const params = new URLSearchParams(window.location.search);
+    const targetItem = params.get('targetItem');
+    const type = params.get('type');
+    const level = params.get('level');
+    
+    if (targetItem && type) {
+      // Delay slightly to ensure stores are initialized if needed, though usually fine
+      setTimeout(() => {
+        handleDeepLink({ targetItem, type, level });
+      }, 500);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Listen to messages from service worker or React Native WebView (window.postMessage)
+    const handleMessage = (event: MessageEvent) => {
+      // event.data can come from SW or window.postMessage
+      // In RN WebView, sometimes event.data is parsed, sometimes it's a string
+      let data = event.data;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch (e) {
+          return;
+        }
+      }
+      
+      if (data && data.type === 'DEEP_LINK_STUDY') {
+        handleDeepLink(data.payload);
+      }
+    };
+    
+    // 1. Service Worker messages
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+    }
+    // 2. React Native WebView messages
+    window.addEventListener('message', handleMessage);
+    
+    return () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleMessage);
+      }
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [setStudyMode, startVocabStudy, startKanjiStudy]);
+
   // Sync push token if notifications are enabled
   useEffect(() => {
     if (currentUser) {
