@@ -8,3 +8,4 @@ coverage/
 !.env.example
 gcp-key.json
 scratch/*.txt
+test-expo-push.ts
