@@ -160,7 +160,7 @@ export default function App() {
       }
       window.removeEventListener('message', handleMessage);
     };
-  }, [setStudyMode, startVocabStudy, startKanjiStudy]);
+  }, [isLoading, setStudyMode, startVocabStudy, startKanjiStudy]);
 
   // Sync push token if notifications are enabled
   useEffect(() => {
