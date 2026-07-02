@@ -1,7 +1,5 @@
 import express from "express";
 import { getDB } from "../db.ts";
-import { webpush, expo } from "../config.ts";
-import { Expo } from "expo-server-sdk";
 
 const router = express.Router();
 

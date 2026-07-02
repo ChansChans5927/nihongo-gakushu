@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { HelpCircle, CheckCircle2, ArrowRight, Award, Sparkles, X, Lightbulb } from "lucide-react";
+import { HelpCircle, CheckCircle2, ArrowRight, Award, Sparkles, X } from "lucide-react";
 import { Question } from "../types";
 import { getTheme } from "../theme";
 

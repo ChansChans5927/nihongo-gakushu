@@ -29,7 +29,6 @@ router.post("/generate", async (req, res) => {
         explicitTargets.unshift(deepLinkTarget.kanji);
       }
     }
-    const hasTargets = explicitTargets.length > 0;
 
     if (db) {
       const query: any = {};

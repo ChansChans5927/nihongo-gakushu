@@ -3,7 +3,7 @@ import { useStudyStore } from "./stores/studyStore";
 import { useAuthStore } from "./stores/authStore";
 import { NativeBridge } from "./nativeBridge";
 import { AnimatePresence, motion } from "motion/react";
-import { BookMarked, CheckCircle2, AlertCircle } from "lucide-react";
+import { BookMarked, AlertCircle } from "lucide-react";
 import { useSpeech } from "./hooks/useSpeech";
 import { MainConfig } from "./components/MainConfig";
 import { KanjiStudy } from "./components/KanjiStudy";
@@ -23,13 +23,13 @@ import { useConfirmStore } from "./stores/confirmStore";
 export default function App() {
   const {
     phase, setPhase, kanjiCount, setKanjiCount, difficulty, setDifficulty, jlptCount, setJlptCount,
-    kanjiList, currentKanjiIndex, questions, currentQuestionIndex, userAnswers, isGraded,
+    kanjiList, currentKanjiIndex, questions, currentQuestionIndex, userAnswers,
     masteredKanji, studyMode, setStudyMode, points, unlockedThemes, currentTheme,
-    vocabCount, setVocabCount, vocabList, currentVocabIndex, masteredVocab, vocabQuestions,
+    vocabCount, setVocabCount, vocabList, currentVocabIndex, masteredVocab,
     bookmarkedKanjis, bookmarkedVocabs, selectedJlptLevel, setSelectedJlptLevel, jlptQuestions,
     currentJlptIndex, jlptAnswers, isJlptGraded, isJlptLoading, jlptErrorMsg, newsLesson,
     isNewsLoading, newsErrorMsg, isLoading, errorMsg, apiSource,
-    fetchUserProgress, resetProgressState, saveMasteredKanji, handleResetMastery, saveMasteredVocab,
+    fetchUserProgress, resetProgressState, handleResetMastery,
     handleResetVocabMastery, handleToggleBookmark, startKanjiStudy, startVocabStudy,
     startJlptQuiz, startNewsStudy, handleSelectAnswer, handleNextStudy, handlePrevStudy,
     handleNextQuestion, handlePrevQuestion, handleGradeQuiz, handleSelectJlptAnswer,
@@ -101,12 +101,11 @@ export default function App() {
 
   // Handle Deep Links via URL Parameters or Service Worker messages
   useEffect(() => {
+    // 앱 구동 시 사용자 정보 및 진도율 로딩(DB fetch)이 완료된 후에만 딥링크를 파싱하도록 안전 가드 적용
+    if (isLoading) return;
+
     const handleDeepLink = (data: any) => {
       if (data && data.targetItem && data.type) {
-        // Must be logged in to save progress properly, but we can still show cards.
-        // If not logged in, auth-card will show, and we'd lose deep link. 
-        // We might need to ensure they are logged in first, or rely on them logging in.
-        // For simplicity, we just trigger study, which handles auth check inside start study.
         if (data.type === 'vocab') {
           setStudyMode('vocab');
           startVocabStudy(false, data.targetItem, data.level);
@@ -124,10 +123,7 @@ export default function App() {
     const level = params.get('level');
     
     if (targetItem && type) {
-      // Delay slightly to ensure stores are initialized if needed, though usually fine
-      setTimeout(() => {
-        handleDeepLink({ targetItem, type, level });
-      }, 500);
+      handleDeepLink({ targetItem, type, level });
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
@@ -143,25 +139,21 @@ export default function App() {
           return;
         }
       }
-      
+
       if (data) {
         if (data.type === 'DEEP_LINK_STUDY' && data.payload) {
           handleDeepLink(data.payload);
-        } else if (data.type === 'deep_link_study') {
-          handleDeepLink({ type: data.studyMode, targetItem: data.targetItem, level: data.level });
-        } else if (data.type === 'vocab' || data.type === 'kanji') {
-          handleDeepLink(data);
         }
       }
     };
-    
+
     // 1. Service Worker messages
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('message', handleMessage);
     }
     // 2. React Native WebView messages
     window.addEventListener('message', handleMessage);
-    
+
     return () => {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.removeEventListener('message', handleMessage);
@@ -255,8 +247,8 @@ export default function App() {
             {currentUser && (
               <div className="flex items-center gap-2 sm:gap-3 mr-1 sm:mr-2 border-r border-slate-200 pr-2 sm:pr-3">
                 {/* Points GNB Badge */}
-                <div 
-                  className="inline-flex bg-amber-50 hover:bg-amber-100 border border-amber-200/70 shadow-2xs px-2.5 py-1 rounded-xl items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95" 
+                <div
+                  className="inline-flex bg-amber-50 hover:bg-amber-100 border border-amber-200/70 shadow-2xs px-2.5 py-1 rounded-xl items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
                   onClick={() => setPhase('shop')}
                   title="테마 상점 이동"
                 >

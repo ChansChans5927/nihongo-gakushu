@@ -30,8 +30,7 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
   // 현재 서브 화면 탭 상태
   const [activeTab, setActiveTab] = useState<"subtitles" | "vocab" | "quiz">("subtitles");
 
-  // 동영상 재생 시간 상태
-  const [currentTime, setCurrentTime] = useState<number>(0);
+
   const [playerState, setPlayerState] = useState<number>(-1); // -1: 미시작, 1: 재생중, 2: 일시정지 등
   const [activeSubtitleIndex, setActiveSubtitleIndex] = useState<number>(0);
 
@@ -109,7 +108,6 @@ export function NewsStudy({ lesson, handleGoHome, username }: NewsStudyProps) {
     timerRef.current = setInterval(() => {
       if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
         const time = playerRef.current.getCurrentTime();
-        setCurrentTime(time);
 
         // 실시간 재생 시간에 해당하는 자막 인덱스 계산
         let foundIdx = -1;

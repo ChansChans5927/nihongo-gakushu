@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { CheckCircle2, Sparkles } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { RadicalPart } from "../types";
 
 interface RadicalModalProps {

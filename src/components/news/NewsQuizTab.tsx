@@ -1,4 +1,4 @@
-import { CheckCircle, HelpCircle, XCircle, Trophy, Lightbulb } from "lucide-react";
+import { CheckCircle, XCircle, Trophy, Lightbulb } from "lucide-react";
 import { Question } from "../../types";
 
 // 퀴즈 탭 Props 인터페이스
