@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStudyStore } from "./stores/studyStore";
 import { useAuthStore } from "./stores/authStore";
 import { NativeBridge } from "./nativeBridge";
@@ -21,6 +21,8 @@ import { ConfirmModal } from "./components/ConfirmModal";
 import { useConfirmStore } from "./stores/confirmStore";
 
 export default function App() {
+  const [isInitCompleted, setIsInitCompleted] = useState(false);
+
   const {
     phase, setPhase, kanjiCount, setKanjiCount, difficulty, setDifficulty, jlptCount, setJlptCount,
     kanjiList, currentKanjiIndex, questions, currentQuestionIndex, userAnswers,
@@ -38,7 +40,7 @@ export default function App() {
   } = useStudyStore();
 
   const {
-    currentUser, setCurrentUser, isReviewMode, setIsReviewMode, loadSession, logout
+    currentUser, setCurrentUser, isReviewMode, setIsReviewMode, logout
   } = useAuthStore();
 
   // Hook for speech synthesis
@@ -68,19 +70,39 @@ export default function App() {
     return () => window.removeEventListener('hardwareBackPress', handleHardwareBack as EventListener);
   }, [phase, isJlptGraded, handleGoHome]);
 
-  // Load session from localStorage on mount
+  // 1. Restore session and fetch user progress sequentially on app launch
   useEffect(() => {
-    loadSession();
-  }, [loadSession]);
+    const initApp = async () => {
+      const savedUser = localStorage.getItem("user");
+      if (savedUser) {
+        try {
+          const user = JSON.parse(savedUser);
+          setCurrentUser(user);
+          // Wait for progress to be loaded from DB before marking initialization complete
+          await fetchUserProgress(user.username);
+        } catch (e) {
+          console.error("Failed to restore session or progress", e);
+          resetProgressState();
+        }
+      } else {
+        resetProgressState();
+      }
+      setIsInitCompleted(true);
+    };
 
-  // Load progress when user signs in or restore session
+    initApp();
+  }, [setCurrentUser, fetchUserProgress, resetProgressState]);
+
+  // 2. Fetch progress when user logs in manually or signs out (after initial sync is done)
   useEffect(() => {
+    if (!isInitCompleted) return;
+
     if (currentUser) {
       fetchUserProgress(currentUser.username);
     } else {
       resetProgressState();
     }
-  }, [currentUser, fetchUserProgress, resetProgressState]);
+  }, [currentUser, isInitCompleted, fetchUserProgress, resetProgressState]);
 
   // Handle unauthorized event (e.g. token expired) for auto-logout
   useEffect(() => {
@@ -102,7 +124,7 @@ export default function App() {
   // Handle Deep Links via URL Parameters or Service Worker messages
   useEffect(() => {
     // 앱 구동 시 사용자 정보 및 진도율 로딩(DB fetch)이 완료된 후에만 딥링크를 파싱하도록 안전 가드 적용
-    if (isLoading) return;
+    if (!isInitCompleted) return;
 
     const handleDeepLink = (data: any) => {
       if (data && data.targetItem && data.type) {
@@ -160,7 +182,7 @@ export default function App() {
       }
       window.removeEventListener('message', handleMessage);
     };
-  }, [isLoading, setStudyMode, startVocabStudy, startKanjiStudy]);
+  }, [isInitCompleted, setStudyMode, startVocabStudy, startKanjiStudy]);
 
   // Sync push token if notifications are enabled
   useEffect(() => {

@@ -50,7 +50,14 @@ export function startPushScheduler() {
           };
         }
 
-        const payload = JSON.stringify({ title, body, url });
+        const payload = JSON.stringify({
+          title,
+          body,
+          url,
+          type: dataPayload.studyMode || "vocab",
+          targetItem: dataPayload.targetItem,
+          level: dataPayload.level
+        });
 
         if (user.expoPushToken && Expo.isExpoPushToken(user.expoPushToken)) {
           expoMessages.push({
