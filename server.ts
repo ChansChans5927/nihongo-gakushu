@@ -13,7 +13,6 @@ import kanjiRouter from "./server/routes/kanji.ts";
 import vocabRouter from "./server/routes/vocab.ts";
 import jlptRouter from "./server/routes/jlpt.ts";
 import progressRouter from "./server/routes/progress.ts";
-import newsRouter from "./server/routes/news.ts";
 import notificationsRouter from "./server/routes/notifications.ts";
 import ttsRouter from "./server/routes/tts.ts";
 
@@ -30,7 +29,6 @@ app.use("/api/auth", authRouter);
 app.use("/api/kanji", kanjiRouter);
 app.use("/api/vocab", vocabRouter);
 app.use("/api/jlpt", jlptRouter);
-app.use("/api/news", newsRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/tts", ttsRouter);
 app.use("/api", progressRouter); // progressRouter internally mounts /progress/* and /user/* routes

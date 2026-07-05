@@ -9,8 +9,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
-  History,
-  Tv
+  History
 } from "lucide-react";
 
 interface MainConfigProps {
@@ -38,9 +37,6 @@ interface MainConfigProps {
   setStudyMode: (mode: 'kanji' | 'vocab') => void;
   isReviewMode: boolean;
   setIsReviewMode: (mode: boolean) => void;
-  startNewsStudy: () => void;
-  isNewsLoading: boolean;
-  newsErrorMsg: string | null;
   points?: number;
   unlockedThemes?: string[];
   currentTheme?: string;
@@ -74,9 +70,6 @@ export function MainConfig({
   setStudyMode,
   isReviewMode,
   setIsReviewMode,
-  startNewsStudy,
-  isNewsLoading,
-  newsErrorMsg,
   points = 0,
   unlockedThemes = ["default"],
   currentTheme = "default",
@@ -84,9 +77,9 @@ export function MainConfig({
   onThemeUpdate,
   onOpenShop
 }: MainConfigProps) {
-  const isAnyLoading = isLoading || isJlptLoading || isNewsLoading;
+  const isAnyLoading = isLoading || isJlptLoading;
 
-  const [activeTab, setActiveTab] = useState<'kanji' | 'vocab' | 'jlpt' | 'news'>(
+  const [activeTab, setActiveTab] = useState<'kanji' | 'vocab' | 'jlpt'>(
     studyMode === 'vocab' ? 'vocab' : 'kanji'
   );
 
@@ -122,7 +115,7 @@ export function MainConfig({
       </div>
 
       {/* Tab Selector Pills */}
-      <div className="grid grid-cols-4 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/50 max-w-lg mx-auto mb-6">
+      <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/50 max-w-lg mx-auto mb-6">
         <button
           type="button"
           onClick={() => {
@@ -169,21 +162,6 @@ export function MainConfig({
           <Award className="w-3.5 h-3.5 shrink-0" />
           <span className="hidden sm:inline">JLPT 평가</span>
           <span className="inline sm:hidden">JLPT</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('news');
-          }}
-          disabled={isAnyLoading}
-          className={`py-2 px-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 disabled:opacity-50 disabled:pointer-events-none ${activeTab === 'news'
-            ? "bg-white text-rose-600 shadow-sm border border-slate-200/20"
-            : "text-slate-500 hover:text-slate-800"
-            }`}
-        >
-          <Tv className="w-3.5 h-3.5 shrink-0" />
-          <span className="hidden sm:inline">뉴스 학습</span>
-          <span className="inline sm:hidden">뉴스</span>
         </button>
       </div>
 
@@ -639,61 +617,6 @@ export function MainConfig({
         </div>
       )}
 
-      {activeTab === 'news' && (
-        <div className="max-w-2xl mx-auto bg-gradient-to-br from-rose-950 via-slate-900 to-slate-950 text-white rounded-3xl border border-rose-900/50 p-6 sm:p-8 shadow-2xl relative overflow-hidden group hover:border-rose-700/60 transition-all duration-500">
-          <div className="absolute top-0 right-0 p-5 opacity-[0.03] group-hover:opacity-10 transition-opacity duration-700 pointer-events-none select-none">
-            <Tv className="w-56 h-56 text-white transform rotate-12" />
-          </div>
-
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
-
-          <div className="space-y-8 relative z-10">
-            <div className="text-center space-y-4">
-              <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest bg-rose-500/20 text-rose-300 px-3 py-1 rounded-full border border-rose-500/30 backdrop-blur-md shadow-inner">
-                <Sparkles className="w-3.5 h-3.5 text-rose-400" />
-                뉴스 연계 실전 시사 학습
-              </span>
-              <h4 className="text-xl sm:text-2xl font-black leading-snug font-display tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-rose-100 to-white drop-shadow-sm">
-                유튜브 뉴스 자막과 어휘 퀴즈
-              </h4>
-              <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed bg-black/20 p-4 rounded-2xl backdrop-blur-sm border border-white/5">
-                일본 주요 방송사의 뉴스 쇼츠 영상이 매일 무작위로 매칭됩니다.<br />
-                아나운서의 정확한 발음으로 생생한 최신 뉴스를 듣고, 실전 시사 어휘 학습과 연계 퀴즈를 즐겨보세요!
-              </p>
-            </div>
-
-            <div className="pt-2 space-y-4">
-              {newsErrorMsg && (
-                <div className="p-3 bg-red-950/50 border border-red-800/80 text-red-200 text-xs rounded-xl flex items-start gap-2 text-left backdrop-blur-sm shadow-md animate-pulse">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
-                  <div>{newsErrorMsg}</div>
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={startNewsStudy}
-                disabled={isAnyLoading || isNewsLoading}
-                className="relative w-full py-4 px-6 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-orange-500 text-white font-black rounded-2xl text-sm shadow-[0_0_20px_rgba(244,63,94,0.3)] hover:shadow-[0_0_25px_rgba(244,63,94,0.5)] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed group/btn overflow-hidden"
-              >
-                <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 ease-out"></div>
-                {isNewsLoading ? (
-                  <>
-                    <RefreshCw className="w-5 h-5 animate-spin text-white" />
-                    <span>학습 데이터를 불러오는 중...</span>
-                  </>
-                ) : (
-                  <>
-                    <Tv className="w-5 h-5 text-rose-100 shrink-0 group-hover/btn:scale-110 transition-transform" />
-                    <span>랜덤 뉴스 학습 시작하기</span>
-                    <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </motion.div>
   );

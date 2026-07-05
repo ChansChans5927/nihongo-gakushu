@@ -3,7 +3,7 @@
  * - 모든 슬라이스 인터페이스를 한 곳에 정의하여 순환 의존성(Circular Dependency)을 방지합니다.
  * - 각 슬라이스 파일은 이 파일에서 StudyState를 import하여 StateCreator 제네릭에 사용합니다.
  */
-import { KanjiItem, VocabItem, Question, JlptQuestion, NewsLesson } from "../types";
+import { KanjiItem, VocabItem, Question, JlptQuestion } from "../types";
 
 // ─────────────────────────────────────────────
 // 1. 한자 학습 슬라이스 인터페이스
@@ -57,16 +57,7 @@ export interface JlptSlice {
   handleGoHomeJlpt: () => Promise<void>;                           // JLPT 화면에서 홈으로
 }
 
-// ─────────────────────────────────────────────
-// 4. 뉴스 학습 슬라이스 인터페이스
-// ─────────────────────────────────────────────
-export interface NewsSlice {
-  newsLesson: NewsLesson | null;                                   // 현재 뉴스 레슨 데이터
-  isNewsLoading: boolean;                                          // 로딩 중 여부
-  newsErrorMsg: string | null;                                     // 에러 메시지
 
-  startNewsStudy: () => Promise<void>;                             // 뉴스 학습 시작
-}
 
 // ─────────────────────────────────────────────
 // 5. 유저 진행도·북마크·포인트·테마 공통 슬라이스
@@ -93,7 +84,7 @@ export interface ProgressSlice {
 //    (여러 도메인에 걸쳐 동작하는 화면 전환·퀴즈 공용 상태)
 // ─────────────────────────────────────────────
 export interface SharedSlice {
-  phase: 'config' | 'studying' | 'testing' | 'result' | 'news-study' | 'settings' | 'jlpt' | 'shop' | 'bookmarks';
+  phase: 'config' | 'studying' | 'testing' | 'result' | 'settings' | 'jlpt' | 'shop' | 'bookmarks';
   studyMode: 'kanji' | 'vocab';                                   // 한자/단어 모드
   difficulty: string;                                              // 공통 난이도 (JLPT 레벨)
   questions: Question[];                                           // 한자·단어 퀴즈 공용 문제 배열
@@ -119,4 +110,4 @@ export interface SharedSlice {
 // ─────────────────────────────────────────────
 // 전체 합성 스토어 타입 (모든 슬라이스의 합집합)
 // ─────────────────────────────────────────────
-export type StudyState = KanjiSlice & VocabSlice & JlptSlice & NewsSlice & ProgressSlice & SharedSlice;
+export type StudyState = KanjiSlice & VocabSlice & JlptSlice & ProgressSlice & SharedSlice;

@@ -12,7 +12,6 @@ import { QuizTest } from "./components/QuizTest";
 import { ResultReport } from "./components/ResultReport";
 import { JlptTest } from "./components/JlptTest";
 import { AuthCard } from "./components/AuthCard";
-import { NewsStudy } from "./components/NewsStudy";
 import { UserDropdown } from "./components/UserDropdown";
 import { SettingsView } from "./components/SettingsView";
 import { ShopView } from "./components/ShopView";
@@ -29,11 +28,11 @@ export default function App() {
     masteredKanji, studyMode, setStudyMode, points, unlockedThemes, currentTheme,
     vocabCount, setVocabCount, vocabList, currentVocabIndex, masteredVocab,
     bookmarkedKanjis, bookmarkedVocabs, selectedJlptLevel, setSelectedJlptLevel, jlptQuestions,
-    currentJlptIndex, jlptAnswers, isJlptGraded, isJlptLoading, jlptErrorMsg, newsLesson,
-    isNewsLoading, newsErrorMsg, isLoading, errorMsg, apiSource,
+    currentJlptIndex, jlptAnswers, isJlptGraded, isJlptLoading, jlptErrorMsg,
+    isLoading, errorMsg, apiSource,
     fetchUserProgress, resetProgressState, handleResetMastery,
     handleResetVocabMastery, handleToggleBookmark, startKanjiStudy, startVocabStudy,
-    startJlptQuiz, startNewsStudy, handleSelectAnswer, handleNextStudy, handlePrevStudy,
+    startJlptQuiz, handleSelectAnswer, handleNextStudy, handlePrevStudy,
     handleNextQuestion, handlePrevQuestion, handleGradeQuiz, handleSelectJlptAnswer,
     handleNextJlptQuestion, handlePrevJlptQuestion, handleGradeJlptQuiz, handleGoHomeJlpt,
     handleGoHome
@@ -399,9 +398,6 @@ export default function App() {
                   setStudyMode={setStudyMode}
                   isReviewMode={isReviewMode}
                   setIsReviewMode={setIsReviewMode}
-                  startNewsStudy={startNewsStudy}
-                  isNewsLoading={isNewsLoading}
-                  newsErrorMsg={newsErrorMsg}
                   points={points}
                   unlockedThemes={unlockedThemes}
                   currentTheme={currentTheme}
@@ -469,14 +465,7 @@ export default function App() {
                 />
               )}
 
-              {/* PHASE 5: YouTube News Study & Mnemonic Vocabulary */}
-              {phase === 'news-study' && newsLesson && (
-                <NewsStudy
-                  lesson={newsLesson}
-                  handleGoHome={handleGoHome}
-                  username={currentUser?.username}
-                />
-              )}
+
 
               {/* PHASE 6: Settings View */}
               {phase === 'settings' && currentUser && (

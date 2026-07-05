@@ -8,7 +8,6 @@
  *   - kanjiSlice:    한자 학습 (startKanjiStudy, saveMasteredKanji 등)
  *   - vocabSlice:    단어 학습 (startVocabStudy, saveMasteredVocab 등)
  *   - jlptSlice:     JLPT 모의고사 (startJlptQuiz, handleGradeJlptQuiz 등)
- *   - newsSlice:     뉴스 학습 (startNewsStudy)
  *   - progressSlice: 유저 진행도·북마크·포인트·테마 (fetchUserProgress, handleToggleBookmark 등)
  *
  * 공용 오케스트레이션 (이 파일):
@@ -24,7 +23,6 @@ import { useConfirmStore } from "./confirmStore";
 import { createKanjiSlice } from "./slices/kanjiSlice";
 import { createVocabSlice } from "./slices/vocabSlice";
 import { createJlptSlice } from "./slices/jlptSlice";
-import { createNewsSlice } from "./slices/newsSlice";
 import { createProgressSlice } from "./slices/progressSlice";
 
 export const useStudyStore = create<StudyState>()((...args) => {
@@ -35,7 +33,6 @@ export const useStudyStore = create<StudyState>()((...args) => {
     ...createKanjiSlice(...args),
     ...createVocabSlice(...args),
     ...createJlptSlice(...args),
-    ...createNewsSlice(...args),
     ...createProgressSlice(...args),
 
     // ─── 공용 오케스트레이션 초기 상태 ───
@@ -192,7 +189,7 @@ export const useStudyStore = create<StudyState>()((...args) => {
     // ─── 홈으로 돌아가기 (학습 중이면 확인 다이얼로그, 상태 초기화) ───
     handleGoHome: async () => {
       const p = get().phase;
-      if (p === 'studying' || p === 'testing' || p === 'news-study') {
+      if (p === 'studying' || p === 'testing') {
         const confirmed = await useConfirmStore.getState().showConfirm("학습을 중단하고 메인 화면으로 돌아가시겠습니까?");
         if (!confirmed) {
           return;
@@ -210,8 +207,6 @@ export const useStudyStore = create<StudyState>()((...args) => {
         kanjiList: [],
         vocabList: [],
         questions: [],
-        newsLesson: null,
-        newsErrorMsg: null,
         isJlptGraded: false,
         jlptQuestions: [],
         jlptAnswers: {},
