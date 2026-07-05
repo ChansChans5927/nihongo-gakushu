@@ -26,8 +26,10 @@ router.post("/generate", async (req, res) => {
     if (deepLinkTarget && deepLinkTarget.word) {
       if (!explicitTargets.some(t => t.word === deepLinkTarget.word)) {
         explicitTargets.unshift({ word: deepLinkTarget.word });
+      }
     }
 
+    if (db) {
       const query: any = {};
       if (targetLevel !== "all") {
         query.jlptLevel = targetLevel;
