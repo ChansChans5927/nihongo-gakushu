@@ -54,7 +54,7 @@ export function startPushScheduler() {
           title,
           body,
           url,
-          type: dataPayload.studyMode || "vocab",
+          type: "vocab",
           targetItem: dataPayload.targetItem,
           level: dataPayload.level
         });
@@ -65,11 +65,13 @@ export function startPushScheduler() {
             sound: "default",
             title,
             body,
-            data: dataPayload
+            data: {
+              type: "vocab",
+              targetItem: dataPayload.targetItem,
+              level: dataPayload.level
+            }
           });
-        }
-
-        if (user.pushSubscription) {
+        } else if (user.pushSubscription) {
           try {
             await webpush.sendNotification(user.pushSubscription, payload);
             console.log(`[Push] Sent Web Push to ${user.username} with target ${dataPayload.targetItem || 'none'}`);

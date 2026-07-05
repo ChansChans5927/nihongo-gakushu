@@ -127,11 +127,12 @@ export default function App() {
     if (!isInitCompleted) return;
 
     const handleDeepLink = (data: any) => {
-      if (data && data.targetItem && data.type) {
-        if (data.type === 'vocab') {
+      if (data && data.targetItem) {
+        const type = data.type === 'deep_link_study' ? (data.studyMode || 'vocab') : data.type;
+        if (type === 'vocab') {
           setStudyMode('vocab');
           startVocabStudy(false, data.targetItem, data.level);
-        } else if (data.type === 'kanji') {
+        } else if (type === 'kanji') {
           setStudyMode('kanji');
           startKanjiStudy(false, data.targetItem, data.level);
         }
@@ -218,6 +219,13 @@ export default function App() {
         }
       } else {
         // PC Browser Web Push
+        // 로컬 환경(localhost, 127.0.0.1)에서는 웹 푸시 구독 동기화를 차단하여 운영 DB 덮어쓰기 방지
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocal) {
+          console.log("[Token Sync] Localhost detected. Skipping web push token sync.");
+          return;
+        }
+
         if ('serviceWorker' in navigator) {
           const swRegistration = await navigator.serviceWorker.ready;
           const subscription = await swRegistration.pushManager.getSubscription();
