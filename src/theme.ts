@@ -128,6 +128,12 @@ export interface ThemeConfig {
   wordPronunciationText: string;
   btnHintQuiz: string;
   hintModalBg: string;
+
+  // --- Global Application Layout Specifics ---
+  globalBg: string;
+  headerBgClass: string;
+  headerTextClass: string;
+  footerBgClass: string;
 }
 
 export const THEME_CONFIGS: Record<string, ThemeConfig> = {
@@ -252,7 +258,11 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     wordPronunciationBlock: "bg-slate-50 border border-slate-200",
     wordPronunciationText: "text-slate-700 font-bold",
     btnHintQuiz: "border border-dashed border-slate-200 text-slate-600 bg-slate-50 hover:bg-slate-100",
-    hintModalBg: "bg-white/95 backdrop-blur-md border-slate-200/80 text-slate-800 rounded-[28px] shadow-[0_20px_50px_rgba(15,23,42,0.15)]"
+    hintModalBg: "bg-white/95 backdrop-blur-md border-slate-200/80 text-slate-800 rounded-[28px] shadow-[0_20px_50px_rgba(15,23,42,0.15)]",
+    globalBg: "bg-slate-50 text-slate-800 font-sans selection:bg-amber-100 selection:text-amber-950",
+    headerBgClass: "bg-white/80 backdrop-blur-md border-b border-slate-200/80",
+    headerTextClass: "text-slate-900",
+    footerBgClass: "bg-white border-t border-slate-200/80 text-slate-450"
   },
   samurai: {
     key: "samurai",
@@ -272,9 +282,9 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     cardIndexText: "text-amber-900/70",
     badgeBg: "bg-amber-900/20 text-amber-950",
 
-    wordPanelBg: "samurai-card-texture sword-glint",
-    wordTextHover: "text-amber-950 hover:text-red-800 ink-reveal",
-    wordSubText: "text-amber-900/70",
+    wordPanelBg: "bg-[#e5d8b7] border border-amber-900/20",
+    wordTextHover: "text-amber-955 hover:text-red-900 ink-reveal",
+    wordSubText: "text-amber-955/80 font-bold",
     wordAudioBtn: "bg-amber-900/20 border border-amber-900/40 text-amber-950 hover:bg-[#3e2723] hover:text-[#f4e8d1]",
     meaningBadge: "bg-[#3e2723] text-[#f4e8d1]",
 
@@ -297,17 +307,17 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     exampleMeaningText: "text-amber-950 border-amber-900/20",
 
     footerBg: "bg-transparent border-t border-amber-900/20",
-    btnSecondary: "bg-transparent hover:bg-amber-900/10 text-amber-950 border border-amber-900/30 rounded-none",
-    btnPrimary: "bg-[#3e2723] hover:bg-[#2d1b18] text-[#f4e8d1] rounded-none border border-amber-900/50",
+    btnSecondary: "bg-transparent hover:bg-amber-900/10 text-amber-955 border border-amber-900/30 rounded-xl",
+    btnPrimary: "bg-[#3e2723] hover:bg-[#2d1b18] text-[#f4e8d1] rounded-xl border border-amber-900/50",
 
-    sealBadgeClass: "inline-block px-3 py-1 bg-transparent text-red-800 border-2 border-red-800 text-[11px] font-bold uppercase tracking-widest rounded-sm transform -rotate-2 opacity-90 select-none",
-    choiceBtnBase: "bg-transparent border-amber-900/40 hover:border-amber-950 text-amber-950 hover:bg-amber-900/5 border-2 rounded-none sword-glint p-3 sm:p-4 text-sm",
-    choiceBtnSelected: "bg-amber-900/10 border-amber-950 text-amber-950 font-serif rounded-none ring-1 ring-amber-950 border-2",
-    choiceIdxBase: "bg-transparent text-amber-950 border border-amber-900/50 rounded-none font-bold",
+    sealBadgeClass: "inline-block px-3 py-1 bg-transparent text-red-800 border-2 border-red-800 text-[11px] font-bold uppercase tracking-widest rounded-md transform -rotate-2 opacity-90 select-none",
+    choiceBtnBase: "bg-transparent border-amber-900/40 hover:border-amber-955 text-amber-955 hover:bg-amber-900/5 border-2 rounded-xl sword-glint p-3 sm:p-4 text-sm",
+    choiceBtnSelected: "bg-amber-900/10 border-amber-955 text-amber-955 font-serif rounded-xl ring-1 ring-amber-955 border-2",
+    choiceIdxBase: "bg-transparent text-amber-955 border border-amber-900/50 rounded-full font-bold",
     choiceIdxSelected: "bg-red-800 text-amber-50 font-bold rounded-sm border-2 border-red-900 transform -rotate-3",
     checkIconColor: "text-red-800",
-    choiceTextNormal: "text-amber-950 font-serif",
-    choiceTextSelected: "text-amber-950 font-serif",
+    choiceTextNormal: "text-amber-955 font-serif",
+    choiceTextSelected: "text-amber-955 font-serif",
 
     // Kanji specific (samurai)
     badgeGradeBg: "bg-[#3e2723] text-[#f4e8d1] border border-amber-900/50",
@@ -338,29 +348,29 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     relatedWordMeaningText: "text-amber-900 border-amber-900/20",
     exampleTitleColorKanji: "text-amber-900/80",
     examplePronunciationTextKanji: "text-red-800",
-    btnPrimaryKanji: "bg-[#3e2723] hover:bg-[#2d1b18] text-[#f4e8d1] rounded-none border border-amber-900/50",
+    btnPrimaryKanji: "bg-[#3e2723] hover:bg-[#2d1b18] text-[#f4e8d1] rounded-xl border border-amber-900/50",
 
     // JLPT specific (samurai)
     headerIconColorKanji: "text-amber-800",
     progressTrackBgJlpt: "bg-amber-900/10",
     progressBarBgJlpt: "bg-gradient-to-r from-amber-700 to-red-800",
-    sealBadgeClassJlpt: "inline-block px-3 py-1 bg-transparent text-red-800 border-2 border-red-800 text-[11px] font-bold uppercase tracking-widest rounded-sm transform -rotate-2 opacity-90 select-none",
+    sealBadgeClassJlpt: "inline-block px-3 py-1 bg-transparent text-red-800 border-2 border-red-800 text-[11px] font-bold uppercase tracking-widest rounded-md transform -rotate-2 opacity-90 select-none",
     abandonLinkColor: "text-amber-900/60 hover:text-amber-900",
     questionInstructionColor: "text-amber-900/80",
     questionInstructionIcon: "text-amber-800",
-    questionSentenceBox: "bg-[rgba(255,255,255,0.3)] border-amber-900/20 text-amber-950 font-serif",
+    questionSentenceBox: "bg-[rgba(255,255,255,0.3)] border-amber-900/20 text-amber-955 font-serif",
     blankFillBlock: "bg-amber-900/5 border-amber-900/30 text-amber-900 font-sans",
-    highlightWordBlock: "bg-amber-900/10 text-amber-950 border-amber-900/20",
-    questionPromptText: "text-amber-950",
+    highlightWordBlock: "bg-amber-900/10 text-amber-955 border-amber-900/20",
+    questionPromptText: "text-amber-955",
     questionPromptSubText: "text-amber-900/70",
-    choiceBtnSelectedJlpt: "bg-amber-900/10 border-amber-950 text-amber-950 font-serif rounded-none ring-1 ring-amber-950 border-2",
+    choiceBtnSelectedJlpt: "bg-amber-900/10 border-amber-955 text-amber-955 font-serif rounded-xl ring-1 ring-amber-955 border-2",
     choiceIdxSelectedJlpt: "bg-red-800 text-amber-50 font-bold rounded-sm border-2 border-red-900 transform -rotate-3",
     checkIconColorJlpt: "text-red-800",
-    choiceTextNormalJlpt: "text-amber-950",
-    choiceTextSelectedJlpt: "text-amber-950",
-    btnSecondaryJlpt: "bg-transparent text-amber-950 border border-amber-900/20 hover:bg-amber-900/10 rounded-none",
-    btnNextJlpt: "bg-amber-950 hover:bg-amber-900 text-[#f4e8d1]",
-    btnGradeJlpt: "bg-gradient-to-r from-red-800 to-amber-900 text-amber-100",
+    choiceTextNormalJlpt: "text-amber-955",
+    choiceTextSelectedJlpt: "text-amber-955",
+    btnSecondaryJlpt: "bg-transparent text-amber-955 border border-amber-900/20 hover:bg-amber-900/10 rounded-xl",
+    btnNextJlpt: "bg-amber-955 hover:bg-amber-900 text-[#f4e8d1] rounded-xl",
+    btnGradeJlpt: "bg-gradient-to-r from-red-800 to-amber-900 text-amber-100 rounded-xl",
 
     // Quiz specific (samurai)
     headerIconColorQuiz: "text-amber-800",
@@ -368,14 +378,18 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     quizDisplayBox: "bg-[rgba(255,255,255,0.2)] border-y border-y-amber-900/20 shadow-inner",
     blankFillBlockQuiz: "bg-amber-900/10 border-amber-900/40 text-amber-900",
     quizBigDisplayHint: "text-red-800",
-    btnNextQuiz: "bg-[#3e2723] hover:bg-[#2d1b18] text-[#f4e8d1] rounded-none border border-amber-900/50",
+    btnNextQuiz: "bg-[#3e2723] hover:bg-[#2d1b18] text-[#f4e8d1] rounded-xl border border-amber-900/50",
     btnGradeQuiz: "bg-gradient-to-r from-red-800 to-amber-900 text-amber-100 rounded-xl",
     radicalsBoxBg: "bg-amber-900/5 border border-amber-900/20",
 
     wordPronunciationBlock: "bg-amber-900/10 border border-amber-900/30",
-    wordPronunciationText: "text-amber-950 font-black",
-    btnHintQuiz: "border border-dashed border-amber-900/40 text-amber-955 bg-amber-900/5 hover:bg-amber-900/10 rounded-none",
-    hintModalBg: "bg-[#f5e6ca] border-amber-900/40 text-amber-955 rounded-none shadow-[6px_6px_0px_#5d3a1a] font-serif"
+    wordPronunciationText: "text-amber-955 font-black",
+    btnHintQuiz: "border border-dashed border-amber-900/40 text-amber-955 bg-amber-900/5 hover:bg-amber-900/10 rounded-xl",
+    hintModalBg: "bg-[#f5e6ca] border-amber-900/40 text-amber-955 rounded-xl shadow-[6px_6px_0px_#5d3a1a] font-serif",
+    globalBg: "bg-[#efe4cb] text-amber-955 font-serif min-h-screen",
+    headerBgClass: "bg-[#f4e8d1]/90 backdrop-blur-md border-b border-amber-900/30",
+    headerTextClass: "text-amber-955 font-serif font-bold",
+    footerBgClass: "bg-[#f4e8d1]/90 border-t border-amber-900/20 text-amber-900/70"
   },
   yokai: {
     key: "yokai",
@@ -420,9 +434,9 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     exampleMeaningText: "text-[#e2e8f0] border-[#0ea5e9]/30",
 
     footerBg: "bg-transparent border-t border-[#0ea5e9]/30",
-    btnSecondary: "bg-transparent hover:bg-[#0ea5e9]/20 text-[#e2e8f0] border border-[#0ea5e9]/40 rounded-lg",
-    btnPrimary: "yokai-button-selected text-white rounded-lg border border-[#38bdf8] shadow-[0_0_15px_rgba(14,165,233,0.4)]",
-
+    btnSecondary: "bg-transparent hover:bg-[#0ea5e9]/20 text-[#e2e8f0] border border-[#0ea5e9]/40 rounded-xl",
+    btnPrimary: "yokai-button-selected text-white rounded-xl border border-[#38bdf8] shadow-[0_0_15px_rgba(14,165,233,0.4)]",
+ 
     sealBadgeClass: "yokai-seal-badge inline-block px-3 py-1 text-[11px] font-bold uppercase tracking-widest rounded-sm transform -rotate-1 opacity-90 select-none",
     choiceBtnBase: "yokai-button text-[#e2e8f0] rounded-xl border p-3 sm:p-4 text-sm",
     choiceBtnSelected: "yokai-button-selected text-white rounded-xl border",
@@ -431,7 +445,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     checkIconColor: "text-[#38bdf8]",
     choiceTextNormal: "text-slate-200",
     choiceTextSelected: "text-white",
-
+ 
     // Kanji specific (yokai)
     badgeGradeBg: "bg-[#0ea5e9]/20 text-[#38bdf8] border border-[#0ea5e9]/30",
     strokeCountText: "text-[#38bdf8]/70",
@@ -461,8 +475,8 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     relatedWordMeaningText: "text-slate-300 border-[#0ea5e9]/30",
     exampleTitleColorKanji: "text-[#38bdf8]",
     examplePronunciationTextKanji: "text-[#0ea5e9]",
-    btnPrimaryKanji: "yokai-button-selected text-white rounded-lg border border-[#38bdf8] shadow-[0_0_15px_rgba(14,165,233,0.4)]",
-
+    btnPrimaryKanji: "yokai-button-selected text-white rounded-xl border border-[#38bdf8] shadow-[0_0_15px_rgba(14,165,233,0.4)]",
+ 
     // JLPT specific (yokai)
     headerIconColorKanji: "text-[#0ea5e9]",
     progressTrackBgJlpt: "bg-[#0ea5e9]/10",
@@ -484,21 +498,25 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     btnSecondaryJlpt: "bg-transparent text-slate-300 border-[#0ea5e9]/30 hover:bg-[#0ea5e9]/10 rounded-xl",
     btnNextJlpt: "bg-[#0ea5e9] hover:bg-sky-500 text-white shadow-[0_0_10px_rgba(14,165,233,0.5)]",
     btnGradeJlpt: "bg-gradient-to-r from-cyan-600 to-blue-700 text-white shadow-[0_0_15px_rgba(14,165,233,0.5)]",
-
+ 
     // Quiz specific (yokai)
     headerIconColorQuiz: "text-[#0ea5e9]",
     progressBarBgQuiz: "bg-[#0ea5e9] shadow-[0_0_10px_rgba(14,165,233,0.8)]",
     quizDisplayBox: "bg-[#0f172a]/50 border-y border-[#38bdf8]/30 backdrop-blur-sm",
     blankFillBlockQuiz: "bg-[#38bdf8]/10 border-[#38bdf8]/40 text-[#38bdf8]",
     quizBigDisplayHint: "text-[#38bdf8]",
-    btnNextQuiz: "bg-[#0f172a] hover:bg-[#1e293b] text-[#38bdf8] border border-[#0ea5e9]/50 rounded-lg shadow-[0_0_10px_rgba(14,165,233,0.2)]",
-    btnGradeQuiz: "yokai-button-selected text-white rounded-lg border border-[#38bdf8] shadow-[0_0_15px_rgba(14,165,233,0.4)]",
+    btnNextQuiz: "bg-[#0f172a] hover:bg-[#1e293b] text-[#38bdf8] border border-[#0ea5e9]/50 rounded-xl shadow-[0_0_10px_rgba(14,165,233,0.2)]",
+    btnGradeQuiz: "yokai-button-selected text-white rounded-xl border border-[#38bdf8] shadow-[0_0_15px_rgba(14,165,233,0.4)]",
     radicalsBoxBg: "bg-[#0c1322]/80 border border-[#0ea5e9]/20",
 
     wordPronunciationBlock: "bg-slate-900/60 border border-[#38bdf8]/30 backdrop-blur-sm",
     wordPronunciationText: "text-sky-300 font-bold",
     btnHintQuiz: "border border-dashed border-sky-500/40 text-sky-400 bg-sky-500/5 hover:bg-sky-500/15",
-    hintModalBg: "bg-[#0c1322] border-[#38bdf8]/40 text-[#f8f9fa] rounded-[20px] shadow-[0_0_30px_rgba(56,189,248,0.15)]"
+    hintModalBg: "bg-[#0c1322] border-[#38bdf8]/40 text-[#f8f9fa] rounded-[20px] shadow-[0_0_30px_rgba(56,189,248,0.15)]",
+    globalBg: "bg-[#030712] text-slate-200 font-sans min-h-screen",
+    headerBgClass: "bg-[#0f172a]/90 backdrop-blur-md border-b border-[#38bdf8]/20",
+    headerTextClass: "text-[#38bdf8] font-bold",
+    footerBgClass: "bg-[#0f172a]/90 border-t border-[#0ea5e9]/30 text-[#38bdf8]/60"
   },
   zen: {
     key: "zen",
@@ -544,7 +562,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
 
     footerBg: "bg-transparent border-t border-emerald-600/15",
     btnSecondary: "bg-white hover:bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-600/20",
-    btnPrimary: "zen-button-selected text-white rounded-lg border border-emerald-600 shadow-[0_4px_14px_rgba(74,114,86,0.2)]",
+    btnPrimary: "zen-button-selected text-white rounded-xl border border-emerald-600 shadow-[0_4px_14px_rgba(74,114,86,0.2)]",
 
     sealBadgeClass: "zen-seal-badge inline-block px-3 py-1 text-[11px] font-bold uppercase tracking-widest rounded-md opacity-95 select-none",
     choiceBtnBase: "zen-button text-[#2d4635] rounded-xl border p-3 sm:p-4 text-sm",
@@ -584,7 +602,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     relatedWordMeaningText: "text-emerald-900 border-emerald-600/20",
     exampleTitleColorKanji: "text-emerald-800",
     examplePronunciationTextKanji: "text-emerald-850",
-    btnPrimaryKanji: "zen-button-selected text-white rounded-lg border border-emerald-600 shadow-[0_4px_14px_rgba(74,114,86,0.2)]",
+    btnPrimaryKanji: "zen-button-selected text-white rounded-xl border border-emerald-600 shadow-[0_4px_14px_rgba(74,114,86,0.2)]",
 
     // JLPT specific (zen)
     headerIconColorKanji: "text-emerald-600",
@@ -605,7 +623,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     choiceTextNormalJlpt: "text-emerald-[#2d4635]", // note: zen choice button text color
     choiceTextSelectedJlpt: "text-white",
     btnSecondaryJlpt: "bg-white hover:bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-600/20",
-    btnNextJlpt: "bg-[#ffffff] hover:bg-emerald-50 text-emerald-800 border border-emerald-600/30 rounded-lg shadow-sm",
+    btnNextJlpt: "bg-[#ffffff] hover:bg-emerald-50 text-emerald-800 border border-emerald-600/30 rounded-xl shadow-sm",
     btnGradeJlpt: "zen-button-selected text-white border border-emerald-600 shadow-[0_4px_14px_rgba(74,114,86,0.2)]",
 
     // Quiz specific (zen)
@@ -614,14 +632,18 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     quizDisplayBox: "bg-[#ffffff] border-y border-y-emerald-600/10",
     blankFillBlockQuiz: "bg-emerald-800/10 border-emerald-600/40 text-emerald-800",
     quizBigDisplayHint: "text-emerald-600",
-    btnNextQuiz: "bg-[#ffffff] hover:bg-emerald-50 text-emerald-800 border border-emerald-600/30 rounded-lg",
-    btnGradeQuiz: "zen-button-selected text-white rounded-lg border border-emerald-600 shadow-[0_4px_14px_rgba(74,114,86,0.2)]",
+    btnNextQuiz: "bg-[#ffffff] hover:bg-emerald-50 text-emerald-800 border border-emerald-600/30 rounded-xl",
+    btnGradeQuiz: "zen-button-selected text-white rounded-xl border border-emerald-600 shadow-[0_4px_14px_rgba(74,114,86,0.2)]",
     radicalsBoxBg: "bg-emerald-50/40 border border-emerald-600/10",
 
     wordPronunciationBlock: "bg-emerald-50 border border-emerald-600/20",
     wordPronunciationText: "text-emerald-900 font-bold",
     btnHintQuiz: "border border-dashed border-emerald-600/40 text-emerald-800 bg-emerald-50 hover:bg-emerald-100",
-    hintModalBg: "bg-[#f5f8f6] border-emerald-600/30 text-emerald-955 rounded-[32px] shadow-[0_15px_40px_rgba(74,114,86,0.1)]"
+    hintModalBg: "bg-[#f5f8f6] border-emerald-600/30 text-emerald-955 rounded-[32px] shadow-[0_15px_40px_rgba(74,114,86,0.1)]",
+    globalBg: "bg-[#f3f7f4] text-emerald-955 font-sans min-h-screen",
+    headerBgClass: "bg-emerald-50/90 backdrop-blur-md border-b border-emerald-600/10",
+    headerTextClass: "text-emerald-800 font-bold",
+    footerBgClass: "bg-emerald-50/50 border-t border-emerald-600/15 text-emerald-800/60"
   },
   chalkboard: {
     key: "chalkboard",
@@ -744,7 +766,11 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     wordPronunciationBlock: "bg-black/25 border border-white/20",
     wordPronunciationText: "text-emerald-100 font-bold",
     btnHintQuiz: "border border-dashed border-white/20 text-yellow-300 bg-white/5 hover:bg-white/10",
-    hintModalBg: "bg-[#163024] border border-white/20 text-slate-100 rounded-[8px] shadow-[0_8px_20px_rgba(0,0,0,0.4)] font-mono"
+    hintModalBg: "bg-[#163024] border border-white/20 text-slate-100 rounded-[8px] shadow-[0_8px_20px_rgba(0,0,0,0.4)] font-mono",
+    globalBg: "bg-[#0b2415] text-slate-100 font-sans min-h-screen",
+    headerBgClass: "bg-black/25 border-b border-white/10",
+    headerTextClass: "text-yellow-400 font-bold",
+    footerBgClass: "bg-black/25 border-t border-white/10 text-slate-350/70"
   }
 };
 

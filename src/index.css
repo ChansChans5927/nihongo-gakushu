@@ -80,6 +80,7 @@
   background-color: transparent;
   border: 1px solid rgba(139, 69, 19, 0.4);
   box-shadow: inset 0 0 50px rgba(139, 69, 19, 0.4);
+  overflow: hidden;
 }
 
 /* 1. Embers Effect */

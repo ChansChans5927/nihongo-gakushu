@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { CheckCircle2, RefreshCw, BookOpen, XCircle, Sparkles } from "lucide-react";
 import { Question } from "../types";
+import { getTheme } from "../theme";
 
 interface ResultReportProps {
   questions: Question[];
@@ -10,6 +11,7 @@ interface ResultReportProps {
   startVocabStudy: (isReview?: boolean) => void;
   handleGoHome: () => void;
   studyMode: 'kanji' | 'vocab';
+  currentTheme?: string;
 }
 
 export function ResultReport({
@@ -19,8 +21,10 @@ export function ResultReport({
   startKanjiStudy,
   startVocabStudy,
   handleGoHome,
-  studyMode
+  studyMode,
+  currentTheme = "default"
 }: ResultReportProps) {
+  const theme = getTheme(currentTheme);
 
   // Calculate score values
   const getScoreData = () => {
@@ -46,11 +50,11 @@ export function ResultReport({
       className="space-y-6 w-full"
     >
       {/* Score Assessment Header Grid */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm overflow-hidden text-center space-y-4 relative">
+      <div className={`border rounded-3xl p-6 overflow-hidden text-center space-y-4 relative transition-colors duration-300 ${theme.cardContainer}`}>
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-400" />
 
-        <div className="mx-auto w-24 h-24 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center relative">
-          <div className="text-2xl font-display font-extrabold text-slate-900 font-mono whitespace-nowrap">
+        <div className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center relative border ${theme.wordPanelBg} ${theme.tableBorder}`}>
+          <div className={`text-2xl font-display font-extrabold font-mono whitespace-nowrap ${theme.breakdownKanjiMeaning}`}>
             {scoreData.correctCount} / {scoreData.totalCount}
           </div>
           <div className={`absolute -bottom-1 -right-1 rounded-full p-1 shadow ${scoreData.percentage >= 80 ? 'bg-emerald-500 text-white' : scoreData.percentage >= 40 ? 'bg-amber-500 text-white' : 'bg-red-500 text-white'}`}>
@@ -59,10 +63,10 @@ export function ResultReport({
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+          <h3 className={`text-xl sm:text-2xl font-bold transition-colors duration-300 ${theme.breakdownKanjiMeaning}`}>
             연상 암기 마스터 성적 {scoreData.percentage}점!
           </h3>
-          <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+          <p className={`text-sm max-w-md mx-auto leading-relaxed transition-colors duration-300 ${theme.wordSubText}`}>
             {scoreData.percentage === 100
               ? "훌륭합니다! 머릿속에 연상 이미지가 완벽하게 각인되어 장기 기억으로 저장되었습니다."
               : "틀린 문제를 복습해 볼까요? 아래 연상 비법을 다시 읽어보면 기억의 연결고리가 더 단단해집니다."}
@@ -73,7 +77,7 @@ export function ResultReport({
           <button
             onClick={studyMode === 'vocab' ? startVocabStudy : startKanjiStudy}
             disabled={isLoading}
-            className="py-2.5 px-5 bg-slate-950 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer"
+            className={`py-2.5 px-5 text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer ${theme.btnPrimary}`}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
             <span>{studyMode === 'vocab' ? "새로운 단어 코스 풀기" : "새로운 한자 코스 풀기"}</span>
@@ -81,7 +85,7 @@ export function ResultReport({
 
           <button
             onClick={handleGoHome}
-            className="py-2.5 px-5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+            className={`py-2.5 px-5 text-xs font-semibold rounded-xl transition-colors cursor-pointer ${theme.btnSecondary}`}
           >
             메인 홈으로
           </button>
@@ -90,7 +94,7 @@ export function ResultReport({
 
       {/* LIST OF GRADED QUESTIONS (with mnemonic explanations on failure) */}
       <div className="space-y-4">
-        <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 px-1">
+        <h4 className={`text-sm font-bold uppercase tracking-widest flex items-center gap-1.5 px-1 ${theme.wordSubText}`}>
           <BookOpen className="w-4 h-4 text-amber-500" />
           <span>테스트 결과 상세 오답 해설 리포트</span>
         </h4>
@@ -103,24 +107,24 @@ export function ResultReport({
             return (
               <div
                 key={q.id}
-                className={`bg-white border rounded-2xl overflow-hidden p-5 space-y-4 transition-all ${isCorrect
-                  ? "border-emerald-200/60 shadow-xs"
-                  : "border-red-200 shadow-sm"
+                className={`border rounded-2xl overflow-hidden p-5 space-y-4 transition-all ${theme.cardContainer} ${isCorrect
+                  ? "border-emerald-500/40 ring-1 ring-emerald-500/10"
+                  : "border-rose-500/40 ring-1 ring-rose-500/10"
                   }`}
               >
                 {/* Status label row */}
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-mono font-bold text-slate-400">
+                  <span className={`font-mono font-bold ${theme.wordSubText}`}>
                     문제 #{idx + 1}
                   </span>
 
                   {isCorrect ? (
-                    <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded font-bold">
+                    <span className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 px-2 py-0.5 rounded font-bold">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       정답
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 bg-red-50 border border-red-200 text-red-800 px-2 py-0.5 rounded font-bold">
+                    <span className="inline-flex items-center gap-1 bg-rose-500/10 border border-rose-500/30 text-rose-500 px-2 py-0.5 rounded font-bold">
                       <XCircle className="w-3.5 h-3.5" />
                       오답
                     </span>
@@ -131,8 +135,8 @@ export function ResultReport({
                 <div className="space-y-2">
                   {q.type === 'blank_fill' ? (
                     <div className="space-y-1.5 w-full">
-                      <p className="text-xs font-bold text-slate-400 tracking-wider">제시된 예문</p>
-                      <div className="text-base font-semibold text-slate-800 tracking-wide font-sans leading-relaxed py-2.5 bg-slate-50 border border-slate-100 rounded-xl px-4 select-all">
+                      <p className={`text-xs font-bold tracking-wider ${theme.wordSubText}`}>제시된 예문</p>
+                      <div className={`text-base font-semibold tracking-wide font-sans leading-relaxed py-2.5 rounded-xl px-4 select-all border ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning}`}>
                         {(() => {
                           const sentence = q.questionSentence || "";
                           const correctAnswer = q.choices[q.correctIndex] || "";
@@ -141,7 +145,7 @@ export function ResultReport({
                             return (
                               <>
                                 {parts[0]}
-                                <strong className="text-emerald-600 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
+                                <strong className="text-emerald-500 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
                                   {correctAnswer}
                                 </strong>
                                 {parts[1]}
@@ -159,7 +163,7 @@ export function ResultReport({
                               return (
                                 <>
                                   {parts[0]}
-                                  <strong className="text-emerald-600 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
+                                  <strong className="text-emerald-500 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
                                     {word}
                                   </strong>
                                   {parts[1]}
@@ -169,32 +173,32 @@ export function ResultReport({
                               const firstChar = word[0];
                               const charParts = vocabSentence.split(firstChar);
                               if (charParts.length > 1) {
-                                return (
-                                  <>
-                                    {charParts[0]}
-                                    <strong className="text-emerald-600 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
-                                      {word}
-                                    </strong>
-                                    {charParts[1]}
-                                  </>
-                                );
+                                  return (
+                                    <>
+                                      {charParts[0]}
+                                      <strong className="text-emerald-500 font-extrabold underline underline-offset-4 decoration-emerald-500 mx-1">
+                                        {word}
+                                      </strong>
+                                      {charParts[1]}
+                                    </>
+                                  );
                               }
                             }
-                            return <span className="font-bold text-emerald-800">{vocabSentence}</span>;
+                            return <span className="font-bold text-emerald-500">{vocabSentence}</span>;
                           }
-                          return <span className="font-bold text-emerald-800">{sentence}</span>;
+                          return <span className="font-bold text-emerald-500">{sentence}</span>;
                         })()}
                       </div>
                       {q.vocabItem && (
-                        <p className="text-xs text-slate-500 italic">* 해석: {q.vocabItem.exampleSentence.meaning}</p>
+                        <p className={`text-xs italic ${theme.wordSubText}`}>* 해석: {q.vocabItem.exampleSentence.meaning}</p>
                       )}
-                      <div className="text-sm font-bold text-slate-900 mt-2">
+                      <div className={`text-sm font-bold mt-2 ${theme.breakdownKanjiMeaning}`}>
                         Q. 빈칸에 들어갈 알맞은 단어는 무엇일까요?
                       </div>
                     </div>
                   ) : (
-                    <div className="text-base font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
-                      <span className="text-xl font-serif text-slate-800 font-bold bg-slate-100 px-2 py-0.5 rounded">
+                    <div className={`text-base font-bold flex items-center gap-1.5 flex-wrap ${theme.breakdownKanjiMeaning}`}>
+                      <span className={`text-xl font-serif font-bold px-2 py-0.5 rounded ${theme.radicalsBoxBg} ${theme.breakdownKanjiMeaning}`}>
                         {q.vocabItem ? q.vocabItem.word : q.kanjiItem?.kanji}
                       </span>
                       <span>{q.questionText}</span>
@@ -204,19 +208,19 @@ export function ResultReport({
 
                 {/* Selected result panel */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  <div className="p-3 bg-slate-50 rounded-xl space-y-0.5 border border-slate-100">
-                    <span className="text-slate-400 font-medium block">정답보기</span>
-                    <span className="font-semibold text-slate-800">
+                  <div className={`p-3 rounded-xl space-y-0.5 border ${theme.wordPanelBg} ${theme.tableBorder}`}>
+                    <span className={`font-medium block ${theme.wordSubText}`}>정답보기</span>
+                    <span className={`font-semibold ${theme.breakdownKanjiMeaning}`}>
                       {q.choices[q.correctIndex]}
                     </span>
                   </div>
 
                   <div className={`p-3 rounded-xl space-y-0.5 border ${isCorrect
-                    ? "bg-slate-50 border-slate-100"
-                    : "bg-red-50/50 border-red-100"
+                    ? `${theme.wordPanelBg} ${theme.tableBorder}`
+                    : "bg-rose-500/5 border-rose-500/20"
                     }`}>
-                    <span className="text-slate-400 font-medium block">내가 선택한 보기</span>
-                    <span className={`font-semibold ${isCorrect ? "text-slate-800" : "text-red-700 font-bold"}`}>
+                    <span className={`font-medium block ${theme.wordSubText}`}>내가 선택한 보기</span>
+                    <span className={`font-semibold ${isCorrect ? theme.breakdownKanjiMeaning : "text-rose-500 font-bold"}`}>
                       {selectedIdx !== undefined
                         ? q.choices[selectedIdx]
                         : "선택하지 않음"}
@@ -226,23 +230,23 @@ export function ResultReport({
 
                 {/* MANDATORY EXPLICIT REQUIREMENT: IF WRONG, SHOW STUDY STORY EXTENSIVELY */}
                 {!isCorrect && (
-                  <div className="bg-amber-50/80 border-l-4 border-amber-500 rounded-r-xl p-4.5 space-y-2 text-xs">
-                    <div className="flex items-center gap-1 text-amber-900 font-bold">
+                  <div className="bg-amber-500/10 border-l-4 border-amber-500 rounded-r-xl p-4.5 space-y-2 text-xs">
+                    <div className="flex items-center gap-1 text-amber-500 font-bold">
                       <Sparkles className="w-4 h-4 text-amber-500" />
                       <span>핵심 연상 비법: 기억을 더 단단하게 만드는 암기 공식</span>
                     </div>
                     {q.vocabItem ? (
-                      <div className="space-y-2.5 bg-white/75 p-3 rounded-lg border border-amber-200/50">
-                        <p className="text-slate-800 font-bold">
+                      <div className={`space-y-2.5 p-3 rounded-lg border ${theme.breakdownItemBg} ${theme.tableBorder}`}>
+                        <p className={`font-bold ${theme.breakdownKanjiMeaning}`}>
                           단어: {q.vocabItem.word} ({q.vocabItem.hiragana}) - {q.vocabItem.meaning}
                         </p>
-                        <div className="space-y-2.5 pt-1.5 border-t border-slate-200/50">
+                        <div className={`space-y-2.5 pt-1.5 border-t ${theme.tableBorder}`}>
                           {q.vocabItem.kanjiBreakdown && q.vocabItem.kanjiBreakdown.map((kj, kjIdx) => (
                             <div key={kjIdx} className="space-y-0.5">
-                              <span className="font-bold text-emerald-800 text-[11px] block">
+                              <span className="font-bold text-amber-500 text-[11px] block">
                                 한자 [{kj.kanji}] - {kj.meaning}
                               </span>
-                              <p className="text-slate-600 leading-relaxed font-sans">
+                              <p className={`leading-relaxed font-sans ${theme.wordSubText}`}>
                                 {kj.mnemonic}
                               </p>
                             </div>
@@ -250,15 +254,15 @@ export function ResultReport({
                         </div>
                       </div>
                     ) : q.kanjiItem ? (
-                      <p className="text-amber-950 font-medium leading-relaxed bg-white/75 p-3 rounded-lg border border-amber-200/50">
-                        한자 <strong className="text-sm font-serif text-amber-900 underline underline-offset-3 decoration-amber-500 font-extrabold">{q.kanjiItem.kanji}</strong>의 본래 명칭 : <strong className="text-slate-800 font-bold">{q.kanjiItem.meaning}</strong>
+                      <p className={`leading-relaxed p-3 rounded-lg border ${theme.breakdownItemBg} ${theme.tableBorder} ${theme.wordSubText}`}>
+                        한자 <strong className="text-sm font-serif text-amber-500 underline underline-offset-3 decoration-amber-500 font-extrabold">{q.kanjiItem.kanji}</strong>의 본래 명칭 : <strong className={`font-bold ${theme.breakdownKanjiMeaning}`}>{q.kanjiItem.meaning}</strong>
                         <br />
                         {q.kanjiItem.mnemonic}
                       </p>
                     ) : null}
 
                     {!q.vocabItem && q.kanjiItem && (
-                      <div className="flex flex-wrap gap-2 text-[10px] text-amber-800 pt-1 font-mono font-medium">
+                      <div className="flex flex-wrap gap-2 text-[10px] text-amber-500 pt-1 font-mono font-medium">
                         <span>중요 음독: {q.kanjiItem.onyomi} ({q.kanjiItem.onyomiKorean})</span>
                         <span>•</span>
                         <span>중요 훈독: {q.kanjiItem.hunyomi?.replace(/\./g, "")} ({q.kanjiItem.hunyomiKorean})</span>
@@ -268,23 +272,23 @@ export function ResultReport({
                 )}
 
                 {isCorrect && (
-                  <div className="bg-emerald-50/50 border-l-4 border-emerald-500 rounded-r-xl p-4.5 space-y-2 text-xs">
-                    <div className="flex items-center gap-1 text-emerald-950 font-bold">
+                  <div className="bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-xl p-4.5 space-y-2 text-xs">
+                    <div className="flex items-center gap-1 text-emerald-500 font-bold">
                       <Sparkles className="w-4 h-4 text-emerald-500" />
                       <span>핵심 연상 비법: 기억을 더 단단하게 만드는 암기 공식</span>
                     </div>
                     {q.vocabItem ? (
-                      <div className="space-y-2.5 bg-white/75 p-3 rounded-lg border border-emerald-200/50">
-                        <p className="text-slate-800 font-bold">
+                      <div className={`space-y-2.5 p-3 rounded-lg border ${theme.breakdownItemBg} ${theme.tableBorder}`}>
+                        <p className={`font-bold ${theme.breakdownKanjiMeaning}`}>
                           단어: {q.vocabItem.word} ({q.vocabItem.hiragana}) - {q.vocabItem.meaning}
                         </p>
-                        <div className="space-y-2.5 pt-1.5 border-t border-slate-200/50">
+                        <div className={`space-y-2.5 pt-1.5 border-t ${theme.tableBorder}`}>
                           {q.vocabItem.kanjiBreakdown && q.vocabItem.kanjiBreakdown.map((kj, kjIdx) => (
                             <div key={kjIdx} className="space-y-0.5">
-                              <span className="font-bold text-emerald-850 text-[11px] block">
+                              <span className="font-bold text-emerald-500 text-[11px] block">
                                 한자 [{kj.kanji}] - {kj.meaning}
                               </span>
-                              <p className="text-slate-600 leading-relaxed font-sans">
+                              <p className={`leading-relaxed font-sans ${theme.wordSubText}`}>
                                 {kj.mnemonic}
                               </p>
                             </div>
@@ -292,17 +296,17 @@ export function ResultReport({
                         </div>
                       </div>
                     ) : q.kanjiItem ? (
-                      <p className="text-slate-700 leading-relaxed bg-white/75 p-3 rounded-lg border border-emerald-200/50 font-sans">
-                        한자 <strong className="text-sm font-serif text-emerald-900 underline underline-offset-3 decoration-emerald-500 font-extrabold">{q.kanjiItem.kanji}</strong>의 본래 명칭 : <strong className="text-slate-800 font-bold">{q.kanjiItem.meaning}</strong>
+                      <p className={`leading-relaxed p-3 rounded-lg border ${theme.breakdownItemBg} ${theme.tableBorder} ${theme.wordSubText}`}>
+                        한자 <strong className="text-sm font-serif text-emerald-500 underline underline-offset-3 decoration-emerald-500 font-extrabold">{q.kanjiItem.kanji}</strong>의 본래 명칭 : <strong className={`font-bold ${theme.breakdownKanjiMeaning}`}>{q.kanjiItem.meaning}</strong>
                         <br />
-                        <span className="text-slate-600 mt-1 block">
+                        <span className={`mt-1 block ${theme.wordSubText}`}>
                           {q.kanjiItem.mnemonic}
                         </span>
                       </p>
                     ) : null}
 
                     {!q.vocabItem && q.kanjiItem && (
-                      <div className="flex flex-wrap gap-2 text-[10px] text-emerald-800 pt-1 font-mono font-medium">
+                      <div className="flex flex-wrap gap-2 text-[10px] text-emerald-500 pt-1 font-mono font-medium">
                         <span>중요 음독: {q.kanjiItem.onyomi} ({q.kanjiItem.onyomiKorean})</span>
                         <span>•</span>
                         <span>중요 훈독: {q.kanjiItem.hunyomi?.replace(/\./g, "")} ({q.kanjiItem.hunyomiKorean})</span>

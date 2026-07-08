@@ -18,6 +18,7 @@ import { ShopView } from "./components/ShopView";
 import { BookmarksView } from "./components/BookmarksView";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { useConfirmStore } from "./stores/confirmStore";
+import { getTheme } from "./theme";
 
 export default function App() {
   const [isInitCompleted, setIsInitCompleted] = useState(false);
@@ -41,6 +42,8 @@ export default function App() {
   const {
     currentUser, setCurrentUser, isReviewMode, setIsReviewMode, logout
   } = useAuthStore();
+
+  const theme = getTheme(currentTheme);
 
   // Hook for speech synthesis
   const { speakJapanese } = useSpeech(currentUser?.username);
@@ -252,9 +255,9 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-amber-100 selection:text-amber-950 flex flex-col">
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${theme.globalBg}`}>
       {/* Upper Navigation Bar */}
-      <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-200/80 z-40 px-4 py-3 sm:px-6">
+      <header className={`sticky top-0 z-40 px-4 py-3 sm:px-6 transition-all duration-300 ${theme.headerBgClass}`}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <button
             onClick={handleGoHome}
@@ -264,7 +267,7 @@ export default function App() {
               <BookMarked className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-sm sm:text-lg font-display font-bold text-slate-900 tracking-tight">
+              <h1 className={`text-sm sm:text-lg font-display font-bold tracking-tight transition-colors duration-300 ${theme.headerTextClass}`}>
                 <span className="hidden sm:inline">일본어 한자 & 단어 마스터</span>
                 <span className="inline sm:hidden">일본어 한자 & 단어</span>
               </h1>
@@ -274,15 +277,15 @@ export default function App() {
 
           <div className="flex items-center gap-1.5 sm:gap-2">
             {currentUser && (
-              <div className="flex items-center gap-2 sm:gap-3 mr-1 sm:mr-2 border-r border-slate-200 pr-2 sm:pr-3">
+              <div className="flex items-center gap-2 sm:gap-3 mr-1 sm:mr-2">
                 {/* Points GNB Badge */}
                 <div
-                  className="inline-flex bg-amber-50 hover:bg-amber-100 border border-amber-200/70 shadow-2xs px-2.5 py-1 rounded-xl items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                  className={`inline-flex border shadow-2xs px-2.5 py-1 rounded-xl items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme.wordPanelBg} ${theme.tableBorder}`}
                   onClick={() => setPhase('shop')}
                   title="테마 상점 이동"
                 >
-                  <span className="text-[9px] font-bold text-amber-600 uppercase tracking-widest hidden xs:inline">Points</span>
-                  <strong className="text-slate-800 font-mono font-black text-xs">
+                  <span className={`text-[9px] font-bold uppercase tracking-widest hidden xs:inline ${theme.wordSubText}`}>Points</span>
+                  <strong className={`font-mono font-black text-xs ${theme.breakdownKanjiMeaning}`}>
                     {points.toLocaleString()} <span className="text-amber-500">P</span>
                   </strong>
                 </div>
@@ -296,16 +299,19 @@ export default function App() {
                 />
               </div>
             )}
+            {currentUser && (phase === 'studying' || phase === 'jlpt' || phase === 'testing' || phase === 'result' || (apiSource === 'fallback' && phase !== 'config')) && (
+              <div className={`h-5 border-r mx-1.5 sm:mx-2 transition-colors duration-300 ${theme.tableBorder}`} />
+            )}
             {(phase === 'studying' || phase === 'jlpt') && (
               <>
-                <span className="hidden sm:inline text-xs bg-amber-50 border border-amber-200 text-amber-800 px-2.5 py-1 rounded-full font-mono font-medium">
+                <span className={`hidden sm:inline text-xs border px-2.5 py-1 rounded-full font-mono font-semibold ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning}`}>
                   {phase === 'jlpt'
                     ? `JLPT ${selectedJlptLevel} 테스트: ${currentJlptIndex + 1} / ${jlptQuestions.length}`
                     : studyMode === 'vocab'
                       ? `공부 단계: ${currentVocabIndex + 1} / ${vocabList.length}`
                       : `공부 단계: ${currentKanjiIndex + 1} / ${kanjiList.length}`}
                 </span>
-                <span className="inline sm:hidden text-[10px] bg-amber-50 border border-amber-200 text-amber-800 px-2 py-0.5 rounded-full font-mono font-semibold">
+                <span className={`inline sm:hidden text-[10px] border px-2 py-0.5 rounded-full font-mono font-semibold ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning}`}>
                   {phase === 'jlpt'
                     ? `JLPT ${selectedJlptLevel}: ${currentJlptIndex + 1}/${jlptQuestions.length}`
                     : studyMode === 'vocab'
@@ -316,16 +322,16 @@ export default function App() {
             )}
             {phase === 'testing' && (
               <>
-                <span className="hidden sm:inline text-xs bg-blue-50 border border-blue-200 text-blue-800 px-2.5 py-1 rounded-full font-mono font-medium">
+                <span className={`hidden sm:inline text-xs border px-2.5 py-1 rounded-full font-mono font-semibold ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning}`}>
                   테스트 단계: {currentQuestionIndex + 1} / {questions.length}
                 </span>
-                <span className="inline sm:hidden text-[10px] bg-blue-50 border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full font-mono font-semibold">
+                <span className={`inline sm:hidden text-[10px] border px-2 py-0.5 rounded-full font-mono font-semibold ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning}`}>
                   테스트: {currentQuestionIndex + 1}/{questions.length}
                 </span>
               </>
             )}
             {phase === 'result' && (
-              <span className="text-[10px] sm:text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-mono font-medium">
+              <span className={`text-[10px] sm:text-xs border px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-mono font-semibold ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning}`}>
                 결과 리포트
               </span>
             )}
@@ -462,6 +468,7 @@ export default function App() {
                   startVocabStudy={startVocabStudy}
                   handleGoHome={handleGoHome}
                   studyMode={studyMode}
+                  currentTheme={currentTheme}
                 />
               )}
 
@@ -471,6 +478,7 @@ export default function App() {
               {phase === 'settings' && currentUser && (
                 <SettingsView
                   username={currentUser.username}
+                  currentTheme={currentTheme}
                   onGoBack={handleGoHome}
                   onLogout={() => {
                     logout();
@@ -526,7 +534,7 @@ export default function App() {
       </main>
 
       {/* Elegant minimalist bottom footer */}
-      <footer className="bg-white border-t border-slate-200/80 p-4 text-center text-xs text-slate-400 space-y-1">
+      <footer className={`p-4 text-center text-xs space-y-1 transition-all duration-300 ${theme.footerBgClass}`}>
         <p className="font-medium">일본어 한자 & 단어 마스터 © {new Date().getFullYear()} Japanese Kanji & Word Workspace</p>
       </footer>
 

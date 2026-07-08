@@ -25,13 +25,13 @@ export function JlptResultScore({
   const scorePercent = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm text-center space-y-4 relative">
+    <div className={`border rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs text-center space-y-4 relative transition-colors duration-300 ${theme.cardContainer}`}>
       {/* 상단 무지개 색상 데코레이션 탑라인 */}
       <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 via-rose-400 to-indigo-500" />
 
       {/* 점수 텍스트를 담은 동그라미 판 */}
-      <div className="mx-auto w-24 h-24 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center relative">
-        <div className="text-2xl font-display font-extrabold text-slate-900 font-mono whitespace-nowrap">
+      <div className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center relative border ${theme.wordPanelBg} ${theme.tableBorder}`}>
+        <div className={`text-2xl font-display font-extrabold font-mono whitespace-nowrap ${theme.breakdownKanjiMeaning}`}>
           {correctCount} / {totalCount}
         </div>
         <div className={`absolute -bottom-1 -right-1 rounded-full p-1 shadow ${scorePercent >= 80 ? 'bg-emerald-500 text-white' : scorePercent >= 40 ? 'bg-amber-500 text-white' : 'bg-red-500 text-white'}`}>
@@ -41,10 +41,10 @@ export function JlptResultScore({
 
       {/* 성적 요약 텍스트 설명글 */}
       <div className="space-y-1">
-        <h3 className="text-2xl font-bold text-slate-900">
+        <h3 className={`text-2xl font-bold transition-colors duration-300 ${theme.breakdownKanjiMeaning}`}>
           JLPT {level} 기출 실전 성적 : {scorePercent}점!
         </h3>
-        <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+        <p className={`text-sm max-w-md mx-auto leading-relaxed transition-colors duration-300 ${theme.wordSubText}`}>
           {scorePercent === 100
             ? "대단합니다! 해당 레벨의 핵심 어휘를 완벽히 마스터하셨습니다. 다음 등급에도 도전해 보세요!"
             : "오답 해설을 통해 헷갈렸던 어휘를 정리해 보세요. 고빈도 단어는 합격의 가장 든든한 기초가 됩니다."}
@@ -57,7 +57,7 @@ export function JlptResultScore({
         <button
           onClick={startJlptQuiz}
           disabled={isJlptLoading}
-          className="py-2.5 px-5 bg-slate-950 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-45"
+          className={`py-2.5 px-5 text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-45 ${theme.btnPrimary}`}
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isJlptLoading ? "animate-spin" : ""}`} />
           <span>한 번 더 응시하기</span>
@@ -66,7 +66,7 @@ export function JlptResultScore({
         {/* 세트 목록 홈으로 이동 버튼 */}
         <button
           onClick={handleGoHome}
-          className="py-2.5 px-5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+          className={`py-2.5 px-5 text-xs font-semibold rounded-xl transition-colors cursor-pointer ${theme.btnSecondary}`}
         >
           기출 세트 목록으로
         </button>
