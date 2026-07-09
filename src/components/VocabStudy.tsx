@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { VocabItem } from "../types";
 import { getTheme } from "../theme";
+import { ThemeParticles } from "./ThemeParticles";
 
 // 분할한 하위 컴포넌트들을 가져옴
 import { VocabProgressBar } from "./vocab/VocabProgressBar";
@@ -33,6 +34,8 @@ export function VocabStudy({
   bookmarkedVocabs,
   onToggleBookmark
 }: VocabStudyProps) {
+
+
   const currentVocab = vocabList[currentVocabIndex];
   const theme = getTheme(currentTheme);
 
@@ -55,35 +58,9 @@ export function VocabStudy({
         theme={theme}
       />
 
-      <div className={theme.cardContainer}>
+      <div className={`${theme.cardContainer} overflow-hidden relative ${currentTheme === 'golden_aura' ? 'golden-aura-card-glow' : ''}`}>
         {/* 테마별 배경 특수 시각 효과 */}
-        {theme.isSamurai && <div className="samurai-embers"></div>}
-        {theme.isYokai && (
-          <div className="yokai-wisps-container">
-            <div className="yokai-wisp yokai-wisp-1"></div>
-            <div className="yokai-wisp yokai-wisp-2"></div>
-            <div className="yokai-wisp yokai-wisp-3"></div>
-            <div className="yokai-wisp yokai-wisp-4"></div>
-          </div>
-        )}
-        {theme.isZen && (
-          <div className="zen-leaves">
-            <div className="leaf-1"></div>
-            <div className="leaf-2"></div>
-            <div className="leaf-3"></div>
-            <div className="leaf-4"></div>
-            <div className="leaf-5"></div>
-          </div>
-        )}
-        {theme.isChalkboard && (
-          <div className="chalkboard-dust-particles">
-            <div className="chalk-dust" style={{ left: '10%', animationDelay: '0s' }}></div>
-            <div className="chalk-dust" style={{ left: '30%', animationDelay: '-3s' }}></div>
-            <div className="chalk-dust" style={{ left: '50%', animationDelay: '-6s' }}></div>
-            <div className="chalk-dust" style={{ left: '70%', animationDelay: '-9s' }}></div>
-            <div className="chalk-dust" style={{ left: '90%', animationDelay: '-12s' }}></div>
-          </div>
-        )}
+        <ThemeParticles theme={currentTheme} />
 
         {/* 2. 단어 카드 상단 인덱스 및 품사 바 */}
         <VocabCardHeader

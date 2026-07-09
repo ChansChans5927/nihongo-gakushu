@@ -7,6 +7,22 @@ const router = express.Router();
 // Apply authMiddleware globally to all routes in this router
 router.use(authMiddleware as any);
 
+// Helper function to check if the 1.5x points density booster is active (>= 24 study days in the last 30 days)
+function checkDensityBooster(studyLogs: Record<string, number> | undefined, clientDateStr?: string): boolean {
+  if (!studyLogs) return false;
+  const baseDate = clientDateStr ? new Date(clientDateStr) : new Date();
+  let activeDaysCount = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(baseDate);
+    d.setDate(baseDate.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    if (studyLogs[dateStr] && studyLogs[dateStr] > 0) {
+      activeDaysCount++;
+    }
+  }
+  return activeDaysCount >= 24;
+}
+
 // GET Endpoint to fetch user progress
 router.get("/progress/get", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
@@ -26,7 +42,10 @@ router.get("/progress/get", async (req: AuthenticatedRequest, res) => {
       bookmarkedVocabs: progress?.bookmarkedVocabs || [],
       points: progress?.points || 0,
       unlockedThemes: progress?.unlockedThemes || ["default"],
-      currentTheme: progress?.currentTheme || "default"
+      currentTheme: progress?.currentTheme || "default",
+      studyLogs: progress?.studyLogs || {},
+      claimedWeeklyRewards: progress?.claimedWeeklyRewards || [],
+      claimedMilestones: progress?.claimedMilestones || []
     });
   } catch (err: any) {
     console.error("Get progress error:", err);
@@ -109,7 +128,7 @@ router.delete("/user", async (req: AuthenticatedRequest, res) => {
 // POST Endpoint to save user progress
 router.post("/progress/save", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
-  const { type, items } = req.body;
+  const { type, items, date } = req.body;
   if (!type || !Array.isArray(items)) {
     return res.json({ success: false, errorMsg: "올바르지 않은 요청 데이터입니다." });
   }
@@ -123,9 +142,17 @@ router.post("/progress/save", async (req: AuthenticatedRequest, res) => {
     const normalizedUsername = username.trim().toLowerCase();
     const field = type === "kanji" ? "masteredKanjis" : "masteredVocabs";
 
+    const updateDoc: any = {
+      $addToSet: { [field]: { $each: items } }
+    };
+
+    if (date && items.length > 0) {
+      updateDoc.$inc = { [`studyLogs.${date}`]: items.length };
+    }
+
     await db.collection("progress").updateOne(
       { username: normalizedUsername },
-      { $addToSet: { [field]: { $each: items } } },
+      updateDoc,
       { upsert: true }
     );
 
@@ -136,10 +163,10 @@ router.post("/progress/save", async (req: AuthenticatedRequest, res) => {
   }
 });
 
-// POST Endpoint to add points
+// POST Endpoint to add points (boosted if study density is high)
 router.post("/progress/addPoints", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
-  const { points } = req.body;
+  const { points, date } = req.body;
   if (typeof points !== "number" || points <= 0) {
     return res.json({ success: false, errorMsg: "올바르지 않은 포인트입니다." });
   }
@@ -151,15 +178,158 @@ router.post("/progress/addPoints", async (req: AuthenticatedRequest, res) => {
 
   try {
     const normalizedUsername = username.trim().toLowerCase();
+    const progress = await db.collection("progress").findOne({ username: normalizedUsername });
+    
+    // Check points density booster (>= 80% density in the last 30 days)
+    const hasBooster = checkDensityBooster(progress?.studyLogs, date);
+    const finalPoints = hasBooster ? Math.round(points * 1.5) : points;
+
+    const updateDoc: any = {
+      $inc: { points: finalPoints }
+    };
+
+    if (date) {
+      if (!updateDoc.$inc) updateDoc.$inc = {};
+      updateDoc.$inc[`studyLogs.${date}`] = 1; // Log at least 1 study event
+    }
+
     await db.collection("progress").updateOne(
       { username: normalizedUsername },
-      { $inc: { points: points } },
+      updateDoc,
       { upsert: true }
     );
-    res.json({ success: true });
+    res.json({ success: true, pointsAdded: finalPoints, boosterActive: hasBooster });
   } catch (err: any) {
     console.error("Add points error:", err);
     res.json({ success: false, errorMsg: `포인트 적립 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint to claim weekly perfect study reward (all 7 days of the week completed)
+router.post("/progress/claimWeekly", async (req: AuthenticatedRequest, res) => {
+  const username = req.user!.username;
+  const { weekStart } = req.body; // The YYYY-MM-DD Monday date string
+  if (!weekStart) {
+    return res.json({ success: false, errorMsg: "올바르지 않은 요청 데이터입니다." });
+  }
+
+  const db = getDB();
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    const progress = await db.collection("progress").findOne({ username: normalizedUsername });
+    if (!progress) {
+      return res.json({ success: false, errorMsg: "사용자 진행 기록을 찾을 수 없습니다." });
+    }
+
+    const claimedWeeklyRewards = progress.claimedWeeklyRewards || [];
+    if (claimedWeeklyRewards.includes(weekStart)) {
+      return res.json({ success: false, errorMsg: "이미 보상을 수령한 주간입니다." });
+    }
+
+    // Check all 7 days of the week starting at weekStart
+    const baseDate = new Date(weekStart);
+    const studyLogs = progress.studyLogs || {};
+    let perfect = true;
+    const missingDays: string[] = [];
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(baseDate);
+      d.setDate(baseDate.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+      if (!studyLogs[dateStr] || studyLogs[dateStr] <= 0) {
+        perfect = false;
+        missingDays.push(dateStr);
+      }
+    }
+
+    if (!perfect) {
+      return res.json({ success: false, errorMsg: `해당 주간에 학습 기록이 없는 날이 있습니다. (누락: ${missingDays.join(", ")})` });
+    }
+
+    await db.collection("progress").updateOne(
+      { username: normalizedUsername },
+      {
+        $inc: { points: 300 },
+        $addToSet: { claimedWeeklyRewards: weekStart } as any
+      }
+    );
+
+    res.json({ success: true, pointsAdded: 300 });
+  } catch (err: any) {
+    console.error("Claim weekly reward error:", err);
+    res.json({ success: false, errorMsg: `주간 완주 보상 처리 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+// POST Endpoint to claim cumulative study days milestone reward
+router.post("/progress/claimMilestone", async (req: AuthenticatedRequest, res) => {
+  const username = req.user!.username;
+  const { milestone } = req.body; // "15", "30", "100"
+  if (!["15", "30", "100"].includes(milestone)) {
+    return res.json({ success: false, errorMsg: "올바르지 않은 마일스톤 종류입니다." });
+  }
+
+  const db = getDB();
+  if (!db) {
+    return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
+  }
+
+  try {
+    const normalizedUsername = username.trim().toLowerCase();
+    const progress = await db.collection("progress").findOne({ username: normalizedUsername });
+    if (!progress) {
+      return res.json({ success: false, errorMsg: "사용자 진행 기록을 찾을 수 없습니다." });
+    }
+
+    const claimedMilestones = progress.claimedMilestones || [];
+    if (claimedMilestones.includes(milestone)) {
+      return res.json({ success: false, errorMsg: "이미 보상을 수령한 마일스톤입니다." });
+    }
+
+    const studyLogs = progress.studyLogs || {};
+    const totalStudyDays = Object.keys(studyLogs).filter(d => studyLogs[d] > 0).length;
+    const requiredDays = parseInt(milestone);
+
+    if (totalStudyDays < requiredDays) {
+      return res.json({ success: false, errorMsg: `아직 달성 조건인 ${requiredDays}일 공부를 완료하지 못했습니다. (현재: ${totalStudyDays}일)` });
+    }
+
+    let rewardPoints = 0;
+    const updateQuery: any = {
+      $addToSet: { claimedMilestones: milestone }
+    };
+
+    if (milestone === "15") {
+      rewardPoints = 500;
+    } else if (milestone === "30") {
+      if (!updateQuery.$addToSet) updateQuery.$addToSet = {};
+      updateQuery.$addToSet.unlockedThemes = "golden_sakura";
+    } else if (milestone === "100") {
+      if (!updateQuery.$addToSet) updateQuery.$addToSet = {};
+      updateQuery.$addToSet.unlockedThemes = "golden_aura";
+    }
+
+    if (rewardPoints > 0) {
+      updateQuery.$inc = { points: rewardPoints };
+    }
+
+    await db.collection("progress").updateOne(
+      { username: normalizedUsername },
+      updateQuery
+    );
+
+    res.json({ 
+      success: true, 
+      pointsAdded: rewardPoints, 
+      themeUnlocked: milestone === "30" ? "golden_sakura" : milestone === "100" ? "golden_aura" : null 
+    });
+  } catch (err: any) {
+    console.error("Claim milestone reward error:", err);
+    res.json({ success: false, errorMsg: `마일스톤 보상 처리 중 오류가 발생했습니다: ${err.message}` });
   }
 });
 

@@ -104,7 +104,10 @@ export const createJlptSlice: StateCreator<StudyState, [], [], JlptSlice> = (set
         await fetch("/api/progress/addPoints", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ points: correctCount * 10 })
+          body: JSON.stringify({ 
+            points: correctCount * 10,
+            date: new Date().toLocaleDateString('sv')
+          })
         });
         await get().fetchUserProgress(currentUser.username);
       } catch (err) {

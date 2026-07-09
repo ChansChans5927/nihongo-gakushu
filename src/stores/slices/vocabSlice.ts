@@ -106,7 +106,8 @@ export const createVocabSlice: StateCreator<StudyState, [], [], VocabSlice> = (s
             type: "vocab",
             items: newlyLearned,
             cardDetails: masteredDetails,
-            quizDetails: masteredQuizzes
+            quizDetails: masteredQuizzes,
+            date: new Date().toLocaleDateString('sv')
           })
         });
       } catch (err) {

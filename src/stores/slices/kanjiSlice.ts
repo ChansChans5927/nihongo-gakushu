@@ -102,7 +102,8 @@ export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (s
             username: currentUser.username,
             type: "kanji",
             items: newlyLearned,
-            cardDetails: masteredDetails
+            cardDetails: masteredDetails,
+            date: new Date().toLocaleDateString('sv')
           })
         });
       } catch (err) {

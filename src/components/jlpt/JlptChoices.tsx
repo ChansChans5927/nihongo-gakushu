@@ -90,6 +90,61 @@ export function JlptChoices({
           particle.remove();
         }, 800);
       }
+    } else if (theme.key === 'golden_sakura') {
+      const rect = buttonEl.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      // Sakura Burst Particles
+      const particleCount = 12;
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'sakura-burst-particle';
+        particle.style.left = `${clickX}px`;
+        particle.style.top = `${clickY}px`;
+
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 30 + Math.random() * 80;
+        const tx = Math.cos(angle) * velocity;
+        const ty = Math.sin(angle) * velocity;
+        const size = 6 + Math.random() * 8;
+        const rot = (Math.random() - 0.5) * 360;
+
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.setProperty('--tx', `${tx}px`);
+        particle.style.setProperty('--ty', `${ty}px`);
+        particle.style.setProperty('--rot', `${rot}deg`);
+
+        buttonEl.appendChild(particle);
+
+        setTimeout(() => {
+          particle.remove();
+        }, 800);
+      }
+
+      // Add pulse shadow class
+      buttonEl.classList.add('sakura-select-pulse');
+      setTimeout(() => buttonEl.classList.remove('sakura-select-pulse'), 800);
+    } else if (theme.key === 'golden_aura') {
+      const rect = buttonEl.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      // Aura Shockwave
+      const shockwave = document.createElement('div');
+      shockwave.className = 'aura-shockwave';
+      shockwave.style.left = `${clickX}px`;
+      shockwave.style.top = `${clickY}px`;
+      shockwave.style.width = '20px';
+      shockwave.style.height = '20px';
+      
+      buttonEl.appendChild(shockwave);
+      setTimeout(() => shockwave.remove(), 700);
+
+      // Add halo button flash class
+      buttonEl.classList.add('aura-select-flash');
+      setTimeout(() => buttonEl.classList.remove('aura-select-flash'), 800);
     }
 
     // 부모 컴포넌트의 선택 이벤트 전파

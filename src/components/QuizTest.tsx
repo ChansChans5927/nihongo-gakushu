@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { HelpCircle, CheckCircle2, ArrowRight, Award, Sparkles, X } from "lucide-react";
 import { Question } from "../types";
 import { getTheme } from "../theme";
+import { ThemeParticles } from "./ThemeParticles";
 
 interface QuizTestProps {
   questions: Question[];
@@ -33,6 +34,8 @@ export function QuizTest({
   const yokaiAudioRef = useRef<HTMLAudioElement | null>(null);
   const zenAudioRef = useRef<HTMLAudioElement | null>(null);
   const chalkboardAudioRef = useRef<HTMLAudioElement | null>(null);
+  const sakuraAudioRef = useRef<HTMLAudioElement | null>(null);
+  const auraAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initialize audio once
   if (typeof window !== 'undefined') {
@@ -51,6 +54,14 @@ export function QuizTest({
     if (!chalkboardAudioRef.current) {
       chalkboardAudioRef.current = new Audio("/sounds/chalk.wav");
       chalkboardAudioRef.current.volume = 0.7;
+    }
+    if (!sakuraAudioRef.current) {
+      sakuraAudioRef.current = new Audio("/sounds/ding.wav");
+      sakuraAudioRef.current.volume = 0.6;
+    }
+    if (!auraAudioRef.current) {
+      auraAudioRef.current = new Audio("/sounds/aura.wav");
+      auraAudioRef.current.volume = 0.55;
     }
   }
 
@@ -86,6 +97,16 @@ export function QuizTest({
         chalkboardAudioRef.current.currentTime = 0;
         chalkboardAudioRef.current.play().catch(e => console.log("Audio play failed:", e));
       }
+    } else if (currentTheme === 'golden_sakura') {
+      if (sakuraAudioRef.current) {
+        sakuraAudioRef.current.currentTime = 0;
+        sakuraAudioRef.current.play().catch(e => console.log("Audio play failed:", e));
+      }
+    } else if (currentTheme === 'golden_aura') {
+      if (auraAudioRef.current) {
+        auraAudioRef.current.currentTime = 0;
+        auraAudioRef.current.play().catch(e => console.log("Audio play failed:", e));
+      }
     }
     handleSelectAnswer(choiceIdx);
   };
@@ -119,35 +140,9 @@ export function QuizTest({
 
       {/* Quiz Card View Component */}
       <div
-        className={`${theme.cardContainer} overflow-hidden p-5 sm:p-6 space-y-6 relative ${isShaking && isSamurai ? "shake-effect" : ""}`}
+        className={`${theme.cardContainer} overflow-hidden p-5 sm:p-6 space-y-6 relative ${isShaking && isSamurai ? "shake-effect" : ""} ${currentTheme === 'golden_aura' ? 'golden-aura-card-glow' : ''}`}
       >
-        {isSamurai && <div className="samurai-embers"></div>}
-        {isYokai && (
-          <div className="yokai-wisps-container">
-            <div className="yokai-wisp yokai-wisp-1"></div>
-            <div className="yokai-wisp yokai-wisp-2"></div>
-            <div className="yokai-wisp yokai-wisp-3"></div>
-            <div className="yokai-wisp yokai-wisp-4"></div>
-          </div>
-        )}
-        {isZen && (
-          <div className="zen-leaves">
-            <div className="leaf-1"></div>
-            <div className="leaf-2"></div>
-            <div className="leaf-3"></div>
-            <div className="leaf-4"></div>
-            <div className="leaf-5"></div>
-          </div>
-        )}
-        {theme.isChalkboard && (
-          <div className="chalkboard-dust-particles">
-            <div className="chalk-dust" style={{ left: '10%', animationDelay: '0s' }}></div>
-            <div className="chalk-dust" style={{ left: '30%', animationDelay: '-3s' }}></div>
-            <div className="chalk-dust" style={{ left: '50%', animationDelay: '-6s' }}></div>
-            <div className="chalk-dust" style={{ left: '70%', animationDelay: '-9s' }}></div>
-            <div className="chalk-dust" style={{ left: '90%', animationDelay: '-12s' }}></div>
-          </div>
-        )}
+        <ThemeParticles theme={currentTheme} />
         {/* Visual badge - Hanko style */}
         <span className={theme.sealBadgeClass}>
           Question 0{currentQuestion.id}
@@ -228,7 +223,21 @@ export function QuizTest({
             </div>
           ) : (
             <>
-              <div lang="ja" className={`text-4xl sm:text-5xl font-extrabold select-none text-center ${isSamurai ? "font-serif text-amber-950 drop-shadow-sm" : isYokai ? "font-serif text-[#f8f9fa] drop-shadow-md shadow-[#48cae4]" : isZen ? "font-serif text-emerald-950 drop-shadow-xs" : theme.isChalkboard ? "font-serif text-slate-100 drop-shadow-[0_2px_4px_rgba(255,255,255,0.15)]" : "font-serif text-slate-800"}`}>
+              <div lang="ja" className={`text-4xl sm:text-5xl font-extrabold select-none text-center ${
+                isSamurai 
+                  ? "font-serif text-amber-950 drop-shadow-sm" 
+                  : isYokai 
+                    ? "font-serif text-[#f8f9fa] drop-shadow-md shadow-[#48cae4]" 
+                    : isZen 
+                      ? "font-serif text-emerald-950 drop-shadow-xs" 
+                      : theme.isChalkboard 
+                        ? "font-serif text-slate-100 drop-shadow-[0_2px_4px_rgba(255,255,255,0.15)]" 
+                        : currentTheme === 'golden_sakura'
+                          ? "font-serif text-rose-900 drop-shadow-xs"
+                          : currentTheme === 'golden_aura'
+                            ? "font-serif text-amber-400 drop-shadow-[0_0_12px_rgba(245,158,11,0.65)]"
+                            : "font-serif text-slate-800"
+              }`}>
                 {currentQuestion.type === 'kanji_match' ? (
                   <span className={`font-sans tracking-widest animate-pulse ${theme.quizBigDisplayHint}`}>?</span>
                 ) : (
@@ -339,10 +348,67 @@ export function QuizTest({
                         particle.remove();
                       }, 800);
                     }
+                  } else if (currentTheme === 'golden_sakura') {
+                    const buttonEl = e.currentTarget;
+                    const rect = buttonEl.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const clickY = e.clientY - rect.top;
+
+                    // Sakura Burst Particles
+                    const particleCount = 12;
+                    for (let i = 0; i < particleCount; i++) {
+                      const particle = document.createElement('div');
+                      particle.className = 'sakura-burst-particle';
+                      particle.style.left = `${clickX}px`;
+                      particle.style.top = `${clickY}px`;
+
+                      const angle = Math.random() * Math.PI * 2;
+                      const velocity = 30 + Math.random() * 80; // Spread distance
+                      const tx = Math.cos(angle) * velocity;
+                      const ty = Math.sin(angle) * velocity;
+                      const size = 6 + Math.random() * 8; // Particle size
+                      const rot = (Math.random() - 0.5) * 360; // Rotation
+
+                      particle.style.width = `${size}px`;
+                      particle.style.height = `${size}px`;
+                      particle.style.setProperty('--tx', `${tx}px`);
+                      particle.style.setProperty('--ty', `${ty}px`);
+                      particle.style.setProperty('--rot', `${rot}deg`);
+
+                      buttonEl.appendChild(particle);
+
+                      setTimeout(() => {
+                        particle.remove();
+                      }, 800);
+                    }
+
+                    // Add pulse shadow class
+                    buttonEl.classList.add('sakura-select-pulse');
+                    setTimeout(() => buttonEl.classList.remove('sakura-select-pulse'), 800);
+                  } else if (currentTheme === 'golden_aura') {
+                    const buttonEl = e.currentTarget;
+                    const rect = buttonEl.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const clickY = e.clientY - rect.top;
+
+                    // Aura Shockwave
+                    const shockwave = document.createElement('div');
+                    shockwave.className = 'aura-shockwave';
+                    shockwave.style.left = `${clickX}px`;
+                    shockwave.style.top = `${clickY}px`;
+                    shockwave.style.width = '20px';
+                    shockwave.style.height = '20px';
+                    
+                    buttonEl.appendChild(shockwave);
+                    setTimeout(() => shockwave.remove(), 700);
+
+                    // Add halo button flash class
+                    buttonEl.classList.add('aura-select-flash');
+                    setTimeout(() => buttonEl.classList.remove('aura-select-flash'), 800);
                   }
                   onSelect(choiceIdx);
                 }}
-                className={`w-full text-left font-bold transition-all duration-200 flex items-center justify-between cursor-pointer ${isKanjiMatch ? "py-3.5 px-4 sm:py-5 sm:px-6" : "p-3 sm:p-4 text-sm"
+                className={`w-full text-left font-bold transition-all duration-200 flex items-center justify-between cursor-pointer relative overflow-hidden ${isKanjiMatch ? "py-3.5 px-4 sm:py-5 sm:px-6" : "p-3 sm:p-4 text-sm"
                   } ${isSelected ? selectedStyles : baseStyles} ${customClasses
                   } ${isSlashing ? "samurai-slash-effect scale-[0.98]" : ""}`}
               >

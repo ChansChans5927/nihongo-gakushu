@@ -152,7 +152,10 @@ export const useStudyStore = create<StudyState>()((...args) => {
             await fetch("/api/progress/addPoints", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ points: correctCount * 10 })
+              body: JSON.stringify({ 
+                points: correctCount * 10,
+                date: new Date().toLocaleDateString('sv')
+              })
             });
             await get().fetchUserProgress(currentUser.username);
           } catch (err) {
@@ -173,7 +176,10 @@ export const useStudyStore = create<StudyState>()((...args) => {
             await fetch("/api/progress/addPoints", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ points: correctCount * 10 })
+              body: JSON.stringify({ 
+                points: correctCount * 10,
+                date: new Date().toLocaleDateString('sv')
+              })
             });
             await get().fetchUserProgress(currentUser.username);
           } catch (err) {

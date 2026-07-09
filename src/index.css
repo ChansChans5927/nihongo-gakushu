@@ -738,3 +738,175 @@ button, [role="button"] {
     opacity: 0;
   }
 }
+
+/* ========================================================
+   Golden Sakura Theme V4 (Cherry Blossom & Gold Spark)
+   ======================================================== */
+.golden-sakura-petal {
+  position: absolute;
+  background: linear-gradient(135deg, #fbcfe8 20%, #f472b6 70%, #fbbf24 100%);
+  border-radius: 50% 0 50% 50%;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(244, 63, 94, 0.12));
+  animation: sakura-petal-fall 12s linear infinite;
+  opacity: 0;
+  z-index: 0;
+}
+
+@keyframes sakura-petal-fall {
+  0% {
+    top: -5%;
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(-15deg) scale(0.8) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.85;
+  }
+  90% {
+    opacity: 0.85;
+  }
+  100% {
+    top: 105%;
+    transform: rotateX(360deg) rotateY(180deg) rotateZ(180deg) scale(0.4) translateX(40px);
+    opacity: 0;
+  }
+}
+
+/* ========================================================
+   Golden Aura Theme V4 (Deep Dark & Majestic Gold)
+   ======================================================== */
+@keyframes golden-aura-pulse {
+  0% {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.15), inset 0 0 10px rgba(245, 158, 11, 0.03);
+    border-color: rgba(245, 158, 11, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.4), inset 0 0 20px rgba(245, 158, 11, 0.1);
+    border-color: rgba(251, 191, 36, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.15), inset 0 0 10px rgba(245, 158, 11, 0.03);
+    border-color: rgba(245, 158, 11, 0.2);
+  }
+}
+
+.golden-aura-card-glow {
+  animation: golden-aura-pulse 4s ease-in-out infinite;
+}
+
+.golden-aura-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: radial-gradient(circle, #fde047 20%, #f59e0b 60%, transparent 100%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(0.5px) drop-shadow(0 0 5px #f59e0b);
+  animation: aura-particle-rise 9s ease-in-out infinite;
+  opacity: 0;
+  z-index: 0;
+}
+
+@keyframes aura-particle-rise {
+  0% {
+    top: 105%;
+    transform: scale(0.6) translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.75;
+  }
+  85% {
+    opacity: 0.75;
+  }
+  100% {
+    top: -5%;
+    transform: scale(1.2) translateX(var(--drift, 30px));
+    opacity: 0;
+  }
+}
+
+/* ========================================================
+   Golden Sakura & Golden Aura Premium Selection Animations
+   ======================================================== */
+
+/* Sakura Blossom Burst Particle */
+.sakura-burst-particle {
+  position: absolute;
+  background: linear-gradient(135deg, #fbcfe8 20%, #f472b6 70%, #fbbf24 100%);
+  border-radius: 50% 0 50% 50%;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 6px rgba(244, 63, 94, 0.4));
+  z-index: 10;
+  animation: sakura-burst-fly 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes sakura-burst-fly {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 0) scale(0.5) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(1.2) rotate(var(--rot));
+    opacity: 0;
+  }
+}
+
+.sakura-select-pulse {
+  animation: sakura-pulse-glow 0.8s ease-out forwards;
+}
+
+@keyframes sakura-pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0px rgba(244, 114, 182, 0.6), inset 0 0 10px rgba(244, 114, 182, 0.3);
+    border-color: #f472b6 !important;
+  }
+  100% {
+    box-shadow: 0 0 0 16px rgba(244, 114, 182, 0), inset 0 0 0px rgba(244, 114, 182, 0);
+    border-color: transparent !important;
+  }
+}
+
+/* Aura Energy Shockwave */
+.aura-shockwave {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  border: 2px solid #fde047;
+  background: radial-gradient(circle, rgba(253, 224, 71, 0.4) 0%, rgba(245, 158, 11, 0.1) 60%, transparent 100%);
+  pointer-events: none;
+  z-index: 5;
+  animation: aura-shockwave-expand 0.7s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+  filter: drop-shadow(0 0 10px #f59e0b) drop-shadow(0 0 20px #d97706);
+}
+
+@keyframes aura-shockwave-expand {
+  0% {
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 1;
+    border-width: 4px;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(6);
+    opacity: 0;
+    border-width: 0px;
+  }
+}
+
+.aura-select-flash {
+  animation: aura-intense-flash 0.8s ease-out forwards;
+}
+
+@keyframes aura-intense-flash {
+  0% {
+    box-shadow: 0 0 0 0px rgba(245, 158, 11, 0.9), inset 0 0 20px rgba(245, 158, 11, 0.6);
+    border-color: #fde047 !important;
+    background-color: rgba(245, 158, 11, 0.2) !important;
+  }
+  100% {
+    box-shadow: 0 0 0 20px rgba(245, 158, 11, 0), inset 0 0 0px rgba(245, 158, 11, 0);
+    border-color: transparent !important;
+    background-color: transparent !important;
+  }
+}

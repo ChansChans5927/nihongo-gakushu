@@ -12,6 +12,7 @@ import {
   History
 } from "lucide-react";
 import { getTheme } from "../theme";
+import { StudyGrass } from "./StudyGrass";
 
 interface MainConfigProps {
   kanjiCount: number;
@@ -616,6 +617,10 @@ export function MainConfig({
         </div>
       )}
 
+      {/* 📅 학습 잔디 성장판 및 보상 보드 */}
+      <div className="mt-8">
+        <StudyGrass />
+      </div>
 
     </motion.div>
   );

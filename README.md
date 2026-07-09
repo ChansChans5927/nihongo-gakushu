@@ -68,3 +68,10 @@ https://nihongo-gakushu.onrender.com
   * [writing-chalk-med-03.wav](https://freesound.org/s/377836/) by [newagesoup](https://freesound.org/users/newagesoup/)
   * Licensed under [Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
 
+* **Bell Ding Sound Effect (골든 사쿠라 효과음)**:
+  * [bell ding 1.wav](https://freesound.org/s/611113/) by [5ro4](https://freesound.org/users/5ro4/)
+  * Licensed under [Creative Commons 0 (CC0 1.0)](https://creativecommons.org/publicdomain/zero/1.0/)
+
+* **Crystal Glass Sound Effect (황금빛 오라 효과음)**:
+  * [crystal_glass.wav](https://freesound.org/s/35631/) by [reinsamba](https://freesound.org/users/reinsamba/)
+  * Licensed under [Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)

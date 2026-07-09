@@ -70,6 +70,9 @@ export interface ProgressSlice {
   points: number;                                                  // 유저 포인트
   unlockedThemes: string[];                                        // 해금된 테마 목록
   currentTheme: string;                                            // 현재 적용 테마
+  studyLogs: { [date: string]: number };                            // 일별 학습 기록 (YYYY-MM-DD -> 수량)
+  claimedWeeklyRewards: string[];                                  // 수령 완료한 주간 보상 (월요일 날짜 문자열)
+  claimedMilestones: string[];                                     // 수령 완료한 마일스톤 ("15", "30", "100")
 
   setCurrentTheme: (theme: string) => void;                        // 테마 설정
   setUnlockedThemes: (themes: string[]) => void;                   // 해금 테마 설정
@@ -77,6 +80,8 @@ export interface ProgressSlice {
   fetchUserProgress: (username: string) => Promise<void>;          // 서버에서 진행도 불러오기
   resetProgressState: () => void;                                  // 진행도 전체 초기화
   handleToggleBookmark: (type: "kanji" | "vocab", item: string) => Promise<void>; // 북마크 토글
+  claimWeeklyReward: (weekStart: string) => Promise<boolean>;      // 주간 완주 보상 수령
+  claimMilestoneReward: (milestone: string) => Promise<boolean>;   // 누적 마일스톤 보상 수령
 }
 
 // ─────────────────────────────────────────────

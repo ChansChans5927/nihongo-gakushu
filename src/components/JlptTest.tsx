@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import { CornerDownRight } from "lucide-react";
 import { JlptQuestion } from "../types";
 import { getTheme } from "../theme";
+import { ThemeParticles } from "./ThemeParticles";
 
 // 분리한 하위 컴포넌트 임포트
 import { JlptProgressBar } from "./jlpt/JlptProgressBar";
@@ -54,6 +55,8 @@ export function JlptTest({
   const yokaiAudioRef = useRef<HTMLAudioElement | null>(null);
   const zenAudioRef = useRef<HTMLAudioElement | null>(null);
   const chalkboardAudioRef = useRef<HTMLAudioElement | null>(null);
+  const sakuraAudioRef = useRef<HTMLAudioElement | null>(null);
+  const auraAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // 클라이언트 환경에서 효과음 오디오 객체 싱글톤 성격 초기화
   if (typeof window !== 'undefined') {
@@ -72,6 +75,14 @@ export function JlptTest({
     if (!chalkboardAudioRef.current) {
       chalkboardAudioRef.current = new Audio("/sounds/chalk.wav");
       chalkboardAudioRef.current.volume = 0.7;
+    }
+    if (!sakuraAudioRef.current) {
+      sakuraAudioRef.current = new Audio("/sounds/ding.wav");
+      sakuraAudioRef.current.volume = 0.6;
+    }
+    if (!auraAudioRef.current) {
+      auraAudioRef.current = new Audio("/sounds/aura.wav");
+      auraAudioRef.current.volume = 0.55;
     }
   }
 
@@ -111,6 +122,16 @@ export function JlptTest({
         chalkboardAudioRef.current.currentTime = 0;
         chalkboardAudioRef.current.play().catch(e => console.log("Audio play failed:", e));
       }
+    } else if (currentTheme === 'golden_sakura') {
+      if (sakuraAudioRef.current) {
+        sakuraAudioRef.current.currentTime = 0;
+        sakuraAudioRef.current.play().catch(e => console.log("Audio play failed:", e));
+      }
+    } else if (currentTheme === 'golden_aura') {
+      if (auraAudioRef.current) {
+        auraAudioRef.current.currentTime = 0;
+        auraAudioRef.current.play().catch(e => console.log("Audio play failed:", e));
+      }
     }
     handleSelectJlptAnswer(choiceIdx);
   };
@@ -140,36 +161,10 @@ export function JlptTest({
           />
 
           <div 
-            className={`${theme.cardContainer} overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-6 relative ${isShaking && isSamurai ? "shake-effect" : ""}`}
+            className={`${theme.cardContainer} overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-6 relative ${isShaking && isSamurai ? "shake-effect" : ""} ${currentTheme === 'golden_aura' ? 'golden-aura-card-glow' : ''}`}
           >
             {/* 테마 백그라운드 특수 시각 효과 */}
-            {isSamurai && <div className="samurai-embers"></div>}
-            {isYokai && (
-              <div className="yokai-wisps-container">
-                <div className="yokai-wisp yokai-wisp-1"></div>
-                <div className="yokai-wisp yokai-wisp-2"></div>
-                <div className="yokai-wisp yokai-wisp-3"></div>
-                <div className="yokai-wisp yokai-wisp-4"></div>
-              </div>
-            )}
-            {isZen && (
-              <div className="zen-leaves">
-                <div className="leaf-1"></div>
-                <div className="leaf-2"></div>
-                <div className="leaf-3"></div>
-                <div className="leaf-4"></div>
-                <div className="leaf-5"></div>
-              </div>
-            )}
-            {theme.isChalkboard && (
-              <div className="chalkboard-dust-particles">
-                <div className="chalk-dust" style={{ left: '10%', animationDelay: '0s' }}></div>
-                <div className="chalk-dust" style={{ left: '30%', animationDelay: '-3s' }}></div>
-                <div className="chalk-dust" style={{ left: '50%', animationDelay: '-6s' }}></div>
-                <div className="chalk-dust" style={{ left: '70%', animationDelay: '-9s' }}></div>
-                <div className="chalk-dust" style={{ left: '90%', animationDelay: '-12s' }}></div>
-              </div>
-            )}
+            <ThemeParticles theme={currentTheme} />
 
             {/* 문항 번호 표기 및 나가기 컨트롤 바 */}
             <div className="flex items-center justify-between border-b border-slate-100/20 pb-3 relative z-10">

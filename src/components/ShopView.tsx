@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { CheckCircle2, Sparkles, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Sparkles, ArrowLeft, Lock } from "lucide-react";
 import { getTheme } from "../theme";
 
 interface ShopViewProps {
@@ -329,6 +329,104 @@ export function ShopView({
                   className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   1,200 P로 구매하기
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Golden Sakura Theme */}
+          <div className={`flex flex-col justify-between border rounded-2xl p-5 relative overflow-hidden transition-all duration-300 ${
+            currentTheme === 'golden_sakura'
+              ? 'border-rose-400 ring-2 ring-rose-400/20 bg-rose-50/20'
+              : `${theme.wordPanelBg} ${theme.tableBorder} opacity-75 hover:border-rose-350 hover:shadow-2xs`
+          }`}>
+            <div className="absolute top-0 right-0 p-3 opacity-15 pointer-events-none z-0">
+              <Sparkles className={`w-16 h-16 ${currentTheme === 'golden_sakura' ? 'text-rose-500' : 'text-slate-400'}`} />
+            </div>
+            <div className="space-y-2 relative z-10">
+              <div className="flex items-center justify-between">
+                <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'golden_sakura' ? 'text-rose-900 font-black' : theme.breakdownKanjiMeaning}`}>
+                  골든 사쿠라 테마
+                </h5>
+                {unlockedThemes.includes('golden_sakura') ? (
+                  <span className="text-[10px] bg-rose-500/10 text-rose-600 font-bold px-2 py-0.5 rounded">보유함</span>
+                ) : (
+                  <span className="text-[10px] bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded border border-rose-300">잔디 30일 보상</span>
+                )}
+              </div>
+              <p className={`text-xs mt-1 leading-relaxed ${currentTheme === 'golden_sakura' ? 'text-rose-900/80' : theme.wordSubText}`}>
+                화사한 벚꽃 핑크 톤에 흩날리는 벚꽃잎 애니메이션 효과가 적용됩니다.
+              </p>
+            </div>
+            <div className="mt-6 relative z-10 pt-3 border-t border-slate-100/10">
+              {currentTheme === 'golden_sakura' ? (
+                <div className="w-full text-center py-2 bg-rose-100 text-rose-700 font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-not-allowed">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>장착 완료</span>
+                </div>
+              ) : unlockedThemes.includes('golden_sakura') ? (
+                <button
+                  onClick={() => equipTheme('golden_sakura')}
+                  className="w-full py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl text-xs transition-all cursor-pointer hover:shadow"
+                >
+                  장착하기
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="w-full py-2 bg-slate-200 text-slate-400 font-bold rounded-xl text-xs border border-slate-300 cursor-not-allowed flex items-center justify-center gap-1"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>잔디 30일 완료 시 해금</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Golden Aura Theme */}
+          <div className={`flex flex-col justify-between border rounded-2xl p-5 relative overflow-hidden transition-all duration-300 ${
+            currentTheme === 'golden_aura'
+              ? 'border-amber-400 ring-2 ring-amber-400/20 bg-stone-900/40 shadow-md shadow-amber-500/10'
+              : `${theme.wordPanelBg} ${theme.tableBorder} opacity-75 hover:border-amber-300 hover:shadow-2xs`
+          }`}>
+            <div className="absolute top-0 right-0 p-3 opacity-15 pointer-events-none z-0">
+              <Sparkles className={`w-16 h-16 ${currentTheme === 'golden_aura' ? 'text-amber-500' : 'text-slate-400'}`} />
+            </div>
+            <div className="space-y-2 relative z-10">
+              <div className="flex items-center justify-between">
+                <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'golden_aura' ? 'text-amber-400 font-black' : theme.breakdownKanjiMeaning}`}>
+                  황금빛 오라 테마
+                </h5>
+                {unlockedThemes.includes('golden_aura') ? (
+                  <span className="text-[10px] bg-amber-500/15 text-amber-500 font-bold px-2 py-0.5 rounded border border-amber-500/20">보유함</span>
+                ) : (
+                  <span className="text-[10px] bg-amber-950 text-amber-400 font-bold px-2 py-0.5 rounded border border-amber-500/30">잔디 100일 보상</span>
+                )}
+              </div>
+              <p className={`text-xs mt-1 leading-relaxed ${currentTheme === 'golden_aura' ? 'text-amber-100/70' : theme.wordSubText}`}>
+                다크 차콜 테마에 영롱하게 일렁이는 황금빛 아우라 파티클 효과가 적용됩니다.
+              </p>
+            </div>
+            <div className="mt-6 relative z-10 pt-3 border-t border-slate-100/10">
+              {currentTheme === 'golden_aura' ? (
+                <div className="w-full text-center py-2 bg-stone-850 text-amber-400 font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-not-allowed">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>장착 완료</span>
+                </div>
+              ) : unlockedThemes.includes('golden_aura') ? (
+                <button
+                  onClick={() => equipTheme('golden_aura')}
+                  className="w-full py-2 bg-amber-500 hover:bg-[#d97706] text-[#1c1917] font-bold rounded-xl text-xs transition-all cursor-pointer hover:shadow"
+                >
+                  장착하기
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="w-full py-2 bg-slate-200 text-slate-400 font-bold rounded-xl text-xs border border-slate-300 cursor-not-allowed flex items-center justify-center gap-1"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>잔디 100일 완료 시 해금</span>
                 </button>
               )}
             </div>

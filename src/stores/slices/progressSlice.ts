@@ -16,6 +16,9 @@ export const createProgressSlice: StateCreator<StudyState, [], [], ProgressSlice
   points: 0,
   unlockedThemes: ["default"],
   currentTheme: "default",
+  studyLogs: {},
+  claimedWeeklyRewards: [],
+  claimedMilestones: [],
 
   // ── Setter ──
   setCurrentTheme: (currentTheme) => set({ currentTheme }),
@@ -35,7 +38,10 @@ export const createProgressSlice: StateCreator<StudyState, [], [], ProgressSlice
           bookmarkedVocabs: resData.bookmarkedVocabs || [],
           points: resData.points || 0,
           unlockedThemes: resData.unlockedThemes || ["default"],
-          currentTheme: resData.currentTheme || "default"
+          currentTheme: resData.currentTheme || "default",
+          studyLogs: resData.studyLogs || {},
+          claimedWeeklyRewards: resData.claimedWeeklyRewards || [],
+          claimedMilestones: resData.claimedMilestones || []
         });
 
         // 로그인 전에 로컬스토리지에 저장했던 오프라인 데이터를 서버로 병합
@@ -91,7 +97,10 @@ export const createProgressSlice: StateCreator<StudyState, [], [], ProgressSlice
       bookmarkedVocabs: [],
       points: 0,
       unlockedThemes: ["default"],
-      currentTheme: "default"
+      currentTheme: "default",
+      studyLogs: {},
+      claimedWeeklyRewards: [],
+      claimedMilestones: []
     });
   },
 
@@ -124,6 +133,56 @@ export const createProgressSlice: StateCreator<StudyState, [], [], ProgressSlice
       }
     } catch (err) {
       console.error("Failed to toggle bookmark:", err);
+    }
+  },
+
+  // 주간 완주 보상 수령
+  claimWeeklyReward: async (weekStart: string) => {
+    try {
+      const response = await fetch("/api/progress/claimWeekly", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weekStart })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        set({
+          points: get().points + resData.pointsAdded,
+          claimedWeeklyRewards: [...get().claimedWeeklyRewards, weekStart]
+        });
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Failed to claim weekly reward:", err);
+      return false;
+    }
+  },
+
+  // 누적 마일스톤 보상 수령
+  claimMilestoneReward: async (milestone: string) => {
+    try {
+      const response = await fetch("/api/progress/claimMilestone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ milestone })
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        const unlocked = resData.themeUnlocked
+          ? Array.from(new Set([...get().unlockedThemes, resData.themeUnlocked]))
+          : get().unlockedThemes;
+        set({
+          points: get().points + resData.pointsAdded,
+          claimedMilestones: [...get().claimedMilestones, milestone],
+          unlockedThemes: unlocked
+        });
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Failed to claim milestone reward:", err);
+      return false;
     }
   }
 });
