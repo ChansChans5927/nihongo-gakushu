@@ -106,7 +106,7 @@ export function ShopView({
           <div className={`flex flex-col justify-between border rounded-2xl p-5 transition-all duration-300 ${currentTheme === 'default' ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/30' : `${theme.wordPanelBg} ${theme.tableBorder} opacity-75`}`}>
             <div>
               <div className="flex items-center justify-between">
-                <h5 className={`font-bold ${currentTheme === 'default' ? 'text-indigo-950' : theme.breakdownKanjiMeaning}`}>기본 스킨</h5>
+                <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'default' ? 'text-indigo-955 font-black' : theme.breakdownKanjiMeaning}`}>기본 스킨</h5>
                 <span className="text-[10px] bg-slate-500/10 text-slate-500 font-semibold px-2 py-0.5 rounded">보유함</span>
               </div>
               <p className={`text-xs mt-1 leading-relaxed ${currentTheme === 'default' ? 'text-indigo-900/80' : theme.wordSubText}`}>
@@ -137,7 +137,7 @@ export function ShopView({
 
             <div>
               <div className="flex items-center justify-between">
-                <h5 className={`font-bold ${currentTheme === 'samurai' ? 'text-amber-950 font-serif' : theme.breakdownKanjiMeaning}`}>사무라이 스킨</h5>
+                <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'samurai' ? 'text-amber-955 font-black' : theme.breakdownKanjiMeaning}`}>사무라이 스킨</h5>
                 {unlockedThemes.includes('samurai') ? (
                   <span className="text-[10px] bg-amber-500/10 text-amber-600 font-semibold px-2 py-0.5 rounded">보유함</span>
                 ) : (
@@ -146,7 +146,7 @@ export function ShopView({
                   </span>
                 )}
               </div>
-              <p className={`text-xs mt-1 leading-relaxed ${currentTheme === 'samurai' ? 'text-amber-900/80 font-serif' : theme.wordSubText}`}>
+              <p className={`text-xs mt-1 leading-relaxed ${currentTheme === 'samurai' ? 'text-amber-900/80' : theme.wordSubText}`}>
                 보기를 선택할 때 검격 효과음과 슬래시 애니메이션이 나타납니다.
               </p>
             </div>
@@ -177,34 +177,34 @@ export function ShopView({
           </div>
 
           {/* Yokai Theme */}
-          <div className={`flex flex-col justify-between border rounded-2xl p-5 relative overflow-hidden transition-all duration-300 ${currentTheme === 'yokai' ? 'border-sky-500 ring-2 ring-sky-500/20 bg-slate-900' : `${theme.wordPanelBg} ${theme.tableBorder} opacity-75`}`}>
+          <div className={`flex flex-col justify-between border rounded-2xl p-5 relative overflow-hidden transition-all duration-300 ${currentTheme === 'yokai' ? 'border-violet-500 ring-2 ring-violet-500/20 bg-slate-900' : `${theme.wordPanelBg} ${theme.tableBorder} opacity-75`}`}>
             <div className="absolute top-0 right-0 p-3 opacity-10 pointer-events-none">
-              <Sparkles className={`w-16 h-16 ${currentTheme === 'yokai' ? 'text-sky-400' : 'text-slate-400'}`} />
+              <Sparkles className={`w-16 h-16 ${currentTheme === 'yokai' ? 'text-violet-400' : 'text-slate-400'}`} />
             </div>
             <div className="space-y-2 relative z-10">
               <div className="flex items-center justify-between">
-                <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'yokai' ? 'text-sky-100' : theme.breakdownKanjiMeaning}`}>
+                <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'yokai' ? 'text-violet-100' : theme.breakdownKanjiMeaning}`}>
                   요괴 스킨
                 </h5>
                 {!unlockedThemes.includes('yokai') && (
-                  <span className="bg-sky-500/10 text-sky-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-sky-500/20">
+                  <span className="bg-violet-500/10 text-violet-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-violet-500/20">
                     1,500 P
                   </span>
                 )}
               </div>
-              <p className={`text-xs ${currentTheme === 'yokai' ? 'text-sky-200/70' : theme.wordSubText}`}>
+              <p className={`text-xs ${currentTheme === 'yokai' ? 'text-violet-200/70' : theme.wordSubText}`}>
                 어두운 배경 톤에 도깨비불 연출과 종소리 효과음이 적용됩니다.
               </p>
             </div>
             <div className="mt-6 relative z-10">
               {currentTheme === 'yokai' ? (
-                <div className="w-full text-center py-2 bg-slate-800 text-sky-400 font-bold rounded-xl text-sm cursor-not-allowed border border-sky-500/30">
+                <div className="w-full text-center py-2 bg-slate-800 text-violet-400 font-bold rounded-xl text-xs cursor-not-allowed border border-violet-500/30">
                   현재 장착 중
                 </div>
               ) : unlockedThemes.includes('yokai') ? (
                 <button
                   onClick={() => equipTheme('yokai')}
-                  className="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer"
+                  className="w-full py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer"
                 >
                   장착하기
                 </button>
@@ -212,7 +212,7 @@ export function ShopView({
                 <button
                   onClick={() => buyTheme('yokai', 1500)}
                   disabled={points < 1500}
-                  className="w-full py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   1,500 P로 구매하기
                 </button>
@@ -255,13 +255,13 @@ export function ShopView({
             </div>
             <div className="mt-6 relative z-10">
               {currentTheme === 'zen' ? (
-                <div className="w-full text-center py-2 bg-emerald-800/10 text-emerald-800 border border-emerald-800/20 font-bold rounded-xl text-sm cursor-not-allowed">
+                <div className="w-full text-center py-2 bg-emerald-800/10 text-emerald-800 border border-emerald-800/20 font-bold rounded-xl text-xs cursor-not-allowed">
                   현재 장착 중
                 </div>
               ) : unlockedThemes.includes('zen') ? (
                 <button
                   onClick={() => equipTheme('zen')}
-                  className="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer"
+                  className="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer"
                 >
                   장착하기
                 </button>
@@ -269,7 +269,7 @@ export function ShopView({
                 <button
                   onClick={() => buyTheme('zen', 1000)}
                   disabled={points < 1000}
-                  className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   1,000 P로 구매하기
                 </button>
@@ -312,13 +312,13 @@ export function ShopView({
             </div>
             <div className="mt-6 relative z-10">
               {currentTheme === 'chalkboard' ? (
-                <div className="w-full text-center py-2 bg-emerald-800/10 text-yellow-300 border border-emerald-800/20 font-bold rounded-xl text-sm cursor-not-allowed">
+                <div className="w-full text-center py-2 bg-emerald-800/10 text-yellow-300 border border-emerald-800/20 font-bold rounded-xl text-xs cursor-not-allowed">
                   현재 장착 중
                 </div>
               ) : unlockedThemes.includes('chalkboard') ? (
                 <button
                   onClick={() => equipTheme('chalkboard')}
-                  className="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer"
+                  className="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer"
                 >
                   장착하기
                 </button>
@@ -326,7 +326,7 @@ export function ShopView({
                 <button
                   onClick={() => buyTheme('chalkboard', 1200)}
                   disabled={points < 1200}
-                  className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   1,200 P로 구매하기
                 </button>

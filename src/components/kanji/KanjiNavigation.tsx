@@ -24,23 +24,32 @@ export function KanjiNavigation({
     const buttonEl = e.currentTarget;
 
     if (theme.isYokai) {
-      // 요괴 테마: 잔잔한 물결 원형 리플
+      // 요괴 테마: 요괴 혼령 회오리 (Yokai Spirit Swirl)
       const rect = buttonEl.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
 
-      const ripple = document.createElement('div');
-      ripple.className = 'yokai-ripple';
-      ripple.style.left = `${x}px`;
-      ripple.style.top = `${y}px`;
-      ripple.style.width = ripple.style.height = `${Math.max(rect.width, rect.height)}px`;
-      ripple.style.transform = `translate(-50%, -50%) scale(0)`;
+      const clickWrapper = document.createElement('div');
+      clickWrapper.className = 'yokai-spirit-click';
+      clickWrapper.style.left = `${clickX}px`;
+      clickWrapper.style.top = `${clickY}px`;
 
-      buttonEl.appendChild(ripple);
+      const flame = document.createElement('div');
+      flame.className = 'yokai-spirit-flame';
+      
+      const ring = document.createElement('div');
+      ring.className = 'yokai-spirit-ring';
+
+      clickWrapper.appendChild(flame);
+      clickWrapper.appendChild(ring);
+      buttonEl.appendChild(clickWrapper);
 
       setTimeout(() => {
-        ripple.remove();
-      }, 500);
+        clickWrapper.remove();
+      }, 850);
+
+      buttonEl.classList.add('yokai-select-pulse');
+      setTimeout(() => buttonEl.classList.remove('yokai-select-pulse'), 800);
     } else if (theme.isZen) {
       // 젠 테마: 모래 물결 이펙트 2단계 방출
       const ripple1 = document.createElement('div');
@@ -115,7 +124,7 @@ export function KanjiNavigation({
       {/* 이해했음 (다음) 전환 버튼 */}
       <button
         onClick={handleNextWithEffect}
-        className={`py-3 px-6 text-sm font-bold shadow-md cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5 overflow-hidden relative ${theme.btnPrimaryKanji}`}
+        className={`py-3 px-6 text-sm font-bold shadow-md cursor-pointer transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5 overflow-hidden relative ${theme.btnPrimaryKanji}`}
       >
         <span className="z-10 relative">이해했음 (다음)</span>
         <ArrowRight className="w-4 h-4 z-10 relative" />

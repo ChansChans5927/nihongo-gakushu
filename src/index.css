@@ -73,15 +73,7 @@
   z-index: 20;
 }
 
-.samurai-card-texture {
-  background-image: url('/images/old_paper_seamless.png');
-  background-size: cover;
-  background-position: center;
-  background-color: transparent;
-  border: 1px solid rgba(139, 69, 19, 0.4);
-  box-shadow: inset 0 0 50px rgba(139, 69, 19, 0.4);
-  overflow: hidden;
-}
+
 
 /* 1. Embers Effect */
 .samurai-embers {
@@ -132,20 +124,7 @@
   100% { transform: translateY(-150vh) scale(0.5) translateX(10vw); opacity: 0; }
 }
 
-/* 2. Ink Bleed Reveal */
-.ink-reveal {
-  animation: ink-bleed 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
-  color: transparent;
-  background: linear-gradient(135deg, #1a0505, #3a0303);
-  -webkit-background-clip: text;
-  background-clip: text;
-}
 
-@keyframes ink-bleed {
-  0% { text-shadow: 0 0 40px rgba(74, 4, 4, 1); opacity: 0; transform: scale(0.9); filter: blur(10px); }
-  50% { text-shadow: 0 0 10px rgba(42, 8, 8, 0.8); opacity: 1; filter: blur(2px); }
-  100% { text-shadow: 0 0 0px transparent; opacity: 1; transform: scale(1); filter: blur(0); }
-}
 
 /* 3. Sword Glint Hover */
 .sword-glint {
@@ -201,17 +180,14 @@
    ======================================================== */
 
 .yokai-theme-base {
-  background-color: #030712; 
-  background-image: 
-    radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, #030712 100%);
+  background: linear-gradient(135deg, rgba(11, 16, 28, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%);
   color: #e2e8f0;
-  border: 1px solid rgba(14, 165, 233, 0.3);
+  border: 1px solid rgba(139, 92, 246, 0.22);
   box-shadow: 
-    0 15px 40px rgba(0, 0, 0, 0.9),
-    0 0 0 1px rgba(14, 165, 233, 0.2),
-    inset 0 0 60px rgba(14, 165, 233, 0.05);
+    0 20px 50px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(139, 92, 246, 0.08),
+    inset 0 0 45px rgba(139, 92, 246, 0.04);
+  backdrop-filter: blur(12px);
   position: relative;
   z-index: 1;
   overflow: hidden;
@@ -222,10 +198,10 @@
   position: absolute;
   width: 12px;
   height: 12px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 1) 10%, rgba(56, 189, 248, 0.8) 40%, transparent 70%);
+  background: radial-gradient(circle, rgba(139, 92, 246, 1) 10%, rgba(139, 92, 246, 0.7) 40%, transparent 70%);
   border-radius: 50%;
   filter: blur(2px);
-  box-shadow: 0 0 15px 5px rgba(139, 92, 246, 0.5), 0 0 30px 10px rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 15px 5px rgba(139, 92, 246, 0.45), 0 0 30px 10px rgba(139, 92, 246, 0.25);
   animation: float-wisp 10s ease-in-out infinite alternate;
   opacity: 0;
   pointer-events: none;
@@ -238,7 +214,7 @@
   left: 2px;
   width: 8px;
   height: 20px;
-  background: radial-gradient(ellipse at top, rgba(56, 189, 248, 0.6), transparent);
+  background: radial-gradient(ellipse at top, rgba(139, 92, 246, 0.5), transparent);
   border-radius: 50%;
   filter: blur(3px);
 }
@@ -252,86 +228,140 @@
 }
 
 .yokai-wisp-1 { left: 10%; bottom: -10%; animation-duration: 12s; animation-delay: 0s; }
-.yokai-wisp-2 { left: 80%; bottom: -20%; animation-duration: 15s; animation-delay: 2s; background: radial-gradient(circle, rgba(56, 189, 248, 1) 10%, rgba(14, 165, 233, 0.8) 40%, transparent 70%); }
+.yokai-wisp-2 { left: 80%; bottom: -20%; animation-duration: 15s; animation-delay: 2s; background: radial-gradient(circle, rgba(168, 85, 247, 1) 10%, rgba(139, 92, 246, 0.7) 40%, transparent 70%); }
 .yokai-wisp-3 { left: 40%; bottom: -5%; animation-duration: 10s; animation-delay: 5s; background: radial-gradient(circle, rgba(168, 85, 247, 1) 10%, rgba(139, 92, 246, 0.8) 40%, transparent 70%); }
 .yokai-wisp-4 { left: 65%; bottom: -15%; animation-duration: 14s; animation-delay: 3s; }
 
 
 /* Yokai Button */
 .yokai-button {
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(139, 92, 246, 0.16);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
   overflow: hidden;
   z-index: 1;
 }
 
 .yokai-button:hover {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(139, 92, 246, 0.5);
-  box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
-  transform: translateY(-2px);
+  background: rgba(23, 37, 84, 0.4);
+  border-color: rgba(167, 139, 250, 0.35);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.18);
+  transform: translateY(-1px);
 }
 
 .yokai-button-selected {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9));
-  border: 1px solid rgba(139, 92, 246, 0.8);
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.92), rgba(15, 23, 42, 0.96));
+  border: 1.5px solid rgba(167, 139, 250, 0.8) !important;
   box-shadow: 
-    0 0 20px rgba(139, 92, 246, 0.4),
-    inset 0 0 15px rgba(56, 189, 248, 0.2),
-    inset 0 0 30px rgba(139, 92, 246, 0.1);
-  animation: yokai-dark-energy 3s ease-in-out infinite alternate;
+    0 0 14px rgba(167, 139, 250, 0.35),
+    inset 0 0 8px rgba(139, 92, 246, 0.25);
   position: relative;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
-.yokai-button-selected::before {
-  content: '';
+
+/* Yokai Spirit Swirl Click Effect (요괴 혼령 회오리) */
+.yokai-spirit-click {
   position: absolute;
-  inset: -1px;
-  background: linear-gradient(45deg, transparent, rgba(56, 189, 248, 0.4), rgba(139, 92, 246, 0.6), transparent);
-  background-size: 200% 200%;
-  animation: yokai-shimmer 4s linear infinite;
-  z-index: -1;
-  opacity: 0.5;
-}
-
-@keyframes yokai-dark-energy {
-  0% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.3), inset 0 0 10px rgba(56, 189, 248, 0.1); border-color: rgba(139, 92, 246, 0.6); }
-  50% { box-shadow: 0 0 25px rgba(139, 92, 246, 0.6), 0 0 10px rgba(56, 189, 248, 0.4), inset 0 0 20px rgba(139, 92, 246, 0.2); border-color: rgba(56, 189, 248, 0.9); }
-  100% { box-shadow: 0 0 15px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(139, 92, 246, 0.3); border-color: rgba(139, 92, 246, 0.8); }
-}
-
-@keyframes yokai-shimmer {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
-}
-
-/* Smoke Ripple Effect */
-.yokai-ripple {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, rgba(56, 189, 248, 0.3) 40%, rgba(0,0,0,0) 70%);
-  transform: scale(0);
-  filter: blur(4px);
-  animation: yokai-smoke-ripple 0.8s ease-out forwards;
   pointer-events: none;
+  z-index: 10;
+  transform: translate(-50%, -50%);
 }
 
-@keyframes yokai-smoke-ripple {
-  0% { transform: scale(0) rotate(0deg); opacity: 1; filter: blur(2px); }
-  50% { opacity: 0.8; filter: blur(6px); }
-  100% { transform: scale(5) rotate(45deg); opacity: 0; filter: blur(10px); }
+/* Rising Wave Flame (일렁이며 피어오르는 도깨비불) */
+.yokai-spirit-flame {
+  position: absolute;
+  left: -8px;
+  top: -14px;
+  width: 16px;
+  height: 28px;
+  background: radial-gradient(circle at 50% 20%, #ffffff 0%, rgba(168, 85, 247, 0.95) 30%, rgba(139, 92, 246, 0.85) 65%, rgba(139, 92, 246, 0) 90%);
+  border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;
+  filter: blur(0.5px) drop-shadow(0 0 8px rgba(139, 92, 246, 0.7));
+  animation: yokai-flame-rise 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  transform-origin: bottom center;
 }
 
-.yokai-seal-badge {
-  background: #0f172a;
-  color: #38bdf8;
-  border: 2px solid #0ea5e9;
-  text-shadow: 0 0 5px rgba(56, 189, 248, 0.5);
-  box-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
-  border-radius: 4px;
+@keyframes yokai-flame-rise {
+  0% {
+    transform: translateY(10px) scale(0.2) rotate(0deg);
+    opacity: 0.9;
+  }
+  40% {
+    transform: translateY(-20px) scale(1.2) rotate(15deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-50px) scale(0) rotate(-15deg);
+    opacity: 0;
+  }
+}
+
+/* Expanding spirit portal ring (회전하며 확장하는 영혼의 고리) */
+.yokai-spirit-ring {
+  position: absolute;
+  left: -20px;
+  top: -20px;
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid rgba(167, 139, 250, 0.65);
+  border-top-color: rgba(139, 92, 246, 0.85);
+  border-bottom-color: rgba(139, 92, 246, 0.85);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 12px rgba(139, 92, 246, 0.35),
+    inset 0 0 8px rgba(139, 92, 246, 0.2);
+  animation: yokai-ring-expand 0.7s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes yokai-ring-expand {
+  0% {
+    transform: scale(0.1) rotate(0deg);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    transform: scale(3.2) rotate(180deg);
+    opacity: 0;
+    filter: blur(1.5px);
+  }
+}
+
+.yokai-select-pulse {
+  animation: yokai-pulse-glow 0.8s ease-out forwards;
+}
+
+@keyframes yokai-pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0px rgba(139, 92, 246, 0.6), inset 0 0 10px rgba(139, 92, 246, 0.35);
+    border-color: #a855f7 !important;
+  }
+  100% {
+    box-shadow: 0 0 0 18px rgba(139, 92, 246, 0), inset 0 0 0px rgba(139, 92, 246, 0);
+    border-color: transparent !important;
+  }
+}
+
+
+
+.yokai-panel {
+  background: rgba(17, 24, 39, 0.45);
+  border: 1px solid rgba(167, 139, 250, 0.12);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.7),
+    inset 0 0 20px rgba(167, 139, 250, 0.02);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+}
+
+.yokai-panel:hover {
+  border-color: rgba(167, 139, 250, 0.22);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.8),
+    inset 0 0 20px rgba(167, 139, 250, 0.05);
 }
 
 /* ========================================================

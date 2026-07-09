@@ -156,7 +156,6 @@ router.post("/generate", async (req, res) => {
         properties: {
           id: { type: Type.STRING, description: "Unique alphabetic id" },
           kanji: { type: Type.STRING, description: "The single Kanji character" },
-          strokeCount: { type: Type.INTEGER, description: "Stroke count as an integer" },
           jlptLevel: { type: Type.STRING, description: "The JLPT level (e.g., N5, N4, N3, N2, N1)" },
           grade: { type: Type.STRING, description: "School grade or level (e.g., 초등 1학년, 상용 한자)" },
           mnemonic: { type: Type.STRING, description: "An intuitive visual association storyboard in Korean (strictly maximum 2 brief sentences, under 40 Korean words)" },
@@ -170,7 +169,7 @@ router.post("/generate", async (req, res) => {
           exampleSentence: EXAMPLE_SENTENCE_SCHEMA
         },
         required: [
-          "id", "kanji", "strokeCount", "jlptLevel", "grade", "mnemonic", "meaning",
+          "id", "kanji", "jlptLevel", "grade", "mnemonic", "meaning",
           "onyomi", "onyomiKorean", "hunyomi", "hunyomiKorean", "relatedWords", "exampleSentence", "radicalsBreakdown"
         ]
       }

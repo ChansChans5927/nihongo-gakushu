@@ -262,7 +262,7 @@ export function ResultReport({
                     ) : null}
 
                     {!q.vocabItem && q.kanjiItem && (
-                      <div className="flex flex-wrap gap-2 text-[10px] text-amber-500 pt-1 font-mono font-medium">
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs sm:text-sm text-amber-500 pt-1.5 font-sans font-semibold">
                         <span>중요 음독: {q.kanjiItem.onyomi} ({q.kanjiItem.onyomiKorean})</span>
                         <span>•</span>
                         <span>중요 훈독: {q.kanjiItem.hunyomi?.replace(/\./g, "")} ({q.kanjiItem.hunyomiKorean})</span>
@@ -306,7 +306,7 @@ export function ResultReport({
                     ) : null}
 
                     {!q.vocabItem && q.kanjiItem && (
-                      <div className="flex flex-wrap gap-2 text-[10px] text-emerald-500 pt-1 font-mono font-medium">
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs sm:text-sm text-emerald-500 pt-1.5 font-sans font-semibold">
                         <span>중요 음독: {q.kanjiItem.onyomi} ({q.kanjiItem.onyomiKorean})</span>
                         <span>•</span>
                         <span>중요 훈독: {q.kanjiItem.hunyomi?.replace(/\./g, "")} ({q.kanjiItem.hunyomiKorean})</span>

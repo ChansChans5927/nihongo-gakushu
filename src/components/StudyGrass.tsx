@@ -172,10 +172,10 @@ export function StudyGrass() {
         'bg-red-800 border border-red-950/40'
       ],
       yokai: [
-        'bg-sky-950/80 border border-sky-900/50',
-        'bg-sky-850 border border-sky-800/65',
-        'bg-[#0ea5e9]/70 border border-[#0ea5e9]/80 shadow-[0_0_8px_rgba(14,165,233,0.3)]',
-        'bg-[#38bdf8] border border-sky-200 shadow-[0_0_12px_rgba(56,189,248,0.6)]'
+        'bg-violet-950/60 border border-violet-900/20',
+        'bg-violet-800/40 border border-violet-700/30',
+        'bg-violet-600/60 border border-violet-500/40 shadow-[0_0_6px_rgba(139,92,246,0.2)]',
+        'bg-violet-400 border border-violet-200/60 shadow-[0_0_10px_rgba(167,139,250,0.5)]'
       ],
       chalkboard: [
         'bg-yellow-500/15 border border-yellow-500/20',
@@ -242,13 +242,13 @@ export function StudyGrass() {
         <div className="lg:col-span-2 flex flex-col space-y-3">
           <div className="flex items-center justify-between">
             <span className={`text-[11px] font-bold tracking-wider uppercase ${theme.wordSubText}`}>최근 24주 학습 잔디</span>
-            <div className="flex items-center gap-1 text-[9px] text-slate-400 font-mono">
+            <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-mono">
               <span>Less</span>
-              <div className="w-2.5 h-2.5 bg-slate-100 rounded-[2px]"></div>
-              <div className="w-2.5 h-2.5 bg-emerald-200 rounded-[2px]"></div>
-              <div className="w-2.5 h-2.5 bg-emerald-450 rounded-[2px]"></div>
-              <div className="w-2.5 h-2.5 bg-emerald-600 rounded-[2px]"></div>
-              <div className="w-2.5 h-2.5 bg-emerald-800 rounded-[2px]"></div>
+              <div className={`w-2.5 h-2.5 rounded-[2px] ${getGrassColor(0)}`}></div>
+              <div className={`w-2.5 h-2.5 rounded-[2px] ${getGrassColor(2)}`}></div>
+              <div className={`w-2.5 h-2.5 rounded-[2px] ${getGrassColor(5)}`}></div>
+              <div className={`w-2.5 h-2.5 rounded-[2px] ${getGrassColor(9)}`}></div>
+              <div className={`w-2.5 h-2.5 rounded-[2px] ${getGrassColor(10)}`}></div>
               <span>More</span>
             </div>
           </div>
@@ -323,8 +323,8 @@ export function StudyGrass() {
           </div>
 
           {/* 2. Cumulative Milestones */}
-          <div className={`p-4 rounded-2xl border flex flex-col justify-between flex-1 min-h-[110px] ${theme.wordPanelBg} ${theme.tableBorder}`}>
-            <span className={`text-[10px] font-bold uppercase tracking-wider mb-2 block ${theme.wordSubText}`}>누적 잔디 마일스톤</span>
+          <div className={`p-4 rounded-2xl border flex flex-col justify-center gap-3 flex-1 min-h-[110px] ${theme.wordPanelBg} ${theme.tableBorder}`}>
+            <span className={`text-[10px] font-bold uppercase tracking-wider block ${theme.wordSubText}`}>누적 잔디 마일스톤</span>
             <div className="grid grid-cols-3 gap-2">
               {[
                 { count: "15", label: "15일", points: "500P" },

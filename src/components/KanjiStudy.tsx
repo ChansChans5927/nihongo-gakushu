@@ -81,7 +81,6 @@ export function KanjiStudy({
             <KanjiVisualPanel
               kanji={currentKanji.kanji}
               meaning={currentKanji.meaning}
-              strokeCount={currentKanji.strokeCount}
               isBookmarked={isBookmarked}
               onToggleBookmark={() => onToggleBookmark("kanji", currentKanji.kanji)}
               speakJapanese={speakJapanese}

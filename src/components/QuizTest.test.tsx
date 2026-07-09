@@ -13,7 +13,6 @@ const mockQuestions: Question[] = [
     kanjiItem: {
       id: "kanji_1",
       kanji: "見",
-      strokeCount: 7,
       jlptLevel: "N5",
       grade: "초등 1학년",
       mnemonic: "눈 위에 다리가 달린 모양으로 보다",

@@ -168,7 +168,7 @@ export function QuizTest({
         <div className={`${theme.quizDisplayBox} flex flex-col items-center justify-center py-6 gap-2`}>
           {currentQuestion.type === 'blank_fill' ? (
             <div lang="ja" className="w-full text-center space-y-3">
-              <div className={`text-lg sm:text-2xl font-semibold tracking-wide leading-relaxed ${theme.questionPromptText} ${isSamurai ? "font-serif" : "font-sans"}`}>
+              <div className={`text-lg sm:text-2xl font-semibold tracking-wide leading-relaxed ${theme.questionPromptText} font-sans`}>
                 {(() => {
                   const sentence = currentQuestion.questionSentence || "";
                   if (sentence.includes("__blank__")) {
@@ -176,7 +176,7 @@ export function QuizTest({
                     return (
                       <>
                         {parts[0]}
-                        <span lang="ko" className={`inline-flex items-center border-2 border-dashed px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold mx-1 select-none animate-pulse ${theme.blankFillBlockQuiz}`}>
+                        <span lang="ko" className={`inline-flex items-center align-middle relative -top-[1px] sm:-top-[2px] border-2 border-dashed px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold mx-1 select-none animate-pulse ${theme.blankFillBlockQuiz}`}>
                           빈칸
                         </span>
                         {parts[1]}
@@ -194,7 +194,7 @@ export function QuizTest({
                       return (
                         <>
                           {parts[0]}
-                          <span lang="ko" className={`inline-flex items-center border-2 border-dashed px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold mx-1 select-none animate-pulse ${theme.blankFillBlockQuiz}`}>
+                          <span lang="ko" className={`inline-flex items-center align-middle relative -top-[1px] sm:-top-[2px] border-2 border-dashed px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold mx-1 select-none animate-pulse ${theme.blankFillBlockQuiz}`}>
                             빈칸
                           </span>
                           {parts[1]}
@@ -207,7 +207,7 @@ export function QuizTest({
                         return (
                           <>
                             {charParts[0]}
-                            <span lang="ko" className={`inline-flex items-center border-2 border-dashed px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold mx-1 select-none animate-pulse ${theme.blankFillBlockQuiz}`}>
+                            <span lang="ko" className={`inline-flex items-center align-middle relative -top-[1px] sm:-top-[2px] border-2 border-dashed px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold mx-1 select-none animate-pulse ${theme.blankFillBlockQuiz}`}>
                               빈칸
                             </span>
                             {charParts[1]}
@@ -282,22 +282,33 @@ export function QuizTest({
                 key={choiceIdx}
                 onClick={(e) => {
                   if (isYokai) {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
+                    const buttonEl = e.currentTarget;
+                    const rect = buttonEl.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const clickY = e.clientY - rect.top;
 
-                    const ripple = document.createElement('div');
-                    ripple.className = 'yokai-ripple';
-                    ripple.style.left = `${x}px`;
-                    ripple.style.top = `${y}px`;
-                    ripple.style.width = ripple.style.height = `${Math.max(rect.width, rect.height)}px`;
-                    ripple.style.transform = `translate(-50%, -50%) scale(0)`;
+                    // 요괴 혼령 회오리 (Yokai Spirit Swirl Click Effect)
+                    const clickWrapper = document.createElement('div');
+                    clickWrapper.className = 'yokai-spirit-click';
+                    clickWrapper.style.left = `${clickX}px`;
+                    clickWrapper.style.top = `${clickY}px`;
 
-                    e.currentTarget.appendChild(ripple);
+                    const flame = document.createElement('div');
+                    flame.className = 'yokai-spirit-flame';
+                    
+                    const ring = document.createElement('div');
+                    ring.className = 'yokai-spirit-ring';
+
+                    clickWrapper.appendChild(flame);
+                    clickWrapper.appendChild(ring);
+                    buttonEl.appendChild(clickWrapper);
 
                     setTimeout(() => {
-                      ripple.remove();
-                    }, 500);
+                      clickWrapper.remove();
+                    }, 850);
+
+                    buttonEl.classList.add('yokai-select-pulse');
+                    setTimeout(() => buttonEl.classList.remove('yokai-select-pulse'), 800);
                   } else if (isZen) {
                     const buttonEl = e.currentTarget;
                     const ripple1 = document.createElement('div');

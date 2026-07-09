@@ -23,7 +23,7 @@ export function JlptQuestionSentence({
               <span
                 key={idx}
                 lang="ko"
-                className={`inline-flex items-center border-2 border-dashed px-3 py-1 rounded-xl text-xs tracking-widest font-bold mx-1 animate-pulse select-none ${theme.blankFillBlock}`}
+                className={`inline-flex items-center align-middle relative -top-[1px] sm:-top-[2px] border-2 border-dashed px-3 py-1 rounded-xl text-xs tracking-widest font-bold mx-1 animate-pulse select-none ${theme.blankFillBlock}`}
               >
                 ( 빈칸에 들어갈 말 )
               </span>

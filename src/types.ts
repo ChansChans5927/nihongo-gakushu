@@ -18,7 +18,6 @@ export interface RadicalPart {
 export interface KanjiItem {
   id: string;            // unique identifier
   kanji: string;         // Chinese character (e.g. "見")
-  strokeCount: number;   // Number of strokes (e.g. 7)
   jlptLevel: string;     // e.g. "N5" | "N4" | "N3" | "N2" | "N1"
   grade: string;         // e.g. "초등 1학년" 
   mnemonic: string;      // Easy association mnemonics storyboard

@@ -24,23 +24,33 @@ export function JlptChoices({
     const buttonEl = e.currentTarget;
 
     if (theme.isYokai) {
-      // 요괴 테마: 물결 원형 파동 이펙트
+      // 요괴 테마: 도깨비불 파티클 폭발 이펙트 (Yokai Wisp Burst)
       const rect = buttonEl.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      // 요괴 혼령 회오리 (Yokai Spirit Swirl Click Effect)
+      const clickWrapper = document.createElement('div');
+      clickWrapper.className = 'yokai-spirit-click';
+      clickWrapper.style.left = `${clickX}px`;
+      clickWrapper.style.top = `${clickY}px`;
+
+      const flame = document.createElement('div');
+      flame.className = 'yokai-spirit-flame';
       
-      const ripple = document.createElement('div');
-      ripple.className = 'yokai-ripple';
-      ripple.style.left = `${x}px`;
-      ripple.style.top = `${y}px`;
-      ripple.style.width = ripple.style.height = `${Math.max(rect.width, rect.height)}px`;
-      ripple.style.transform = `translate(-50%, -50%) scale(0)`;
-      
-      buttonEl.appendChild(ripple);
-      
+      const ring = document.createElement('div');
+      ring.className = 'yokai-spirit-ring';
+
+      clickWrapper.appendChild(flame);
+      clickWrapper.appendChild(ring);
+      buttonEl.appendChild(clickWrapper);
+
       setTimeout(() => {
-        ripple.remove();
-      }, 500);
+        clickWrapper.remove();
+      }, 850);
+
+      buttonEl.classList.add('yokai-select-pulse');
+      setTimeout(() => buttonEl.classList.remove('yokai-select-pulse'), 800);
     } else if (theme.isZen) {
       // 젠 테마: 모래 파동 이펙트 2연속 방출
       const ripple1 = document.createElement('div');
