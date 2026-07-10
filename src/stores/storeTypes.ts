@@ -90,7 +90,7 @@ export interface ProgressSlice {
 // ─────────────────────────────────────────────
 export interface SharedSlice {
   phase: 'config' | 'studying' | 'testing' | 'result' | 'settings' | 'jlpt' | 'shop' | 'bookmarks';
-  studyMode: 'kanji' | 'vocab';                                   // 한자/단어 모드
+  studyMode: 'kanji' | 'vocab' | 'bookmark-kanji' | 'bookmark-vocab';           // 한자/단어/북마크 모드
   difficulty: string;                                              // 공통 난이도 (JLPT 레벨)
   questions: Question[];                                           // 한자·단어 퀴즈 공용 문제 배열
   currentQuestionIndex: number;                                    // 현재 퀴즈 문제 인덱스
@@ -98,18 +98,19 @@ export interface SharedSlice {
   isGraded: boolean;                                               // 퀴즈 채점 완료 여부
   isLoading: boolean;                                              // 한자·단어 공통 로딩
   errorMsg: string | null;                                         // 한자·단어 공통 에러
-  apiSource: string;                                               // API 소스 (gemini/fallback 등)
+  apiSource: 'gemini' | 'openai';                                  // 사용할 AI API 소스
 
-  setPhase: (phase: SharedSlice['phase']) => void;                 // 화면 전환
-  setStudyMode: (mode: SharedSlice['studyMode']) => void;          // 학습 모드 전환
-  setDifficulty: (difficulty: string) => void;                     // 난이도 설정
-  handleSelectAnswer: (choiceIndex: number) => void;               // 퀴즈 답 선택
-  handleNextStudy: () => void;                                     // 다음 카드 (한자/단어 분기)
-  handlePrevStudy: () => void;                                     // 이전 카드 (한자/단어 분기)
-  handleNextQuestion: () => void;                                  // 다음 퀴즈 문제
-  handlePrevQuestion: () => void;                                  // 이전 퀴즈 문제
-  handleGradeQuiz: () => Promise<void>;                            // 퀴즈 채점 (한자/단어 분기)
-  handleGoHome: () => Promise<void>;                               // 홈으로 돌아가기
+  setPhase: (phase: SharedSlice['phase']) => void;                 // 화면 페이즈 설정
+  setStudyMode: (mode: SharedSlice['studyMode']) => void;          // 학습 모드 설정
+  setDifficulty: (diff: string) => void;                           // 난이도 설정
+  handleSelectAnswer: (choiceIndex: number) => void;               // 공용 퀴즈 답안 선택
+  handleNextStudy: () => void;                                     // 학습 화면에서 다음 카드로
+  handlePrevStudy: () => void;                                     // 학습 화면에서 이전 카드로
+  handleNextQuestion: () => void;                                  // 공용 퀴즈 다음 문제로
+  handlePrevQuestion: () => void;                                  // 공용 퀴즈 이전 문제로
+  handleGradeQuiz: () => Promise<void>;                            // 공용 퀴즈 채점
+  handleGoHome: () => void;                                        // 메인 화면으로 돌아가기
+  startBookmarkQuiz: (type: 'kanji' | 'vocab', items: any[]) => void; // 북마크 전용 퀴즈 시작
 }
 
 // ─────────────────────────────────────────────

@@ -10,7 +10,8 @@ interface ResultReportProps {
   startKanjiStudy: (isReview?: boolean) => void;
   startVocabStudy: (isReview?: boolean) => void;
   handleGoHome: () => void;
-  studyMode: 'kanji' | 'vocab';
+  handleReturnToBookmarks?: () => void;
+  studyMode: 'kanji' | 'vocab' | 'bookmark-kanji' | 'bookmark-vocab';
   currentTheme?: string;
 }
 
@@ -21,6 +22,7 @@ export function ResultReport({
   startKanjiStudy,
   startVocabStudy,
   handleGoHome,
+  handleReturnToBookmarks,
   studyMode,
   currentTheme = "default"
 }: ResultReportProps) {
@@ -74,21 +76,32 @@ export function ResultReport({
         </div>
 
         <div className="pt-2 flex justify-center gap-3">
-          <button
-            onClick={studyMode === 'vocab' ? startVocabStudy : startKanjiStudy}
-            disabled={isLoading}
-            className={`py-2.5 px-5 text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer ${theme.btnPrimary}`}
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-            <span>{studyMode === 'vocab' ? "새로운 단어 코스 풀기" : "새로운 한자 코스 풀기"}</span>
-          </button>
-
-          <button
-            onClick={handleGoHome}
-            className={`py-2.5 px-5 text-xs font-semibold rounded-xl transition-colors cursor-pointer ${theme.btnSecondary}`}
-          >
-            메인 홈으로
-          </button>
+          {studyMode.startsWith('bookmark') ? (
+            <button
+              onClick={handleReturnToBookmarks || handleGoHome}
+              className={`py-2.5 px-5 text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer ${theme.btnPrimary}`}
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>나만의 단어장으로 돌아가기</span>
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={studyMode === 'vocab' ? startVocabStudy : startKanjiStudy}
+                disabled={isLoading}
+                className={`py-2.5 px-5 text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer ${theme.btnPrimary}`}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+                <span>{studyMode === 'vocab' ? "새로운 단어 코스 풀기" : "새로운 한자 코스 풀기"}</span>
+              </button>
+              <button
+                onClick={handleGoHome}
+                className={`py-2.5 px-5 text-xs font-semibold rounded-xl transition-colors cursor-pointer ${theme.btnSecondary}`}
+              >
+                메인 홈으로
+              </button>
+            </>
+          )}
         </div>
       </div>
 

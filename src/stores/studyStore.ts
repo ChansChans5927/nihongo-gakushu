@@ -110,6 +110,19 @@ export const useStudyStore = create<StudyState>()((...args) => {
       }
     },
 
+    // ─── 북마크 전용 퀴즈 시작 ───
+    startBookmarkQuiz: (type: 'kanji' | 'vocab', items: any[]) => {
+      const nextQuestions = type === 'kanji' ? generateQuiz(items) : generateVocabQuiz(items);
+      set({
+        studyMode: type === 'kanji' ? 'bookmark-kanji' : 'bookmark-vocab',
+        questions: nextQuestions,
+        userAnswers: {},
+        currentQuestionIndex: 0,
+        isGraded: false,
+        phase: 'testing'
+      });
+    },
+
     // ─── 다음 퀴즈 문제 ───
     handleNextQuestion: () => {
       if (get().currentQuestionIndex < get().questions.length - 1) {
@@ -137,6 +150,12 @@ export const useStudyStore = create<StudyState>()((...args) => {
         isGraded: true,
         phase: 'result'
       });
+
+      const mode = get().studyMode;
+      if (mode.startsWith('bookmark')) {
+        // 북마크 테스트는 연습용이므로 포인트나 외운 목록 추가를 하지 않습니다.
+        return;
+      }
 
       const authStore = useAuthStore.getState();
       const currentUser = authStore.currentUser;

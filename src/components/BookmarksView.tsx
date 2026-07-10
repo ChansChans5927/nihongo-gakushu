@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Star, Volume2, ArrowLeft, BookOpen, Sparkles, ChevronDown, ChevronUp, Lightbulb, Puzzle } from "lucide-react";
 import { KanjiItem, VocabItem } from "../types";
 import { getTheme } from "../theme";
+import { useStudyStore } from "../stores/studyStore";
 
 interface BookmarksViewProps {
   currentTheme?: string;
@@ -110,6 +111,30 @@ export function BookmarksView({
           <span>북마크 단어 ({bookmarkedVocabs.length})</span>
         </button>
       </div>
+
+      {/* Action Bar */}
+      {!isLoading && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => {
+              if (activeTab === "kanji") {
+                useStudyStore.getState().startBookmarkQuiz("kanji", kanjiDetails);
+              } else {
+                useStudyStore.getState().startBookmarkQuiz("vocab", vocabDetails);
+              }
+            }}
+            disabled={(activeTab === "kanji" && kanjiDetails.length === 0) || (activeTab === "vocab" && vocabDetails.length === 0)}
+            className={`py-2.5 px-5 rounded-xl text-sm font-bold shadow-md transition-all flex items-center gap-2 ${
+              ((activeTab === "kanji" && kanjiDetails.length === 0) || (activeTab === "vocab" && vocabDetails.length === 0))
+                ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                : `${theme.btnPrimary} cursor-pointer hover:scale-105 active:scale-95`
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>{activeTab === 'kanji' ? '북마크 한자 테스트 시작' : '북마크 단어 테스트 시작'}</span>
+          </button>
+        </div>
+      )}
 
       {/* Content Section */}
       {isLoading ? (

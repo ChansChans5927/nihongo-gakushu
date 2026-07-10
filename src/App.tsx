@@ -467,6 +467,7 @@ export default function App() {
                   startKanjiStudy={startKanjiStudy}
                   startVocabStudy={startVocabStudy}
                   handleGoHome={handleGoHome}
+                  handleReturnToBookmarks={() => setPhase('bookmarks')}
                   studyMode={studyMode}
                   currentTheme={currentTheme}
                 />
