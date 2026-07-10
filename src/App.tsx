@@ -57,6 +57,9 @@ export default function App() {
   useEffect(() => {
     const handleHardwareBack = () => {
       if (phase !== 'config') {
+        if (phase === 'result' || (phase === 'jlpt' && isJlptGraded)) {
+          NativeBridge.showInterstitialAd();
+        }
         handleGoHome();
       } else {
         // 홈 화면(config)일 경우 네이티브 앱 종료 요청
@@ -260,7 +263,12 @@ export default function App() {
       <header className={`sticky top-0 z-40 px-4 py-3 sm:px-6 transition-all duration-300 ${theme.headerBgClass}`}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <button
-            onClick={handleGoHome}
+            onClick={() => {
+              if (phase === 'result' || (phase === 'jlpt' && isJlptGraded)) {
+                NativeBridge.showInterstitialAd();
+              }
+              handleGoHome();
+            }}
             className="flex items-center gap-2 group focus:outline-none text-left"
           >
             <div className="p-2 bg-gradient-to-tr from-amber-500 to-rose-500 rounded-xl text-white shadow-sm transition-transform duration-300 group-hover:rotate-12">
@@ -400,8 +408,8 @@ export default function App() {
                   startJlptQuiz={startJlptQuiz}
                   handleResetMastery={handleResetMastery}
                   handleResetVocabMastery={handleResetVocabMastery}
-                  studyMode={studyMode}
-                  setStudyMode={setStudyMode}
+                  studyMode={studyMode === 'vocab' || studyMode === 'bookmark-vocab' ? 'vocab' : 'kanji'}
+                  setStudyMode={(mode) => setStudyMode(mode)}
                   isReviewMode={isReviewMode}
                   setIsReviewMode={setIsReviewMode}
                   points={points}

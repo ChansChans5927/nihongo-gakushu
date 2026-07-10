@@ -98,7 +98,7 @@ export interface SharedSlice {
   isGraded: boolean;                                               // 퀴즈 채점 완료 여부
   isLoading: boolean;                                              // 한자·단어 공통 로딩
   errorMsg: string | null;                                         // 한자·단어 공통 에러
-  apiSource: 'gemini' | 'openai';                                  // 사용할 AI API 소스
+  apiSource: 'gemini' | 'openai' | 'fallback' | 'mongodb_cache';                                  // 사용할 AI API 소스
 
   setPhase: (phase: SharedSlice['phase']) => void;                 // 화면 페이즈 설정
   setStudyMode: (mode: SharedSlice['studyMode']) => void;          // 학습 모드 설정

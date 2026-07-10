@@ -1,4 +1,6 @@
 import { CheckCircle2, RefreshCw } from "lucide-react";
+import { NativeBridge } from "../../nativeBridge";
+
 
 // 결과 성적판 Props 인터페이스
 interface JlptResultScoreProps {
@@ -55,7 +57,10 @@ export function JlptResultScore({
       <div className="pt-2 flex justify-center gap-3">
         {/* 한 번 더 풀기 버튼 */}
         <button
-          onClick={startJlptQuiz}
+          onClick={() => {
+            NativeBridge.showInterstitialAd();
+            startJlptQuiz();
+          }}
           disabled={isJlptLoading}
           className={`py-2.5 px-5 text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-45 ${theme.btnPrimary}`}
         >
@@ -65,7 +70,10 @@ export function JlptResultScore({
 
         {/* 세트 목록 홈으로 이동 버튼 */}
         <button
-          onClick={handleGoHome}
+          onClick={() => {
+            NativeBridge.showInterstitialAd();
+            handleGoHome();
+          }}
           className={`py-2.5 px-5 text-xs font-semibold rounded-xl transition-colors cursor-pointer ${theme.btnSecondary}`}
         >
           기출 세트 목록으로
