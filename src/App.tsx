@@ -275,7 +275,7 @@ export default function App() {
               <BookMarked className="w-5 h-5" />
             </div>
             <div>
-              <h1 className={`text-sm sm:text-lg font-display font-bold tracking-tight transition-colors duration-300 ${theme.headerTextClass}`}>
+              <h1 className={`text-sm sm:text-lg font-display font-bold tracking-tight transition-colors duration-300 ${theme.headerTextClass} whitespace-nowrap`}>
                 <span className="hidden sm:inline">일본어 한자 & 단어 마스터</span>
                 <span className="inline sm:hidden">일본어 한자 & 단어</span>
               </h1>
@@ -288,12 +288,12 @@ export default function App() {
               <div className="flex items-center gap-2 sm:gap-3 mr-1 sm:mr-2">
                 {/* Points GNB Badge */}
                 <div
-                  className={`inline-flex border shadow-2xs px-2.5 py-1 rounded-xl items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme.wordPanelBg} ${theme.tableBorder}`}
+                  className={`inline-flex border shadow-2xs px-2.5 py-1 rounded-xl items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme.wordPanelBg} ${theme.tableBorder} whitespace-nowrap`}
                   onClick={() => setPhase('shop')}
                   title="테마 상점 이동"
                 >
                   <span className={`text-[9px] font-bold uppercase tracking-widest hidden xs:inline ${theme.wordSubText}`}>Points</span>
-                  <strong className={`font-mono font-black text-xs ${theme.breakdownKanjiMeaning}`}>
+                  <strong className={`font-mono font-black text-xs whitespace-nowrap ${theme.breakdownKanjiMeaning}`}>
                     {points.toLocaleString()} <span className="text-amber-500">P</span>
                   </strong>
                 </div>
@@ -308,7 +308,7 @@ export default function App() {
               </div>
             )}
             {currentUser && (phase === 'studying' || phase === 'jlpt' || phase === 'testing' || phase === 'result' || (apiSource === 'fallback' && phase !== 'config')) && (
-              <div className={`h-5 border-r mx-1.5 sm:mx-2 transition-colors duration-300 ${theme.tableBorder}`} />
+              <div className={`h-5 border-r mx-1.5 sm:mx-2 transition-colors duration-300 ${theme.tableBorder} hidden xs:block`} />
             )}
             {(phase === 'studying' || phase === 'jlpt') && (
               <>
@@ -319,7 +319,7 @@ export default function App() {
                       ? `공부 단계: ${currentVocabIndex + 1} / ${vocabList.length}`
                       : `공부 단계: ${currentKanjiIndex + 1} / ${kanjiList.length}`}
                 </span>
-                <span className={`inline sm:hidden text-[10px] border px-2 py-0.5 rounded-full font-mono font-semibold ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning}`}>
+                <span className={`inline sm:hidden text-[10px] border px-2 py-0.5 rounded-full font-mono font-semibold whitespace-nowrap ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning} hidden xs:inline-block`}>
                   {phase === 'jlpt'
                     ? `JLPT ${selectedJlptLevel}: ${currentJlptIndex + 1}/${jlptQuestions.length}`
                     : studyMode === 'vocab'
@@ -333,13 +333,13 @@ export default function App() {
                 <span className={`hidden sm:inline text-xs border px-2.5 py-1 rounded-full font-mono font-semibold ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning}`}>
                   테스트 단계: {currentQuestionIndex + 1} / {questions.length}
                 </span>
-                <span className={`inline sm:hidden text-[10px] border px-2 py-0.5 rounded-full font-mono font-semibold ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning}`}>
+                <span className={`inline sm:hidden text-[10px] border px-2 py-0.5 rounded-full font-mono font-semibold whitespace-nowrap ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning} hidden xs:inline-block`}>
                   테스트: {currentQuestionIndex + 1}/{questions.length}
                 </span>
               </>
             )}
             {phase === 'result' && (
-              <span className={`text-[10px] sm:text-xs border px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-mono font-semibold ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning}`}>
+              <span className={`text-[10px] sm:text-xs border px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-mono font-semibold whitespace-nowrap ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning} hidden xs:inline-block`}>
                 결과 리포트
               </span>
             )}

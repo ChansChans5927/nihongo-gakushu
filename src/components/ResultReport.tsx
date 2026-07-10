@@ -72,7 +72,7 @@ export function ResultReport({
           <p className={`text-sm max-w-md mx-auto leading-relaxed transition-colors duration-300 ${theme.wordSubText}`}>
             {scoreData.percentage === 100
               ? "훌륭합니다! 머릿속에 연상 이미지가 완벽하게 각인되어 장기 기억으로 저장되었습니다."
-              : "틀린 문제를 복습해 볼까요? 아래 연상 비법을 다시 읽어보면 기억의 연결고리가 더 단단해집니다."}
+              : "틀린 문제를 다시 복습해 볼까요? 아래 연상 힌트와 오답 해설을 읽으면 더 오랫동안 기억에 남습니다."}
           </p>
         </div>
 
