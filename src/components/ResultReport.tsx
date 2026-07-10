@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { CheckCircle2, RefreshCw, BookOpen, XCircle, Sparkles } from "lucide-react";
 import { Question } from "../types";
 import { getTheme } from "../theme";
+import { NativeBridge } from "../nativeBridge";
 
 interface ResultReportProps {
   questions: Question[];
@@ -78,7 +79,11 @@ export function ResultReport({
         <div className="pt-2 flex justify-center gap-3">
           {studyMode.startsWith('bookmark') ? (
             <button
-              onClick={handleReturnToBookmarks || handleGoHome}
+              onClick={() => {
+                NativeBridge.showInterstitialAd();
+                if (handleReturnToBookmarks) handleReturnToBookmarks();
+                else handleGoHome();
+              }}
               className={`py-2.5 px-5 text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer ${theme.btnPrimary}`}
             >
               <BookOpen className="w-4 h-4" />
@@ -87,7 +92,10 @@ export function ResultReport({
           ) : (
             <>
               <button
-                onClick={studyMode === 'vocab' ? startVocabStudy : startKanjiStudy}
+                onClick={() => {
+                  NativeBridge.showInterstitialAd();
+                  studyMode === 'vocab' ? startVocabStudy() : startKanjiStudy();
+                }}
                 disabled={isLoading}
                 className={`py-2.5 px-5 text-xs font-bold rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 cursor-pointer ${theme.btnPrimary}`}
               >
@@ -95,7 +103,10 @@ export function ResultReport({
                 <span>{studyMode === 'vocab' ? "새로운 단어 코스 풀기" : "새로운 한자 코스 풀기"}</span>
               </button>
               <button
-                onClick={handleGoHome}
+                onClick={() => {
+                  NativeBridge.showInterstitialAd();
+                  handleGoHome();
+                }}
                 className={`py-2.5 px-5 text-xs font-semibold rounded-xl transition-colors cursor-pointer ${theme.btnSecondary}`}
               >
                 메인 홈으로

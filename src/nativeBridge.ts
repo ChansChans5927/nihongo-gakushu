@@ -79,4 +79,19 @@ export const NativeBridge = {
       );
     }
   },
+
+  /**
+   * 네이티브 앱에 전면 광고(Interstitial Ad) 표시를 요청합니다.
+   * 결과 화면에서 '홈으로' 또는 '새로운 코스'로 넘어갈 때 호출됩니다.
+   */
+  showInterstitialAd: () => {
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(
+        JSON.stringify({ type: "SHOW_INTERSTITIAL_AD" })
+      );
+      console.log("[NativeBridge] Requested Interstitial Ad.");
+    } else {
+      console.log("[NativeBridge] Not in mobile app. Ad request ignored.");
+    }
+  },
 };
