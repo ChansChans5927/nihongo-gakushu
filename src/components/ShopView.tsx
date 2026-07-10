@@ -107,7 +107,6 @@ export function ShopView({
             <div>
               <div className="flex items-center justify-between">
                 <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'default' ? 'text-indigo-955 font-black' : theme.breakdownKanjiMeaning}`}>기본 스킨</h5>
-                <span className="text-[10px] bg-slate-500/10 text-slate-500 font-semibold px-2 py-0.5 rounded">보유함</span>
               </div>
               <p className={`text-xs mt-1 leading-relaxed ${currentTheme === 'default' ? 'text-indigo-900/80' : theme.wordSubText}`}>
                 기본 스타일의 깔끔하고 심플한 테마입니다.
@@ -118,7 +117,7 @@ export function ShopView({
               {currentTheme === 'default' ? (
                 <div className="w-full text-center py-2 bg-indigo-600/10 text-indigo-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>장착 완료</span>
+                  <span>착용 중</span>
                 </div>
               ) : (
                 <button
@@ -138,9 +137,7 @@ export function ShopView({
             <div>
               <div className="flex items-center justify-between">
                 <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'samurai' ? 'text-amber-955 font-black' : theme.breakdownKanjiMeaning}`}>사무라이 스킨</h5>
-                {unlockedThemes.includes('samurai') ? (
-                  <span className="text-[10px] bg-amber-500/10 text-amber-600 font-semibold px-2 py-0.5 rounded">보유함</span>
-                ) : (
+                {!unlockedThemes.includes('samurai') && (
                   <span className="text-[10px] bg-amber-600 text-white font-bold px-2 py-0.5 rounded flex items-center gap-0.5">
                     <Sparkles className="w-2.5 h-2.5" /> 800P
                   </span>
@@ -155,7 +152,7 @@ export function ShopView({
               {currentTheme === 'samurai' ? (
                 <div className="w-full text-center py-2 bg-amber-600/10 text-amber-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>장착 완료</span>
+                  <span>착용 중</span>
                 </div>
               ) : unlockedThemes.includes('samurai') ? (
                 <button
@@ -170,7 +167,7 @@ export function ShopView({
                   disabled={points < 800}
                   className="w-full py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-xs rounded-xl transition-all cursor-pointer disabled:cursor-not-allowed"
                 >
-                  {points >= 800 ? '구매하기 (800P)' : '포인트 부족'}
+                  800 P로 구매하기
                 </button>
               )}
             </div>
@@ -188,7 +185,7 @@ export function ShopView({
                 </h5>
                 {!unlockedThemes.includes('yokai') && (
                   <span className="bg-violet-500/10 text-violet-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-violet-500/20">
-                    1,500 P
+                    1,000 P
                   </span>
                 )}
               </div>
@@ -199,7 +196,7 @@ export function ShopView({
             <div className="mt-6 relative z-10">
               {currentTheme === 'yokai' ? (
                 <div className="w-full text-center py-2 bg-slate-800 text-violet-400 font-bold rounded-xl text-xs cursor-not-allowed border border-violet-500/30">
-                  현재 장착 중
+                  착용 중
                 </div>
               ) : unlockedThemes.includes('yokai') ? (
                 <button
@@ -210,11 +207,11 @@ export function ShopView({
                 </button>
               ) : (
                 <button
-                  onClick={() => buyTheme('yokai', 1500)}
-                  disabled={points < 1500}
+                  onClick={() => buyTheme('yokai', 1000)}
+                  disabled={points < 1000}
                   className="w-full py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  1,500 P로 구매하기
+                  1,000 P로 구매하기
                 </button>
               )}
             </div>
@@ -245,7 +242,7 @@ export function ShopView({
                 </h5>
                 {!unlockedThemes.includes('zen') && (
                   <span className="bg-emerald-500/10 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    1,000 P
+                    1,200 P
                   </span>
                 )}
               </div>
@@ -256,7 +253,7 @@ export function ShopView({
             <div className="mt-6 relative z-10">
               {currentTheme === 'zen' ? (
                 <div className="w-full text-center py-2 bg-emerald-800/10 text-emerald-800 border border-emerald-800/20 font-bold rounded-xl text-xs cursor-not-allowed">
-                  현재 장착 중
+                  착용 중
                 </div>
               ) : unlockedThemes.includes('zen') ? (
                 <button
@@ -267,11 +264,11 @@ export function ShopView({
                 </button>
               ) : (
                 <button
-                  onClick={() => buyTheme('zen', 1000)}
-                  disabled={points < 1000}
+                  onClick={() => buyTheme('zen', 1200)}
+                  disabled={points < 1200}
                   className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  1,000 P로 구매하기
+                  1,200 P로 구매하기
                 </button>
               )}
             </div>
@@ -302,7 +299,7 @@ export function ShopView({
                 </h5>
                 {!unlockedThemes.includes('chalkboard') && (
                   <span className="bg-emerald-500/10 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    1,200 P
+                    1,500 P
                   </span>
                 )}
               </div>
@@ -313,7 +310,7 @@ export function ShopView({
             <div className="mt-6 relative z-10">
               {currentTheme === 'chalkboard' ? (
                 <div className="w-full text-center py-2 bg-emerald-800/10 text-yellow-300 border border-emerald-800/20 font-bold rounded-xl text-xs cursor-not-allowed">
-                  현재 장착 중
+                  착용 중
                 </div>
               ) : unlockedThemes.includes('chalkboard') ? (
                 <button
@@ -324,11 +321,11 @@ export function ShopView({
                 </button>
               ) : (
                 <button
-                  onClick={() => buyTheme('chalkboard', 1200)}
-                  disabled={points < 1200}
+                  onClick={() => buyTheme('chalkboard', 1500)}
+                  disabled={points < 1500}
                   className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  1,200 P로 구매하기
+                  1,500 P로 구매하기
                 </button>
               )}
             </div>
@@ -345,13 +342,11 @@ export function ShopView({
             </div>
             <div className="space-y-2 relative z-10">
               <div className="flex items-center justify-between">
-                <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'golden_sakura' ? 'text-rose-900 font-black' : theme.breakdownKanjiMeaning}`}>
-                  골든 사쿠라 테마
+                <h5 className={`font-bold text-lg flex items-center gap-1.5 break-keep ${currentTheme === 'golden_sakura' ? 'text-rose-900 font-black' : theme.breakdownKanjiMeaning}`}>
+                  골든 사쿠라 스킨
                 </h5>
-                {unlockedThemes.includes('golden_sakura') ? (
-                  <span className="text-[10px] bg-rose-500/10 text-rose-600 font-bold px-2 py-0.5 rounded">보유함</span>
-                ) : (
-                  <span className="text-[10px] bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded border border-rose-300">잔디 30일 보상</span>
+                {!unlockedThemes.includes('golden_sakura') && (
+                  <span className="text-[10px] bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded border border-rose-300 shrink-0">잔디 30일 보상</span>
                 )}
               </div>
               <p className={`text-xs mt-1 leading-relaxed ${currentTheme === 'golden_sakura' ? 'text-rose-900/80' : theme.wordSubText}`}>
@@ -362,7 +357,7 @@ export function ShopView({
               {currentTheme === 'golden_sakura' ? (
                 <div className="w-full text-center py-2 bg-rose-100 text-rose-700 font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-not-allowed">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>장착 완료</span>
+                  <span>착용 중</span>
                 </div>
               ) : unlockedThemes.includes('golden_sakura') ? (
                 <button
@@ -394,13 +389,11 @@ export function ShopView({
             </div>
             <div className="space-y-2 relative z-10">
               <div className="flex items-center justify-between">
-                <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'golden_aura' ? 'text-amber-400 font-black' : theme.breakdownKanjiMeaning}`}>
-                  황금빛 오라 테마
+                <h5 className={`font-bold text-lg flex items-center gap-1.5 break-keep ${currentTheme === 'golden_aura' ? 'text-amber-400 font-black' : theme.breakdownKanjiMeaning}`}>
+                  황금빛 오라 스킨
                 </h5>
-                {unlockedThemes.includes('golden_aura') ? (
-                  <span className="text-[10px] bg-amber-500/15 text-amber-500 font-bold px-2 py-0.5 rounded border border-amber-500/20">보유함</span>
-                ) : (
-                  <span className="text-[10px] bg-amber-950 text-amber-400 font-bold px-2 py-0.5 rounded border border-amber-500/30">잔디 100일 보상</span>
+                {!unlockedThemes.includes('golden_aura') && (
+                  <span className="text-[10px] bg-amber-950 text-amber-400 font-bold px-2 py-0.5 rounded border border-amber-500/30 shrink-0">잔디 100일 보상</span>
                 )}
               </div>
               <p className={`text-xs mt-1 leading-relaxed ${currentTheme === 'golden_aura' ? 'text-amber-100/70' : theme.wordSubText}`}>
@@ -411,7 +404,7 @@ export function ShopView({
               {currentTheme === 'golden_aura' ? (
                 <div className="w-full text-center py-2 bg-stone-850 text-amber-400 font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-not-allowed">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>장착 완료</span>
+                  <span>착용 중</span>
                 </div>
               ) : unlockedThemes.includes('golden_aura') ? (
                 <button
