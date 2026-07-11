@@ -181,7 +181,7 @@ export async function triggerScheduledTask() {
 export function startDataGeneratorScheduler() {
   // Runs every day at 3:00 AM Seoul time
   cron.schedule(
-    "0 3 * * *",
+    "0 13 * * *",
     async () => {
       console.log("[Cron] Starting daily data generation cycle...");
       await triggerScheduledTask();
@@ -191,5 +191,5 @@ export function startDataGeneratorScheduler() {
     }
   );
 
-  console.log("Data generator cron scheduler started. Runs daily at 3:00 AM Asia/Seoul.");
+  console.log("Data generator cron scheduler started. Runs daily at 1:00 PM (13:00) Asia/Seoul.");
 }

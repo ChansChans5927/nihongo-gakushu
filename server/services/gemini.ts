@@ -125,6 +125,8 @@ async function callNvidiaNIM(prompt: string, systemInstruction: string, schema: 
     throw new Error("NVIDIA NIM API returned empty content");
   }
 
+  console.log(`[NVIDIA NIM API] Raw Response content:\n${content}`);
+
   return JSON.parse(content.trim());
 }
 
@@ -138,34 +140,51 @@ export async function callGeminiJSON(prompt: string, systemInstruction: string, 
     const currentModel = models[attempt] || "gemini-2.5-flash";
     try {
       const startTime = Date.now();
+      let parsed: any;
+
       if (currentModel === "nvidia-nim") {
         if (!process.env.NVIDIA_API_KEY) {
           console.log("[Gemini API] Skipping NVIDIA NIM fallback (NVIDIA_API_KEY not configured).");
           attempt++;
           continue;
         }
-        const data = await callNvidiaNIM(prompt, systemInstruction, schema);
+        parsed = await callNvidiaNIM(prompt, systemInstruction, schema);
         const durationMs = Date.now() - startTime;
         console.log(`[NVIDIA NIM API] Call took ${durationMs}ms`);
-        return data;
+      } else {
+        console.log(`[Gemini API] Calling ${currentModel} (attempt ${attempt + 1}/${maxRetries})...`);
+        const response = await ai.models.generateContent({
+          model: currentModel,
+          contents: prompt,
+          config: {
+            systemInstruction,
+            responseMimeType: "application/json",
+            responseSchema: schema
+          }
+        });
+
+        const durationMs = Date.now() - startTime;
+        console.log(`[Gemini API] Call to ${currentModel} took ${durationMs}ms`);
+
+        const bodyText = response.text || "[]";
+        parsed = JSON.parse(bodyText.trim());
       }
 
-      console.log(`[Gemini API] Calling ${currentModel} (attempt ${attempt + 1}/${maxRetries})...`);
-      const response = await ai.models.generateContent({
-        model: currentModel,
-        contents: prompt,
-        config: {
-          systemInstruction,
-          responseMimeType: "application/json",
-          responseSchema: schema
+      // 보정 로직: 스키마가 Type.ARRAY를 기대하지만 결과가 배열이 아닐 경우
+      if (schema && schema.type === Type.ARRAY && !Array.isArray(parsed)) {
+        console.log("[callGeminiJSON] Root schema is ARRAY but returned data is an object. Attempting to extract array...");
+        // 객체 키 중 배열 타입인 첫 번째 키를 찾음 (예: "cards", "data", "items" 등)
+        const firstArrayKey = Object.keys(parsed).find((k) => Array.isArray(parsed[k]));
+        if (firstArrayKey) {
+          console.log(`[callGeminiJSON] Extracted array from key: ${firstArrayKey}`);
+          parsed = parsed[firstArrayKey];
+        } else {
+          // 배열을 찾을 수 없는 경우 강제로 예외를 던져 다음 시도(gemini-2.5-flash 등)로 넘어가게 함
+          throw new Error("Root schema is Type.ARRAY but parsed JSON contains no array fields.");
         }
-      });
+      }
 
-      const durationMs = Date.now() - startTime;
-      console.log(`[Gemini API] Call to ${currentModel} took ${durationMs}ms`);
-
-      const bodyText = response.text || "[]";
-      return JSON.parse(bodyText.trim());
+      return parsed;
     } catch (err: any) {
       attempt++;
       console.warn(`[Gemini API] Call to ${currentModel} failed: ${err.message || err}`);
