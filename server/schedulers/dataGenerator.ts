@@ -87,7 +87,7 @@ export async function triggerScheduledTask() {
         console.log(`[Cron] All master kanjis for ${step.level} already exist in DB. Skipping API generation.`);
       } else {
         console.log(`[Cron] Selected target kanjis: ${JSON.stringify(targetKanjis)}`);
-        
+
         // 4. Trigger generation API
         const response = await fetch(`${BASE_URL}/api/kanji/generate`, {
           method: "POST",
@@ -106,7 +106,7 @@ export async function triggerScheduledTask() {
           throw new Error(`Kanji generation API failed: ${result.errorMsg}`);
         }
       }
-    } 
+    }
     else if (step.type === "vocab") {
       // 1. Load Master Vocab list
       if (!fs.existsSync(MASTER_VOCAB_PATH)) {
@@ -127,7 +127,7 @@ export async function triggerScheduledTask() {
         console.log(`[Cron] All master vocabs for ${step.level} already exist in DB. Skipping API generation.`);
       } else {
         console.log(`[Cron] Selected target vocabs: ${JSON.stringify(targetVocabs.map(v => v.word))}`);
-        
+
         // 4. Trigger generation API
         const response = await fetch(`${BASE_URL}/api/vocab/generate`, {
           method: "POST",
@@ -146,10 +146,10 @@ export async function triggerScheduledTask() {
           throw new Error(`Vocab generation API failed: ${result.errorMsg}`);
         }
       }
-    } 
+    }
     else if (step.type === "jlpt") {
       console.log(`[Cron] Generating 5 new JLPT mock questions for ${step.level}...`);
-      
+
       // Trigger generation API (internally filters duplicates based on questionSentence)
       const response = await fetch(`${BASE_URL}/api/jlpt/generate`, {
         method: "POST",
@@ -181,7 +181,7 @@ export async function triggerScheduledTask() {
 export function startDataGeneratorScheduler() {
   // Runs every day at 3:00 AM Seoul time
   cron.schedule(
-    "0 13 * * *",
+    "0 14 * * *",
     async () => {
       console.log("[Cron] Starting daily data generation cycle...");
       await triggerScheduledTask();
