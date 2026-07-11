@@ -3,9 +3,9 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { getDB } from "../db.ts";
 import { authMiddleware, AuthenticatedRequest } from "../middlewares/authMiddleware.ts";
+import { JWT_SECRET } from "../env.ts";
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || "nihongo_gakushu_secret_key";
 
 function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
