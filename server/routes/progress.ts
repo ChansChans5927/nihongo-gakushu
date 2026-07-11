@@ -2,6 +2,7 @@ import express from "express";
 import { getDB } from "../db.ts";
 import { authMiddleware, AuthenticatedRequest } from "../middlewares/authMiddleware.ts";
 import { calculateQuizPoints, getKoreanDateString } from "../services/points.ts";
+import { getThemePrice, isThemeId } from "../../shared/themeCatalog.ts";
 
 const router = express.Router();
 
@@ -168,11 +169,6 @@ router.post("/progress/save", async (req: AuthenticatedRequest, res) => {
 router.post("/progress/addPoints", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
   const { activity, correctCount, questionCount } = req.body;
-  const basePoints = calculateQuizPoints(activity, correctCount, questionCount);
-  if (basePoints === null) {
-    return res.status(400).json({ success: false, errorMsg: "올바르지 않은 퀴즈 보상 요청입니다." });
-  }
-
   const date = getKoreanDateString();
 
   const db = getDB();
@@ -183,6 +179,23 @@ router.post("/progress/addPoints", async (req: AuthenticatedRequest, res) => {
   try {
     const normalizedUsername = username.trim().toLowerCase();
     const progress = await db.collection("progress").findOne({ username: normalizedUsername });
+
+    let maximumQuestionCount = 20;
+    if (activity === "kanji_review") {
+      maximumQuestionCount = Array.isArray(progress?.masteredKanjis) ? progress.masteredKanjis.length : 0;
+    } else if (activity === "vocab_review") {
+      maximumQuestionCount = Array.isArray(progress?.masteredVocabs) ? progress.masteredVocabs.length : 0;
+    }
+
+    const basePoints = calculateQuizPoints(
+      activity,
+      correctCount,
+      questionCount,
+      maximumQuestionCount
+    );
+    if (basePoints === null) {
+      return res.status(400).json({ success: false, errorMsg: "올바르지 않은 퀴즈 보상 요청입니다." });
+    }
     
     // Check points density booster (>= 80% density in the last 30 days)
     const hasBooster = checkDensityBooster(progress?.studyLogs, date);
@@ -340,9 +353,10 @@ router.post("/progress/claimMilestone", async (req: AuthenticatedRequest, res) =
 // POST Endpoint to buy a theme
 router.post("/progress/buyTheme", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
-  const { theme, cost } = req.body;
-  if (!theme || typeof cost !== "number" || cost < 0) {
-    return res.json({ success: false, errorMsg: "올바르지 않은 요청 데이터입니다." });
+  const { theme } = req.body;
+  const cost = getThemePrice(theme);
+  if (cost === null) {
+    return res.status(400).json({ success: false, errorMsg: "구매할 수 없는 테마입니다." });
   }
 
   const db = getDB();
@@ -352,28 +366,29 @@ router.post("/progress/buyTheme", async (req: AuthenticatedRequest, res) => {
 
   try {
     const normalizedUsername = username.trim().toLowerCase();
-    const progress = await db.collection("progress").findOne({ username: normalizedUsername });
-    const currentPoints = progress?.points || 0;
-    const unlockedThemes = progress?.unlockedThemes || ["default"];
-
-    if (unlockedThemes.includes(theme)) {
-      return res.json({ success: false, errorMsg: "이미 구매한 테마입니다." });
-    }
-
-    if (currentPoints < cost) {
-      return res.json({ success: false, errorMsg: "포인트가 부족합니다." });
-    }
-
-    await db.collection("progress").updateOne(
-      { username: normalizedUsername },
+    const result = await db.collection("progress").updateOne(
+      {
+        username: normalizedUsername,
+        points: { $gte: cost },
+        unlockedThemes: { $ne: theme }
+      },
       { 
         $inc: { points: -cost },
         $addToSet: { unlockedThemes: theme },
         $set: { currentTheme: theme } // 자동 장착
-      },
-      { upsert: true }
+      }
     );
-    res.json({ success: true });
+
+    if (result.matchedCount === 0) {
+      const progress = await db.collection("progress").findOne({ username: normalizedUsername });
+      const unlockedThemes = progress?.unlockedThemes || ["default"];
+      if (unlockedThemes.includes(theme)) {
+        return res.json({ success: false, errorMsg: "이미 구매한 테마입니다." });
+      }
+      return res.json({ success: false, errorMsg: "포인트가 부족합니다." });
+    }
+
+    res.json({ success: true, pointsSpent: cost });
   } catch (err: any) {
     console.error("Buy theme error:", err);
     res.json({ success: false, errorMsg: `테마 구매 중 오류가 발생했습니다: ${err.message}` });
@@ -384,8 +399,8 @@ router.post("/progress/buyTheme", async (req: AuthenticatedRequest, res) => {
 router.post("/progress/equipTheme", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
   const { theme } = req.body;
-  if (!theme) {
-    return res.json({ success: false, errorMsg: "올바르지 않은 요청 데이터입니다." });
+  if (!isThemeId(theme)) {
+    return res.status(400).json({ success: false, errorMsg: "존재하지 않는 테마입니다." });
   }
 
   const db = getDB();

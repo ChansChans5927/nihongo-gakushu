@@ -168,18 +168,24 @@ export const useStudyStore = create<StudyState>()((...args) => {
         const correctCount = correctVocabList.length;
         if (correctCount > 0 && currentUser) {
           try {
-            await fetch("/api/progress/addPoints", {
+            const rewardResponse = await fetch("/api/progress/addPoints", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ 
-                activity: "vocab_quiz",
+                activity: authStore.isReviewMode ? "vocab_review" : "vocab_quiz",
                 correctCount,
                 questionCount: get().questions.length
               })
             });
+            const rewardData = await rewardResponse.json();
+            if (!rewardResponse.ok || !rewardData.success) {
+              throw new Error(rewardData.errorMsg || "포인트 적립에 실패했습니다.");
+            }
             await get().fetchUserProgress(currentUser.username);
           } catch (err) {
-            console.error(err);
+            console.error("Failed to award vocab quiz points:", err);
+            const message = err instanceof Error ? err.message : "알 수 없는 오류입니다.";
+            useConfirmStore.getState().showAlert(`퀴즈 결과는 저장되었지만 포인트 적립에 실패했습니다. (${message})`);
           }
         }
         const finishedVocab = Array.from(new Set<string>(correctVocabList));
@@ -193,18 +199,24 @@ export const useStudyStore = create<StudyState>()((...args) => {
         const correctCount = correctKanjiList.length;
         if (correctCount > 0 && currentUser) {
           try {
-            await fetch("/api/progress/addPoints", {
+            const rewardResponse = await fetch("/api/progress/addPoints", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ 
-                activity: "kanji_quiz",
+                activity: authStore.isReviewMode ? "kanji_review" : "kanji_quiz",
                 correctCount,
                 questionCount: get().questions.length
               })
             });
+            const rewardData = await rewardResponse.json();
+            if (!rewardResponse.ok || !rewardData.success) {
+              throw new Error(rewardData.errorMsg || "포인트 적립에 실패했습니다.");
+            }
             await get().fetchUserProgress(currentUser.username);
           } catch (err) {
-            console.error(err);
+            console.error("Failed to award kanji quiz points:", err);
+            const message = err instanceof Error ? err.message : "알 수 없는 오류입니다.";
+            useConfirmStore.getState().showAlert(`퀴즈 결과는 저장되었지만 포인트 적립에 실패했습니다. (${message})`);
           }
         }
         const finishedKanjis = Array.from(new Set<string>(correctKanjiList));

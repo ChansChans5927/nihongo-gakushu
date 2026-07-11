@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { CheckCircle2, Sparkles, ArrowLeft, Lock } from "lucide-react";
 import { getTheme } from "../theme";
+import { THEME_PRICES, type PurchasableTheme } from "../../shared/themeCatalog";
 
 interface ShopViewProps {
   points: number;
@@ -21,13 +22,13 @@ export function ShopView({
   const [shopMsg, setShopMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const theme = getTheme(currentTheme);
 
-  const buyTheme = async (themeId: string, cost: number) => {
+  const buyTheme = async (themeId: PurchasableTheme) => {
     setShopMsg(null);
     try {
       const res = await fetch("/api/progress/buyTheme", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ theme: themeId, cost })
+        body: JSON.stringify({ theme: themeId })
       });
       const data = await res.json();
       if (data.success) {
@@ -139,7 +140,7 @@ export function ShopView({
                 <h5 className={`font-bold text-lg flex items-center gap-1.5 ${currentTheme === 'samurai' ? 'text-amber-955 font-black' : theme.breakdownKanjiMeaning}`}>사무라이 스킨</h5>
                 {!unlockedThemes.includes('samurai') && (
                   <span className="text-[10px] bg-amber-600 text-white font-bold px-2 py-0.5 rounded flex items-center gap-0.5">
-                    <Sparkles className="w-2.5 h-2.5" /> 800P
+                    <Sparkles className="w-2.5 h-2.5" /> {THEME_PRICES.samurai.toLocaleString()}P
                   </span>
                 )}
               </div>
@@ -163,11 +164,11 @@ export function ShopView({
                 </button>
               ) : (
                 <button
-                  onClick={() => buyTheme('samurai', 800)}
-                  disabled={points < 800}
+                  onClick={() => buyTheme('samurai')}
+                  disabled={points < THEME_PRICES.samurai}
                   className="w-full py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold text-xs rounded-xl transition-all cursor-pointer disabled:cursor-not-allowed"
                 >
-                  800 P로 구매하기
+                  {THEME_PRICES.samurai.toLocaleString()} P로 구매하기
                 </button>
               )}
             </div>
@@ -185,7 +186,7 @@ export function ShopView({
                 </h5>
                 {!unlockedThemes.includes('yokai') && (
                   <span className="bg-violet-500/10 text-violet-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-violet-500/20">
-                    1,000 P
+                    {THEME_PRICES.yokai.toLocaleString()} P
                   </span>
                 )}
               </div>
@@ -207,11 +208,11 @@ export function ShopView({
                 </button>
               ) : (
                 <button
-                  onClick={() => buyTheme('yokai', 1000)}
-                  disabled={points < 1000}
+                  onClick={() => buyTheme('yokai')}
+                  disabled={points < THEME_PRICES.yokai}
                   className="w-full py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  1,000 P로 구매하기
+                  {THEME_PRICES.yokai.toLocaleString()} P로 구매하기
                 </button>
               )}
             </div>
@@ -242,7 +243,7 @@ export function ShopView({
                 </h5>
                 {!unlockedThemes.includes('zen') && (
                   <span className="bg-emerald-500/10 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    1,200 P
+                    {THEME_PRICES.zen.toLocaleString()} P
                   </span>
                 )}
               </div>
@@ -264,11 +265,11 @@ export function ShopView({
                 </button>
               ) : (
                 <button
-                  onClick={() => buyTheme('zen', 1200)}
-                  disabled={points < 1200}
+                  onClick={() => buyTheme('zen')}
+                  disabled={points < THEME_PRICES.zen}
                   className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  1,200 P로 구매하기
+                  {THEME_PRICES.zen.toLocaleString()} P로 구매하기
                 </button>
               )}
             </div>
@@ -299,7 +300,7 @@ export function ShopView({
                 </h5>
                 {!unlockedThemes.includes('chalkboard') && (
                   <span className="bg-emerald-500/10 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    1,500 P
+                    {THEME_PRICES.chalkboard.toLocaleString()} P
                   </span>
                 )}
               </div>
@@ -321,11 +322,11 @@ export function ShopView({
                 </button>
               ) : (
                 <button
-                  onClick={() => buyTheme('chalkboard', 1500)}
-                  disabled={points < 1500}
+                  onClick={() => buyTheme('chalkboard')}
+                  disabled={points < THEME_PRICES.chalkboard}
                   className="w-full py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  1,500 P로 구매하기
+                  {THEME_PRICES.chalkboard.toLocaleString()} P로 구매하기
                 </button>
               )}
             </div>

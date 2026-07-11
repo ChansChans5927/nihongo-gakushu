@@ -2,16 +2,19 @@ const QUIZ_REWARD_PER_CORRECT = {
   kanji_quiz: 10,
   vocab_quiz: 10,
   jlpt_quiz: 10,
+  kanji_review: 10,
+  vocab_review: 10,
 } as const;
 
-const ALLOWED_QUIZ_COUNTS = new Set([5, 10, 15, 20]);
+const MAX_QUIZ_QUESTION_COUNT = 20;
 
 export type QuizActivity = keyof typeof QUIZ_REWARD_PER_CORRECT;
 
 export function calculateQuizPoints(
   activity: unknown,
   correctCount: unknown,
-  questionCount: unknown
+  questionCount: unknown,
+  maximumQuestionCount = MAX_QUIZ_QUESTION_COUNT
 ): number | null {
   if (
     typeof activity !== "string" ||
@@ -23,7 +26,10 @@ export function calculateQuizPoints(
   if (
     typeof questionCount !== "number" ||
     !Number.isInteger(questionCount) ||
-    !ALLOWED_QUIZ_COUNTS.has(questionCount)
+    questionCount < 1 ||
+    !Number.isInteger(maximumQuestionCount) ||
+    maximumQuestionCount < 1 ||
+    questionCount > maximumQuestionCount
   ) {
     return null;
   }

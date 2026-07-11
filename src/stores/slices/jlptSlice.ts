@@ -101,7 +101,7 @@ export const createJlptSlice: StateCreator<StudyState, [], [], JlptSlice> = (set
     // 맞힌 문제당 10포인트 적립
     if (correctCount > 0 && currentUser) {
       try {
-        await fetch("/api/progress/addPoints", {
+        const rewardResponse = await fetch("/api/progress/addPoints", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
@@ -110,9 +110,15 @@ export const createJlptSlice: StateCreator<StudyState, [], [], JlptSlice> = (set
             questionCount: get().jlptQuestions.length
           })
         });
+        const rewardData = await rewardResponse.json();
+        if (!rewardResponse.ok || !rewardData.success) {
+          throw new Error(rewardData.errorMsg || "포인트 적립에 실패했습니다.");
+        }
         await get().fetchUserProgress(currentUser.username);
       } catch (err) {
-        console.error(err);
+        console.error("Failed to award JLPT quiz points:", err);
+        const message = err instanceof Error ? err.message : "알 수 없는 오류입니다.";
+        useConfirmStore.getState().showAlert(`시험 결과는 저장되었지만 포인트 적립에 실패했습니다. (${message})`);
       }
     }
     set({ isJlptGraded: true });
