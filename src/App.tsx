@@ -198,7 +198,7 @@ export default function App() {
         .then(data => {
           if (data.success) {
             if (data.data?.notificationsEnabled) {
-              syncPushToken(currentUser.username);
+              syncPushToken();
             }
             // Save TTS settings to localStorage for useSpeech hook
             localStorage.setItem(`${currentUser.username}_ttsSpeed`, data.data?.ttsSpeed || "normal");
@@ -210,7 +210,7 @@ export default function App() {
   }, [currentUser]);
 
   // Function to silently sync the push token on app start
-  const syncPushToken = async (username: string) => {
+  const syncPushToken = async () => {
     try {
       if (NativeBridge.isMobileApp()) {
         const expoPushToken = await NativeBridge.requestExpoToken();
@@ -218,7 +218,7 @@ export default function App() {
           await fetch('/api/notifications/subscribe', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, expoPushToken })
+            body: JSON.stringify({ expoPushToken })
           });
           console.log("[Token Sync] Successfully synced Expo push token.");
         }
@@ -238,7 +238,7 @@ export default function App() {
             await fetch('/api/notifications/subscribe', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ username, subscription })
+              body: JSON.stringify({ subscription })
             });
             console.log("[Token Sync] Successfully synced Web Push subscription.");
           }

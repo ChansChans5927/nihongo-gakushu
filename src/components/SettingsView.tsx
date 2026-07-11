@@ -74,7 +74,7 @@ export function SettingsView({ username, currentTheme = "default", onGoBack, onL
         await fetch('/api/notifications/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, expoPushToken })
+          body: JSON.stringify({ expoPushToken })
         });
       } catch (err: any) {
         throw new Error("모바일 앱에서 알림을 켤 수 없습니다. " + err.message);
@@ -107,7 +107,7 @@ export function SettingsView({ username, currentTheme = "default", onGoBack, onL
       await fetch('/api/notifications/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, subscription })
+        body: JSON.stringify({ subscription })
       });
     }
   };

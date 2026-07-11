@@ -1,14 +1,13 @@
 import express from "express";
 import { getDB } from "../db.ts";
+import { authMiddleware, AuthenticatedRequest } from "../middlewares/authMiddleware.ts";
 
 const router = express.Router();
 
 // POST Endpoint for Push Subscription
-router.post("/subscribe", async (req, res) => {
-  const { username, subscription, expoPushToken } = req.body;
-  if (!username) {
-    return res.json({ success: false, errorMsg: "잘못된 요청입니다." });
-  }
+router.post("/subscribe", authMiddleware as any, async (req: AuthenticatedRequest, res) => {
+  const username = req.user!.username;
+  const { subscription, expoPushToken } = req.body;
   if (!subscription && !expoPushToken) {
     return res.json({ success: false, errorMsg: "구독 정보 또는 엑스포 토큰이 필요합니다." });
   }
@@ -18,7 +17,7 @@ router.post("/subscribe", async (req, res) => {
     return res.json({ success: false, errorMsg: "데이터베이스 연결에 실패했습니다." });
   }
   try {
-    const normalizedUsername = String(username).trim().toLowerCase();
+    const normalizedUsername = username.trim().toLowerCase();
     const updateData: any = { notificationsEnabled: true };
     if (subscription) updateData.pushSubscription = subscription;
     if (expoPushToken) updateData.expoPushToken = expoPushToken;
