@@ -172,8 +172,9 @@ export const useStudyStore = create<StudyState>()((...args) => {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ 
-                points: correctCount * 10,
-                date: new Date().toLocaleDateString('sv')
+                activity: "vocab_quiz",
+                correctCount,
+                questionCount: get().questions.length
               })
             });
             await get().fetchUserProgress(currentUser.username);
@@ -196,8 +197,9 @@ export const useStudyStore = create<StudyState>()((...args) => {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ 
-                points: correctCount * 10,
-                date: new Date().toLocaleDateString('sv')
+                activity: "kanji_quiz",
+                correctCount,
+                questionCount: get().questions.length
               })
             });
             await get().fetchUserProgress(currentUser.username);

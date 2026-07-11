@@ -105,8 +105,9 @@ export const createJlptSlice: StateCreator<StudyState, [], [], JlptSlice> = (set
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
-            points: correctCount * 10,
-            date: new Date().toLocaleDateString('sv')
+            activity: "jlpt_quiz",
+            correctCount,
+            questionCount: get().jlptQuestions.length
           })
         });
         await get().fetchUserProgress(currentUser.username);

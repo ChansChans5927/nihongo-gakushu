@@ -1,6 +1,7 @@
 import express from "express";
 import { getDB } from "../db.ts";
 import { authMiddleware, AuthenticatedRequest } from "../middlewares/authMiddleware.ts";
+import { calculateQuizPoints, getKoreanDateString } from "../services/points.ts";
 
 const router = express.Router();
 
@@ -163,13 +164,16 @@ router.post("/progress/save", async (req: AuthenticatedRequest, res) => {
   }
 });
 
-// POST Endpoint to add points (boosted if study density is high)
+// POST Endpoint to award server-calculated quiz points (boosted if study density is high)
 router.post("/progress/addPoints", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
-  const { points, date } = req.body;
-  if (typeof points !== "number" || points <= 0) {
-    return res.json({ success: false, errorMsg: "올바르지 않은 포인트입니다." });
+  const { activity, correctCount, questionCount } = req.body;
+  const basePoints = calculateQuizPoints(activity, correctCount, questionCount);
+  if (basePoints === null) {
+    return res.status(400).json({ success: false, errorMsg: "올바르지 않은 퀴즈 보상 요청입니다." });
   }
+
+  const date = getKoreanDateString();
 
   const db = getDB();
   if (!db) {
@@ -182,7 +186,7 @@ router.post("/progress/addPoints", async (req: AuthenticatedRequest, res) => {
     
     // Check points density booster (>= 80% density in the last 30 days)
     const hasBooster = checkDensityBooster(progress?.studyLogs, date);
-    const finalPoints = hasBooster ? Math.round(points * 1.5) : points;
+    const finalPoints = hasBooster ? Math.round(basePoints * 1.5) : basePoints;
 
     const updateDoc: any = {
       $inc: { points: finalPoints }
