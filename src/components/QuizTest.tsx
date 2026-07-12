@@ -155,7 +155,7 @@ export function QuizTest({
               ? "제시된 일본어 예문의 빈칸에 들어갈 알맞은 단어는 무엇일까요?"
               : currentQuestion.questionText
                   .replace(/한자 '[^']+'의/g, '다음 한자의')
-                  .replace(/단어 '[^']+'의/g, '다음 단어의')}
+                  .replace(/단어 '[^']+'\s*(?:\([^)]+\))?\s*의/g, '다음 단어의')}
           </h3>
           <p className={`text-xs ${theme.questionPromptSubText}`}>
             {currentQuestion.type === 'blank_fill'
@@ -222,7 +222,7 @@ export function QuizTest({
               </div>
             </div>
           ) : (
-            <>
+            <div className="flex flex-col items-center gap-1.5 w-full">
               <div lang="ja" className={`text-4xl sm:text-5xl font-extrabold select-none text-center ${
                 isSamurai 
                   ? "font-serif text-amber-950 drop-shadow-sm" 
@@ -241,9 +241,27 @@ export function QuizTest({
                 {currentQuestion.type === 'kanji_match' ? (
                   <span className={`font-sans tracking-widest animate-pulse ${theme.quizBigDisplayHint}`}>?</span>
                 ) : (
-                  currentQuestion.vocabItem ? currentQuestion.vocabItem.word : currentQuestion.kanjiItem?.kanji
+                  currentQuestion.targetWord 
+                    ? currentQuestion.targetWord 
+                    : (currentQuestion.vocabItem ? currentQuestion.vocabItem.word : currentQuestion.kanjiItem?.kanji)
                 )}
               </div>
+              {/* Display reading (hiragana) if it is a meaning/word_meaning question and reading is available */}
+              {currentQuestion.type !== 'reading' && currentQuestion.type !== 'kanji_match' && (
+                (() => {
+                  const reading = currentQuestion.targetReading || currentQuestion.vocabItem?.hiragana;
+                  if (reading) {
+                    return (
+                      <span lang="ja" className={`text-sm sm:text-base font-semibold tracking-wide font-sans ${
+                        theme.isChalkboard ? "text-slate-300/80" : "text-slate-500"
+                      }`}>
+                        {reading}
+                      </span>
+                    );
+                  }
+                  return null;
+                })()
+              )}
               {currentQuestion.type === 'kanji_match' ? (
                 <span className={`text-xs font-mono text-center ${theme.questionPromptSubText}`}>
                   알맞은 표기를 아래 보기에서 선택하세요
@@ -252,13 +270,13 @@ export function QuizTest({
                 <button
                   type="button"
                   onClick={() => setIsHintOpen(true)}
-                  className={`text-xs font-bold text-center underline underline-offset-4 cursor-pointer hover:opacity-80 transition-all flex items-center gap-1 justify-center py-1 px-2.5 rounded-lg border border-dashed ${theme.btnHintQuiz}`}
+                  className={`text-xs font-bold text-center underline underline-offset-4 cursor-pointer hover:opacity-80 transition-all flex items-center gap-1 justify-center py-1 px-2.5 rounded-lg border border-dashed mt-1 ${theme.btnHintQuiz}`}
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>암기 비법 힌트 보기</span>
                 </button>
               )}
-            </>
+            </div>
           )}
         </div>
 

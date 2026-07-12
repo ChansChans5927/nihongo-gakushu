@@ -48,6 +48,7 @@ export interface Question {
   kanjiItem?: KanjiItem;
   vocabItem?: VocabItem;
   targetWord?: string;
+  targetReading?: string;
   targetKanji?: string;
   questionText: string;
   choices: string[];

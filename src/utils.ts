@@ -62,6 +62,8 @@ export function generateQuiz(kanjiList: KanjiItem[]): Question[] {
     let questionText = "";
     let choices: string[] = [];
     let correctValue = "";
+    let targetWord: string | undefined;
+    let targetReading: string | undefined;
 
     // Resolve level decoy fallback pool based on target Kanji's JLPT level
     const levelKey = (item.jlptLevel && LEVEL_DECOYS[item.jlptLevel]) ? item.jlptLevel : "N3";
@@ -88,6 +90,8 @@ export function generateQuiz(kanjiList: KanjiItem[]): Question[] {
       const rWord = item.relatedWords[0] || { word: "見학", meaning: "견학", hiragana: "けん가く" };
       questionText = `단어 '${rWord.word}' (${rWord.hiragana})의 올바른 한국어 뜻은 무엇일까요?`;
       correctValue = rWord.meaning;
+      targetWord = rWord.word;
+      targetReading = rWord.hiragana;
 
       const decoys = kanjiList
         .filter((k) => k.kanji !== item.kanji)
@@ -109,6 +113,8 @@ export function generateQuiz(kanjiList: KanjiItem[]): Question[] {
       id: index + 1,
       type,
       kanjiItem: item,
+      targetWord,
+      targetReading,
       questionText,
       choices,
       correctIndex
