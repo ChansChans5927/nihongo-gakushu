@@ -44,19 +44,24 @@ npm run dev
 https://nihongo-gakushu.onrender.com
 
 ### 🏠 메인 페이지
-![메인 페이지](image.png)
+<img width="919" height="800" alt="image" src="https://github.com/user-attachments/assets/0305d905-c66d-44ab-af03-ebef3d8c8bc1" />
+
 
 ### ✍ 한자 암기 페이지
-![한자 암기 페이지](image-1.png)
+<img width="945" height="908" alt="image" src="https://github.com/user-attachments/assets/798ed523-bdee-41db-a1ad-2777dd51e6fe" />
+
 
 ### 📖 단어 암기 페이지
-![단어 암기 페이지](image-2.png)
+<img width="918" height="796" alt="image" src="https://github.com/user-attachments/assets/986ce71e-31c3-4478-9323-b97af4e52f82" />
+
 
 ### 📝 단어 문제 풀이 페이지
-![단어 문제 풀이 페이지](image-3.png)
+<img width="916" height="812" alt="image" src="https://github.com/user-attachments/assets/2bd3b459-1fb3-42da-b48a-2b5911799c87" />
+
 
 ### 📊 결과 리포트 페이지
-![결과 리포트 페이지](image-4.png)
+<img width="919" height="888" alt="image" src="https://github.com/user-attachments/assets/32eee9c7-198d-43d6-8b85-a9f22e081cd6" />
+
 
 ---
 
