@@ -8,7 +8,10 @@ import { StudyState, KanjiSlice } from "../storeTypes";
 import { useAuthStore } from "../authStore";
 import { useConfirmStore } from "../confirmStore";
 
-export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (set, get) => ({
+export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (
+  set,
+  get,
+) => ({
   // ── 초기 상태 ──
   kanjiCount: 5,
   kanjiList: [],
@@ -18,9 +21,16 @@ export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (s
   setKanjiCount: (kanjiCount) => set({ kanjiCount }),
 
   // 한자 학습 시작 (신규 학습 또는 복습 모드)
-  startKanjiStudy: async (isReviewOverride?: boolean, targetItem?: string, level?: string) => {
+  startKanjiStudy: async (
+    isReviewOverride?: boolean,
+    targetItem?: string,
+    level?: string,
+  ) => {
     const authStore = useAuthStore.getState();
-    const isReview = typeof isReviewOverride === 'boolean' ? isReviewOverride : authStore.isReviewMode;
+    const isReview =
+      typeof isReviewOverride === "boolean"
+        ? isReviewOverride
+        : authStore.isReviewMode;
     const currentUser = authStore.currentUser;
 
     // 공용 상태 초기화 (SharedSlice 영역이지만 set으로 교차 설정 가능)
@@ -31,7 +41,7 @@ export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (s
       currentQuestionIndex: 0,
       userAnswers: {},
       isGraded: false,
-      studyMode: 'kanji'
+      studyMode: "kanji",
     });
     authStore.setIsReviewMode(isReview);
 
@@ -47,18 +57,21 @@ export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (s
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             username: currentUser.username,
-            type: "kanji"
-          })
+            type: "kanji",
+          }),
         });
       } else {
         // 신규 학습 모드: AI가 생성한 새 한자 카드 요청
         const requestBody: any = {
           count: get().kanjiCount,
           level: level || get().difficulty,
-          excludeKanji: get().masteredKanji
+          excludeKanji: get().masteredKanji,
         };
         if (targetItem) {
-          requestBody.deepLinkTarget = { kanji: targetItem, level: level || get().difficulty };
+          requestBody.deepLinkTarget = {
+            kanji: targetItem,
+            level: level || get().difficulty,
+          };
         }
 
         response = await fetch("/api/kanji/generate", {
@@ -74,14 +87,22 @@ export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (s
         set({
           kanjiList: resData.data,
           apiSource: resData.source || "mongodb_cache",
-          phase: 'studying'
+          phase: "studying",
         });
       } else {
-        throw new Error(resData.errorMsg || resData.message || "한자를 불러오는 데 실패했습니다.");
+        throw new Error(
+          resData.errorMsg ||
+            resData.message ||
+            "한자를 불러오는 데 실패했습니다.",
+        );
       }
     } catch (err: any) {
       console.error("Failed to load kanji sets:", err);
-      set({ errorMsg: err.message || "서버 통신에 오류가 발생했거나 한자 데이터를 받아오지 못했습니다. 잠시 후 다시 시도해 주세요." });
+      set({
+        errorMsg:
+          err.message ||
+          "서버 통신에 오류가 발생했거나 한자 데이터를 받아오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      });
     } finally {
       set({ isLoading: false });
     }
@@ -94,7 +115,9 @@ export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (s
     const currentUser = authStore.currentUser;
     if (currentUser && newlyLearned.length > 0) {
       try {
-        const masteredDetails = get().kanjiList.filter(item => newlyLearned.includes(item.kanji));
+        const masteredDetails = get().kanjiList.filter((item) =>
+          newlyLearned.includes(item.kanji),
+        );
         await fetch("/api/progress/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -103,8 +126,7 @@ export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (s
             type: "kanji",
             items: newlyLearned,
             cardDetails: masteredDetails,
-            date: new Date().toLocaleDateString('sv')
-          })
+          }),
         });
       } catch (err) {
         console.error("Failed to save mastered kanji to DB:", err);
@@ -114,7 +136,11 @@ export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (s
 
   // 외운 한자 내역 전체 초기화 (확인 다이얼로그 포함)
   handleResetMastery: async () => {
-    const confirmed = await useConfirmStore.getState().showConfirm("외운 한자 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?");
+    const confirmed = await useConfirmStore
+      .getState()
+      .showConfirm(
+        "외운 한자 내역을 전부 초기화하고 처음부터 다시 공부하시겠습니까?",
+      );
     if (confirmed) {
       set({ masteredKanji: [] });
       const authStore = useAuthStore.getState();
@@ -124,12 +150,15 @@ export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (s
           await fetch("/api/progress/reset", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: currentUser.username, type: "kanji" })
+            body: JSON.stringify({
+              username: currentUser.username,
+              type: "kanji",
+            }),
           });
         } catch (err) {
           console.error("Failed to reset progress in DB:", err);
         }
       }
     }
-  }
+  },
 });
