@@ -57,3 +57,29 @@ export function getKoreanDateString(date = new Date()): string {
   const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
   return `${values.year}-${values.month}-${values.day}`;
 }
+
+export function getCompletedWeekDates(
+  weekStart: unknown,
+  koreanToday = getKoreanDateString(),
+): string[] | null {
+  if (typeof weekStart !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) {
+    return null;
+  }
+
+  const start = new Date(`${weekStart}T00:00:00.000Z`);
+  if (
+    Number.isNaN(start.getTime()) ||
+    start.toISOString().slice(0, 10) !== weekStart ||
+    start.getUTCDay() !== 1
+  ) {
+    return null;
+  }
+
+  const dates = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(start);
+    date.setUTCDate(start.getUTCDate() + index);
+    return date.toISOString().slice(0, 10);
+  });
+
+  return dates[6] <= koreanToday ? dates : null;
+}

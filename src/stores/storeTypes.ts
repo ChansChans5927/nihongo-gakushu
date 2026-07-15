@@ -15,7 +15,6 @@ export interface KanjiSlice {
 
   setKanjiCount: (count: number) => void;                          // 한자 개수 설정
   startKanjiStudy: (isReviewOverride?: boolean, targetItem?: string, level?: string) => Promise<void>;  // 한자 학습 시작 (신규/복습/딥링크)
-  saveMasteredKanji: (list: string[], newlyLearned?: string[]) => Promise<void>;  // 외운 한자 서버 저장
   handleResetMastery: () => Promise<void>;                         // 한자 암기 초기화
 }
 
@@ -30,7 +29,6 @@ export interface VocabSlice {
 
   setVocabCount: (count: number) => void;                          // 단어 개수 설정
   startVocabStudy: (isReviewOverride?: boolean, targetItem?: string, level?: string) => Promise<void>;  // 단어 학습 시작 (신규/복습/딥링크)
-  saveMasteredVocab: (list: string[], newlyLearned?: string[]) => Promise<void>;  // 외운 단어 서버 저장
   handleResetVocabMastery: () => Promise<void>;                    // 단어 암기 초기화
 }
 
@@ -46,6 +44,7 @@ export interface JlptSlice {
   isJlptGraded: boolean;                                           // 채점 완료 여부
   isJlptLoading: boolean;                                          // 로딩 중 여부
   jlptErrorMsg: string | null;                                     // 에러 메시지
+  jlptAttemptId: string | null;                                    // 서버 발급 JLPT 시도 ID
 
   setJlptCount: (count: number) => void;                           // 문항 개수 설정
   setSelectedJlptLevel: (level: string) => void;                   // JLPT 레벨 설정
@@ -99,12 +98,13 @@ export interface SharedSlice {
   isLoading: boolean;                                              // 한자·단어 공통 로딩
   errorMsg: string | null;                                         // 한자·단어 공통 에러
   apiSource: 'gemini' | 'openai' | 'fallback' | 'mongodb_cache';                                  // 사용할 AI API 소스
+  quizAttemptId: string | null;                                    // 서버 발급 한자·단어 퀴즈 시도 ID
 
   setPhase: (phase: SharedSlice['phase']) => void;                 // 화면 페이즈 설정
   setStudyMode: (mode: SharedSlice['studyMode']) => void;          // 학습 모드 설정
   setDifficulty: (diff: string) => void;                           // 난이도 설정
   handleSelectAnswer: (choiceIndex: number) => void;               // 공용 퀴즈 답안 선택
-  handleNextStudy: () => void;                                     // 학습 화면에서 다음 카드로
+  handleNextStudy: () => Promise<void>;                             // 학습 화면에서 다음 카드로
   handlePrevStudy: () => void;                                     // 학습 화면에서 이전 카드로
   handleNextQuestion: () => void;                                  // 공용 퀴즈 다음 문제로
   handlePrevQuestion: () => void;                                  // 공용 퀴즈 이전 문제로

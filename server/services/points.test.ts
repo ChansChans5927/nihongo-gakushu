@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { calculateQuizPoints, getKoreanDateString } from "./points.ts";
+import {
+  calculateQuizPoints,
+  getCompletedWeekDates,
+  getKoreanDateString,
+} from "./points.ts";
 
 describe("calculateQuizPoints", () => {
   it.each(["kanji_quiz", "vocab_quiz", "jlpt_quiz"])(
@@ -39,5 +43,31 @@ describe("calculateQuizPoints", () => {
 describe("getKoreanDateString", () => {
   it("uses the Korean calendar date around the UTC day boundary", () => {
     expect(getKoreanDateString(new Date("2026-07-10T16:00:00.000Z"))).toBe("2026-07-11");
+  });
+});
+
+describe("getCompletedWeekDates", () => {
+  it("accepts a canonical Monday after the week is complete", () => {
+    expect(getCompletedWeekDates("2026-07-06", "2026-07-12")).toEqual([
+      "2026-07-06",
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-11",
+      "2026-07-12",
+    ]);
+  });
+
+  it.each([
+    "2026-07-07",
+    "2026-07-06T00:00:00.000Z",
+    "not-a-date",
+  ])("rejects non-canonical or non-Monday values: %s", (weekStart) => {
+    expect(getCompletedWeekDates(weekStart, "2026-07-20")).toBeNull();
+  });
+
+  it("rejects a week that is not complete in Korea yet", () => {
+    expect(getCompletedWeekDates("2026-07-13", "2026-07-18")).toBeNull();
   });
 });

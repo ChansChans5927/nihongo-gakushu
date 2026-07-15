@@ -1,14 +1,23 @@
 import express from "express";
-import { getDB } from "../db.ts";
+import { getDB, getDBClient } from "../db.ts";
 import {
   authMiddleware,
   AuthenticatedRequest,
 } from "../middlewares/authMiddleware.ts";
 import {
   calculateQuizPoints,
+  getCompletedWeekDates,
   getKoreanDateString,
 } from "../services/points.ts";
 import { getThemePrice, isThemeId } from "../../shared/themeCatalog.ts";
+import {
+  createQuizAttempt,
+  getCorrectItemKeys,
+  gradeQuizAnswers,
+  parseQuizAnswers,
+  QuizAttemptDocument,
+  QuizSubmissionResult,
+} from "../services/quizAttempts.ts";
 
 const router = express.Router();
 
@@ -173,20 +182,20 @@ router.delete("/user", async (req: AuthenticatedRequest, res) => {
   }
 });
 
-// POST Endpoint to save user progress
-router.post("/progress/save", async (req: AuthenticatedRequest, res) => {
-  const username = req.user!.username;
-  const { type, items } = req.body;
-  if (!type || !Array.isArray(items)) {
-    return res.json({
-      success: false,
-      errorMsg: "올바르지 않은 요청 데이터입니다.",
-    });
-  }
+// Legacy client-controlled mastery writes are no longer accepted.
+router.post("/progress/save", (_req: AuthenticatedRequest, res) => {
+  return res.status(410).json({
+    success: false,
+    errorMsg: "퀴즈 제출 API를 통해서만 학습 결과를 저장할 수 있습니다.",
+  });
+});
 
+// Create a server-owned quiz attempt and return questions without answer keys.
+router.post("/progress/quiz/start", async (req: AuthenticatedRequest, res) => {
+  const username = req.user!.username;
   const db = getDB();
   if (!db) {
-    return res.json({
+    return res.status(503).json({
       success: false,
       errorMsg: "데이터베이스 연결에 실패했습니다.",
     });
@@ -194,115 +203,175 @@ router.post("/progress/save", async (req: AuthenticatedRequest, res) => {
 
   try {
     const normalizedUsername = username.trim().toLowerCase();
-    const field = type === "kanji" ? "masteredKanjis" : "masteredVocabs";
-    const serverDate = getKoreanDateString();
-
-    const updateDoc: any = {
-      $addToSet: { [field]: { $each: items } },
-    };
-
-    if (items.length > 0) {
-      updateDoc.$inc = { [`studyLogs.${serverDate}`]: items.length };
-    }
-
-    await db
-      .collection("progress")
-      .updateOne({ username: normalizedUsername }, updateDoc, { upsert: true });
-
-    res.json({ success: true });
+    const attempt = await createQuizAttempt(db, normalizedUsername, req.body);
+    res.status(201).json({ success: true, ...attempt });
   } catch (err: any) {
-    console.error("Save progress error:", err);
-    res.json({
+    console.error("Start quiz attempt error:", err);
+    res.status(400).json({
       success: false,
-      errorMsg: `진행률 저장 중 오류가 발생했습니다: ${err.message}`,
+      errorMsg: err.message || "퀴즈를 시작할 수 없습니다.",
     });
   }
 });
 
-// POST Endpoint to award server-calculated quiz points (boosted if study density is high)
-router.post("/progress/addPoints", async (req: AuthenticatedRequest, res) => {
+// Submit answers once. The server grades the stored questions and awards points atomically.
+router.post("/progress/quiz/submit", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
-  const { activity, correctCount, questionCount } = req.body;
-  const date = getKoreanDateString();
-
+  const normalizedUsername = username.trim().toLowerCase();
+  const { attemptId, answers: rawAnswers } = req.body;
   const db = getDB();
-  if (!db) {
-    return res.json({
+  const client = getDBClient();
+  if (!db || !client) {
+    return res.status(503).json({
       success: false,
       errorMsg: "데이터베이스 연결에 실패했습니다.",
     });
   }
-
-  try {
-    const normalizedUsername = username.trim().toLowerCase();
-    const progress = await db
-      .collection("progress")
-      .findOne({ username: normalizedUsername });
-
-    let maximumQuestionCount = 20;
-    if (activity === "kanji_review") {
-      maximumQuestionCount = Array.isArray(progress?.masteredKanjis)
-        ? progress.masteredKanjis.length
-        : 0;
-    } else if (activity === "vocab_review") {
-      maximumQuestionCount = Array.isArray(progress?.masteredVocabs)
-        ? progress.masteredVocabs.length
-        : 0;
-    }
-
-    const basePoints = calculateQuizPoints(
-      activity,
-      correctCount,
-      questionCount,
-      maximumQuestionCount,
-    );
-    if (basePoints === null) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          errorMsg: "올바르지 않은 퀴즈 보상 요청입니다.",
-        });
-    }
-
-    // Check points density booster (>= 80% density in the last 30 days)
-    const hasBooster = checkDensityBooster(progress?.studyLogs, date);
-    const finalPoints = hasBooster ? Math.round(basePoints * 1.5) : basePoints;
-
-    const updateDoc: any = {
-      $inc: { points: finalPoints },
-    };
-
-    if (date) {
-      if (!updateDoc.$inc) updateDoc.$inc = {};
-      updateDoc.$inc[`studyLogs.${date}`] = 1; // Log at least 1 study event
-    }
-
-    await db
-      .collection("progress")
-      .updateOne({ username: normalizedUsername }, updateDoc, { upsert: true });
-    res.json({
-      success: true,
-      pointsAdded: finalPoints,
-      boosterActive: hasBooster,
-    });
-  } catch (err: any) {
-    console.error("Add points error:", err);
-    res.json({
+  if (
+    typeof attemptId !== "string" ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(attemptId)
+  ) {
+    return res.status(400).json({
       success: false,
-      errorMsg: `포인트 적립 중 오류가 발생했습니다: ${err.message}`,
+      errorMsg: "올바르지 않은 퀴즈 시도 ID입니다.",
     });
   }
+
+  try {
+    const payload = await client.withSession(async (session) => {
+      return session.withTransaction(async () => {
+        const attempts = db.collection<QuizAttemptDocument>("quiz_attempts");
+        const attempt = await attempts.findOne(
+          { _id: attemptId, username: normalizedUsername },
+          { session },
+        );
+        if (!attempt) {
+          throw new Error("퀴즈 시도를 찾을 수 없습니다.");
+        }
+
+        if (attempt.submittedAt && attempt.result) {
+          return {
+            success: true,
+            replayed: true,
+            ...attempt.result,
+            questions: attempt.questions,
+          };
+        }
+        if (attempt.expiresAt.getTime() <= Date.now()) {
+          throw new Error("퀴즈 제출 시간이 만료되었습니다.");
+        }
+
+        const answers = parseQuizAnswers(rawAnswers, attempt.questions);
+        if (!answers) {
+          throw new Error("올바르지 않은 답안 데이터입니다.");
+        }
+
+        const progressCollection = db.collection("progress");
+        const progress = await progressCollection.findOne(
+          { username: normalizedUsername },
+          { session },
+        );
+        const correctCount = gradeQuizAnswers(attempt.questions, answers);
+        const basePoints = correctCount > 0
+          ? calculateQuizPoints(
+              attempt.activity,
+              correctCount,
+              attempt.questions.length,
+            )
+          : 0;
+        if (basePoints === null) {
+          throw new Error("퀴즈 보상을 계산할 수 없습니다.");
+        }
+
+        const date = getKoreanDateString();
+        const boosterActive = checkDensityBooster(progress?.studyLogs, date);
+        const pointsAdded = boosterActive
+          ? Math.round(basePoints * 1.5)
+          : basePoints;
+        const correctItemKeys = getCorrectItemKeys(
+          attempt.activity,
+          attempt.questions,
+          answers,
+        );
+
+        const updateDoc: any = {
+          $inc: {
+            points: pointsAdded,
+            [`studyLogs.${date}`]: 1,
+          },
+          $setOnInsert: {
+            username: normalizedUsername,
+            unlockedThemes: ["default"],
+            currentTheme: "default",
+          },
+        };
+        if (
+          correctItemKeys.length > 0 &&
+          !attempt.activity.endsWith("_review")
+        ) {
+          const field = attempt.activity.startsWith("kanji_")
+            ? "masteredKanjis"
+            : "masteredVocabs";
+          updateDoc.$addToSet = { [field]: { $each: correctItemKeys } };
+        }
+
+        await progressCollection.updateOne(
+          { username: normalizedUsername },
+          updateDoc,
+          { upsert: true, session },
+        );
+
+        const result: QuizSubmissionResult = {
+          correctCount,
+          questionCount: attempt.questions.length,
+          pointsAdded,
+          boosterActive,
+          correctItemKeys,
+        };
+        const submitted = await attempts.updateOne(
+          { _id: attemptId, submittedAt: { $exists: false } },
+          { $set: { submittedAt: new Date(), result } },
+          { session },
+        );
+        if (submitted.matchedCount !== 1) {
+          throw new Error("이미 제출된 퀴즈입니다.");
+        }
+
+        return {
+          success: true,
+          replayed: false,
+          ...result,
+          questions: attempt.questions,
+        };
+      });
+    });
+
+    res.json(payload);
+  } catch (err: any) {
+    console.error("Submit quiz attempt error:", err);
+    res.status(400).json({
+      success: false,
+      errorMsg: err.message || "퀴즈 제출 중 오류가 발생했습니다.",
+    });
+  }
+});
+
+router.post("/progress/addPoints", (_req: AuthenticatedRequest, res) => {
+  return res.status(410).json({
+    success: false,
+    errorMsg: "더 이상 직접 포인트를 적립할 수 없습니다.",
+  });
 });
 
 // POST Endpoint to claim weekly perfect study reward (all 7 days of the week completed)
 router.post("/progress/claimWeekly", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
-  const { weekStart } = req.body; // The YYYY-MM-DD Monday date string
-  if (!weekStart) {
-    return res.json({
+  const { weekStart } = req.body;
+  const weekDates = getCompletedWeekDates(weekStart);
+  if (!weekDates) {
+    return res.status(400).json({
       success: false,
-      errorMsg: "올바르지 않은 요청 데이터입니다.",
+      errorMsg: "완료된 주의 월요일 날짜만 사용할 수 있습니다.",
     });
   }
 
@@ -316,54 +385,24 @@ router.post("/progress/claimWeekly", async (req: AuthenticatedRequest, res) => {
 
   try {
     const normalizedUsername = username.trim().toLowerCase();
-    const progress = await db
-      .collection("progress")
-      .findOne({ username: normalizedUsername });
-    if (!progress) {
-      return res.json({
-        success: false,
-        errorMsg: "사용자 진행 기록을 찾을 수 없습니다.",
-      });
-    }
-
-    const claimedWeeklyRewards = progress.claimedWeeklyRewards || [];
-    if (claimedWeeklyRewards.includes(weekStart)) {
-      return res.json({
-        success: false,
-        errorMsg: "이미 보상을 수령한 주간입니다.",
-      });
-    }
-
-    // Check all 7 days of the week starting at weekStart
-    const baseDate = new Date(weekStart);
-    const studyLogs = progress.studyLogs || {};
-    let perfect = true;
-    const missingDays: string[] = [];
-
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(baseDate);
-      d.setDate(baseDate.getDate() + i);
-      const dateStr = d.toISOString().split("T")[0];
-      if (!studyLogs[dateStr] || studyLogs[dateStr] <= 0) {
-        perfect = false;
-        missingDays.push(dateStr);
-      }
-    }
-
-    if (!perfect) {
-      return res.json({
-        success: false,
-        errorMsg: `해당 주간에 학습 기록이 없는 날이 있습니다. (누락: ${missingDays.join(", ")})`,
-      });
-    }
-
-    await db.collection("progress").updateOne(
-      { username: normalizedUsername },
+    const result = await db.collection("progress").updateOne(
+      {
+        username: normalizedUsername,
+        claimedWeeklyRewards: { $ne: weekStart },
+        $and: weekDates.map((date) => ({ [`studyLogs.${date}`]: { $gt: 0 } })),
+      },
       {
         $inc: { points: 300 },
         $addToSet: { claimedWeeklyRewards: weekStart } as any,
       },
     );
+
+    if (result.modifiedCount !== 1) {
+      return res.status(409).json({
+        success: false,
+        errorMsg: "이미 수령했거나 해당 주의 7일 학습 조건을 충족하지 못했습니다.",
+      });
+    }
 
     res.json({ success: true, pointsAdded: 300 });
   } catch (err: any) {
@@ -448,9 +487,22 @@ router.post(
         updateQuery.$inc = { points: rewardPoints };
       }
 
-      await db
+      const result = await db
         .collection("progress")
-        .updateOne({ username: normalizedUsername }, updateQuery);
+        .updateOne(
+          {
+            username: normalizedUsername,
+            claimedMilestones: { $ne: milestone },
+          },
+          updateQuery,
+        );
+
+      if (result.modifiedCount !== 1) {
+        return res.status(409).json({
+          success: false,
+          errorMsg: "이미 보상을 수령한 마일스톤입니다.",
+        });
+      }
 
       res.json({
         success: true,
@@ -659,7 +711,9 @@ router.post("/progress/review", async (req: AuthenticatedRequest, res) => {
       });
     }
 
-    const selectedKeys = [...list].sort(() => 0.5 - Math.random());
+    const selectedKeys = [...list]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 20);
 
     if (type === "kanji") {
       let cachedCards: any[] = [];

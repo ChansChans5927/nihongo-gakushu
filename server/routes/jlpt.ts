@@ -2,6 +2,7 @@ import express from "express";
 import { getDB } from "../db.ts";
 import { callGeminiJSON } from "../services/gemini.ts";
 import { Type } from "@google/genai";
+import { sanitizeQuizQuestions } from "../services/quizAttempts.ts";
 
 const router = express.Router();
 
@@ -42,7 +43,11 @@ router.post("/generate", async (req, res) => {
       });
       const selected = deduplicated.slice(0, numQuestions);
       console.log(`[JLPT Gen] Served ${selected.length} questions instantly from MongoDB cache.`);
-      return res.json({ success: true, source: "mongodb_cache", data: selected });
+      return res.json({
+        success: true,
+        source: "mongodb_cache",
+        data: sanitizeQuizQuestions(selected),
+      });
     }
 
     let allDbSentences: string[] = [];
@@ -174,7 +179,11 @@ router.post("/generate", async (req, res) => {
       return true;
     });
     const finalData = deduplicatedFinal.slice(0, numQuestions);
-    res.json({ success: true, source: mergedData.length > 0 ? "gemini_parallel" : "mongodb_cache", data: finalData });
+    res.json({
+      success: true,
+      source: mergedData.length > 0 ? "gemini_parallel" : "mongodb_cache",
+      data: sanitizeQuizQuestions(finalData),
+    });
   } catch (err: any) {
     console.error("Gemini API JLPT generation error:", err);
     res.json({ success: false, errorMsg: `JLPT 문제 생성 중 오류가 발생했습니다: ${err.message}` });

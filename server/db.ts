@@ -12,6 +12,9 @@ export async function connectDB(): Promise<Db | null> {
       client = new MongoClient(mongoUri);
       await client.connect();
       db = client.db("nihongo_gakushu");
+      await db
+        .collection("quiz_attempts")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
       console.log("Connected to MongoDB Atlas successfully.");
       return db;
     } catch (dbErr) {
@@ -26,4 +29,8 @@ export async function connectDB(): Promise<Db | null> {
 
 export function getDB(): Db | null {
   return db;
+}
+
+export function getDBClient(): MongoClient | null {
+  return client;
 }

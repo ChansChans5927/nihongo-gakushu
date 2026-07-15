@@ -16,7 +16,7 @@ interface VocabStudyProps {
   vocabList: VocabItem[];                                               // 학습용 단어 리스트
   currentVocabIndex: number;                                            // 현재 단어의 인덱스 번호 (0-based)
   handlePrevStudy: () => void;                                          // 이전 버튼 이벤트 핸들러
-  handleNextStudy: () => void;                                          // 다음 버튼 이벤트 핸들러
+  handleNextStudy: () => Promise<void>;                                 // 다음 버튼 이벤트 핸들러
   speakJapanese: (text: string) => void;                                // 일본어 TTS 재생 함수
   currentTheme?: string;                                                // 활성화된 디자인 테마 키
   bookmarkedVocabs: string[];                                           // 사용자가 북마크한 단어 문자열 배열

@@ -21,7 +21,7 @@ interface KanjiStudyProps {
   kanjiList: KanjiItem[];                                               // 학습용 한자 리스트
   currentKanjiIndex: number;                                            // 현재 한자 인덱스 번호 (0-based)
   handlePrevStudy: () => void;                                          // 이전 한자 핸들러
-  handleNextStudy: () => void;                                          // 다음 한자 핸들러
+  handleNextStudy: () => Promise<void>;                                 // 다음 한자 핸들러
   speakJapanese: (text: string) => void;                                // 일어 TTS 음성 함수
   currentTheme?: string;                                                // 활성화된 디자인 테마 키
   bookmarkedKanjis: string[];                                           // 사용자가 북마크한 한자 배열

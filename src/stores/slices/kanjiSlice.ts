@@ -108,32 +108,6 @@ export const createKanjiSlice: StateCreator<StudyState, [], [], KanjiSlice> = (
     }
   },
 
-  // 외운 한자 목록을 서버에 저장
-  saveMasteredKanji: async (list: string[], newlyLearned: string[] = []) => {
-    set({ masteredKanji: list });
-    const authStore = useAuthStore.getState();
-    const currentUser = authStore.currentUser;
-    if (currentUser && newlyLearned.length > 0) {
-      try {
-        const masteredDetails = get().kanjiList.filter((item) =>
-          newlyLearned.includes(item.kanji),
-        );
-        await fetch("/api/progress/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: currentUser.username,
-            type: "kanji",
-            items: newlyLearned,
-            cardDetails: masteredDetails,
-          }),
-        });
-      } catch (err) {
-        console.error("Failed to save mastered kanji to DB:", err);
-      }
-    }
-  },
-
   // 외운 한자 내역 전체 초기화 (확인 다이얼로그 포함)
   handleResetMastery: async () => {
     const confirmed = await useConfirmStore

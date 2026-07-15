@@ -110,36 +110,6 @@ export const createVocabSlice: StateCreator<StudyState, [], [], VocabSlice> = (
     }
   },
 
-  // 외운 단어 목록을 서버에 저장
-  saveMasteredVocab: async (list: string[], newlyLearned: string[] = []) => {
-    set({ masteredVocab: list });
-    const authStore = useAuthStore.getState();
-    const currentUser = authStore.currentUser;
-    if (currentUser && newlyLearned.length > 0) {
-      try {
-        const masteredDetails = get().vocabList.filter((item) =>
-          newlyLearned.includes(item.word),
-        );
-        const masteredQuizzes = get().vocabQuestions.filter((q) =>
-          newlyLearned.includes(q.targetWord || ""),
-        );
-        await fetch("/api/progress/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: currentUser.username,
-            type: "vocab",
-            items: newlyLearned,
-            cardDetails: masteredDetails,
-            quizDetails: masteredQuizzes,
-          }),
-        });
-      } catch (err) {
-        console.error("Failed to save mastered vocab to DB:", err);
-      }
-    }
-  },
-
   // 외운 단어 내역 전체 초기화 (확인 다이얼로그 포함)
   handleResetVocabMastery: async () => {
     const confirmed = await useConfirmStore

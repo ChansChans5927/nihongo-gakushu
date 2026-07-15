@@ -6,7 +6,7 @@ interface KanjiNavigationProps {
   currentIndex: number;          // 현재 한자 인덱스 (0-based)
   totalCount: number;            // 전체 한자 개수
   handlePrevStudy: () => void;   // '이전 한자' 클릭 핸들러
-  handleNextStudy: () => void;   // '다음 한자' 클릭 핸들러
+  handleNextStudy: () => Promise<void>; // '다음 한자' 클릭 핸들러
   theme: any;                    // 적용된 테마 객체
 }
 

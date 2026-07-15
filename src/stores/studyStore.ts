@@ -46,6 +46,7 @@ export const useStudyStore = create<StudyState>()((...args) => {
     isLoading: false,
     errorMsg: null,
     apiSource: 'gemini',
+    quizAttemptId: null,
 
     // ─── 공용 Setter ───
     setPhase: (phase) => set({ phase }),
@@ -65,34 +66,80 @@ export const useStudyStore = create<StudyState>()((...args) => {
     },
 
     // ─── 다음 카드로 이동 (한자/단어 분기 → 마지막 카드이면 퀴즈 시작) ───
-    handleNextStudy: () => {
+    handleNextStudy: async () => {
       if (get().studyMode === 'vocab') {
         if (get().currentVocabIndex < get().vocabList.length - 1) {
           set({ currentVocabIndex: get().currentVocabIndex + 1 });
         } else {
-          // 마지막 단어 카드 → 퀴즈 단계로 전환
-          const nextQuestions = get().vocabQuestions.length > 0 ? get().vocabQuestions : generateVocabQuiz(get().vocabList);
-          set({
-            questions: nextQuestions,
-            userAnswers: {},
-            currentQuestionIndex: 0,
-            isGraded: false,
-            phase: 'testing'
-          });
+          set({ isLoading: true, errorMsg: null });
+          try {
+            const activity = useAuthStore.getState().isReviewMode
+              ? "vocab_review"
+              : "vocab_quiz";
+            const response = await fetch("/api/progress/quiz/start", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                activity,
+                itemKeys: get().vocabList.map((item) => item.word),
+              }),
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+              throw new Error(data.errorMsg || "단어 퀴즈를 시작할 수 없습니다.");
+            }
+            set({
+              questions: data.questions,
+              quizAttemptId: data.attemptId,
+              userAnswers: {},
+              currentQuestionIndex: 0,
+              isGraded: false,
+              phase: 'testing'
+            });
+          } catch (err) {
+            const message = err instanceof Error ? err.message : "단어 퀴즈를 시작할 수 없습니다.";
+            set({ errorMsg: message });
+            await useConfirmStore.getState().showAlert(message);
+          } finally {
+            set({ isLoading: false });
+          }
         }
       } else {
         if (get().currentKanjiIndex < get().kanjiList.length - 1) {
           set({ currentKanjiIndex: get().currentKanjiIndex + 1 });
         } else {
-          // 마지막 한자 카드 → 퀴즈 단계로 전환
-          const generatedQuiz = generateQuiz(get().kanjiList);
-          set({
-            questions: generatedQuiz,
-            userAnswers: {},
-            currentQuestionIndex: 0,
-            isGraded: false,
-            phase: 'testing'
-          });
+          set({ isLoading: true, errorMsg: null });
+          try {
+            const activity = useAuthStore.getState().isReviewMode
+              ? "kanji_review"
+              : "kanji_quiz";
+            const response = await fetch("/api/progress/quiz/start", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                activity,
+                itemKeys: get().kanjiList.map((item) => item.kanji),
+              }),
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+              throw new Error(data.errorMsg || "한자 퀴즈를 시작할 수 없습니다.");
+            }
+            set({
+              questions: data.questions,
+              quizAttemptId: data.attemptId,
+              userAnswers: {},
+              currentQuestionIndex: 0,
+              isGraded: false,
+              phase: 'testing'
+            });
+          } catch (err) {
+            const message = err instanceof Error ? err.message : "한자 퀴즈를 시작할 수 없습니다.";
+            set({ errorMsg: message });
+            await useConfirmStore.getState().showAlert(message);
+          } finally {
+            set({ isLoading: false });
+          }
         }
       }
     },
@@ -119,6 +166,7 @@ export const useStudyStore = create<StudyState>()((...args) => {
         userAnswers: {},
         currentQuestionIndex: 0,
         isGraded: false,
+        quizAttemptId: null,
         phase: 'testing'
       });
     },
@@ -146,82 +194,43 @@ export const useStudyStore = create<StudyState>()((...args) => {
           return;
         }
       }
-      set({
-        isGraded: true,
-        phase: 'result'
-      });
-
       const mode = get().studyMode;
       if (mode.startsWith('bookmark')) {
         // 북마크 테스트는 연습용이므로 포인트나 외운 목록 추가를 하지 않습니다.
+        set({ isGraded: true, phase: 'result' });
         return;
       }
 
-      const authStore = useAuthStore.getState();
-      const currentUser = authStore.currentUser;
+      const currentUser = useAuthStore.getState().currentUser;
+      const attemptId = get().quizAttemptId;
+      if (!currentUser || !attemptId) {
+        await useConfirmStore.getState().showAlert("유효한 퀴즈 시도를 찾을 수 없습니다. 다시 시작해 주세요.");
+        return;
+      }
 
-      if (get().studyMode === 'vocab') {
-        // 단어 퀴즈 채점: 정답 단어들을 외운 목록에 추가
-        const correctVocabList = get().questions
-          .filter(q => get().userAnswers[q.id] === q.correctIndex && q.vocabItem)
-          .map(q => q.vocabItem!.word as string);
-        const correctCount = correctVocabList.length;
-        if (correctCount > 0 && currentUser) {
-          try {
-            const rewardResponse = await fetch("/api/progress/addPoints", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ 
-                activity: authStore.isReviewMode ? "vocab_review" : "vocab_quiz",
-                correctCount,
-                questionCount: get().questions.length
-              })
-            });
-            const rewardData = await rewardResponse.json();
-            if (!rewardResponse.ok || !rewardData.success) {
-              throw new Error(rewardData.errorMsg || "포인트 적립에 실패했습니다.");
-            }
-            await get().fetchUserProgress(currentUser.username);
-          } catch (err) {
-            console.error("Failed to award vocab quiz points:", err);
-            const message = err instanceof Error ? err.message : "알 수 없는 오류입니다.";
-            useConfirmStore.getState().showAlert(`퀴즈 결과는 저장되었지만 포인트 적립에 실패했습니다. (${message})`);
-          }
+      set({ isLoading: true });
+      try {
+        const response = await fetch("/api/progress/quiz/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ attemptId, answers: get().userAnswers }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.errorMsg || "퀴즈 채점에 실패했습니다.");
         }
-        const finishedVocab = Array.from(new Set<string>(correctVocabList));
-        const updated = Array.from(new Set<string>([...get().masteredVocab, ...finishedVocab]));
-        await get().saveMasteredVocab(updated, finishedVocab);
-      } else {
-        // 한자 퀴즈 채점: 정답 한자들을 외운 목록에 추가
-        const correctKanjiList = get().questions
-          .filter(q => get().userAnswers[q.id] === q.correctIndex && q.kanjiItem)
-          .map(q => q.kanjiItem!.kanji as string);
-        const correctCount = correctKanjiList.length;
-        if (correctCount > 0 && currentUser) {
-          try {
-            const rewardResponse = await fetch("/api/progress/addPoints", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ 
-                activity: authStore.isReviewMode ? "kanji_review" : "kanji_quiz",
-                correctCount,
-                questionCount: get().questions.length
-              })
-            });
-            const rewardData = await rewardResponse.json();
-            if (!rewardResponse.ok || !rewardData.success) {
-              throw new Error(rewardData.errorMsg || "포인트 적립에 실패했습니다.");
-            }
-            await get().fetchUserProgress(currentUser.username);
-          } catch (err) {
-            console.error("Failed to award kanji quiz points:", err);
-            const message = err instanceof Error ? err.message : "알 수 없는 오류입니다.";
-            useConfirmStore.getState().showAlert(`퀴즈 결과는 저장되었지만 포인트 적립에 실패했습니다. (${message})`);
-          }
-        }
-        const finishedKanjis = Array.from(new Set<string>(correctKanjiList));
-        const updated = Array.from(new Set<string>([...get().masteredKanji, ...finishedKanjis]));
-        await get().saveMasteredKanji(updated, finishedKanjis);
+        set({
+          questions: data.questions,
+          isGraded: true,
+          phase: 'result',
+        });
+        await get().fetchUserProgress(currentUser.username);
+      } catch (err) {
+        console.error("Failed to submit quiz attempt:", err);
+        const message = err instanceof Error ? err.message : "알 수 없는 오류입니다.";
+        await useConfirmStore.getState().showAlert(`퀴즈 채점에 실패했습니다. (${message})`);
+      } finally {
+        set({ isLoading: false });
       }
     },
 
@@ -246,6 +255,7 @@ export const useStudyStore = create<StudyState>()((...args) => {
         kanjiList: [],
         vocabList: [],
         questions: [],
+        quizAttemptId: null,
         isJlptGraded: false,
         jlptQuestions: [],
         jlptAnswers: {},

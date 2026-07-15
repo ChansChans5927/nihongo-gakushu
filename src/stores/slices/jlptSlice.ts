@@ -18,6 +18,7 @@ export const createJlptSlice: StateCreator<StudyState, [], [], JlptSlice> = (set
   isJlptGraded: false,
   isJlptLoading: false,
   jlptErrorMsg: null,
+  jlptAttemptId: null,
 
   // ── Setter ──
   setJlptCount: (jlptCount) => set({ jlptCount }),
@@ -30,7 +31,8 @@ export const createJlptSlice: StateCreator<StudyState, [], [], JlptSlice> = (set
       jlptErrorMsg: null,
       currentJlptIndex: 0,
       jlptAnswers: {},
-      isJlptGraded: false
+      isJlptGraded: false,
+      jlptAttemptId: null,
     });
 
     try {
@@ -42,10 +44,22 @@ export const createJlptSlice: StateCreator<StudyState, [], [], JlptSlice> = (set
       const resData = await response.json();
 
       if (resData.success && resData.data && resData.data.length > 0) {
-        // 각 문제에 고유 ID 부여
-        const uniqueQs = resData.data.map((q: any, index: number) => ({ ...q, id: `jlpt_${index}` }));
+        const attemptResponse = await fetch("/api/progress/quiz/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            activity: "jlpt_quiz",
+            level: get().selectedJlptLevel,
+            count: get().jlptCount,
+          }),
+        });
+        const attemptData = await attemptResponse.json();
+        if (!attemptResponse.ok || !attemptData.success) {
+          throw new Error(attemptData.errorMsg || "JLPT 퀴즈 시도를 만들 수 없습니다.");
+        }
         set({
-          jlptQuestions: uniqueQs,
+          jlptQuestions: attemptData.questions,
+          jlptAttemptId: attemptData.attemptId,
           phase: 'jlpt'
         });
       } else {
@@ -94,34 +108,36 @@ export const createJlptSlice: StateCreator<StudyState, [], [], JlptSlice> = (set
         return;
       }
     }
-    const correctCount = get().jlptQuestions.filter(q => get().jlptAnswers[q.id] === q.correctIndex).length;
-    const authStore = useAuthStore.getState();
-    const currentUser = authStore.currentUser;
-
-    // 맞힌 문제당 10포인트 적립
-    if (correctCount > 0 && currentUser) {
-      try {
-        const rewardResponse = await fetch("/api/progress/addPoints", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            activity: "jlpt_quiz",
-            correctCount,
-            questionCount: get().jlptQuestions.length
-          })
-        });
-        const rewardData = await rewardResponse.json();
-        if (!rewardResponse.ok || !rewardData.success) {
-          throw new Error(rewardData.errorMsg || "포인트 적립에 실패했습니다.");
-        }
-        await get().fetchUserProgress(currentUser.username);
-      } catch (err) {
-        console.error("Failed to award JLPT quiz points:", err);
-        const message = err instanceof Error ? err.message : "알 수 없는 오류입니다.";
-        useConfirmStore.getState().showAlert(`시험 결과는 저장되었지만 포인트 적립에 실패했습니다. (${message})`);
-      }
+    const currentUser = useAuthStore.getState().currentUser;
+    const attemptId = get().jlptAttemptId;
+    if (!currentUser || !attemptId) {
+      await useConfirmStore.getState().showAlert("유효한 JLPT 퀴즈 시도를 찾을 수 없습니다.");
+      return;
     }
-    set({ isJlptGraded: true });
+
+    set({ isJlptLoading: true });
+    try {
+      const response = await fetch("/api/progress/quiz/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ attemptId, answers: get().jlptAnswers }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.errorMsg || "JLPT 채점에 실패했습니다.");
+      }
+      set({
+        jlptQuestions: data.questions,
+        isJlptGraded: true,
+      });
+      await get().fetchUserProgress(currentUser.username);
+    } catch (err) {
+      console.error("Failed to submit JLPT quiz attempt:", err);
+      const message = err instanceof Error ? err.message : "알 수 없는 오류입니다.";
+      await useConfirmStore.getState().showAlert(`JLPT 채점에 실패했습니다. (${message})`);
+    } finally {
+      set({ isJlptLoading: false });
+    }
   },
 
   // JLPT 화면에서 홈으로 복귀 (채점 전이면 확인 다이얼로그 표시)
@@ -136,6 +152,7 @@ export const createJlptSlice: StateCreator<StudyState, [], [], JlptSlice> = (set
       phase: 'config',
       isJlptGraded: false,
       jlptQuestions: [],
+      jlptAttemptId: null,
       jlptAnswers: {},
       jlptErrorMsg: null
     });
