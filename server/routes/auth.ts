@@ -1,26 +1,35 @@
 import express from "express";
-import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { getDB } from "../db.ts";
 import { authMiddleware, AuthenticatedRequest } from "../middlewares/authMiddleware.ts";
 import { JWT_SECRET } from "../env.ts";
+import {
+  FixedWindowRateLimiter,
+  hashPassword,
+  verifyPassword,
+} from "../services/authSecurity.ts";
 
 const router = express.Router();
 
-function hashPassword(password: string): string {
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.pbkdf2Sync(password, salt, 600000, 64, "sha512").toString("hex");
-  return `${salt}:${hash}`;
+const loginCredentialLimiter = new FixedWindowRateLimiter(5, 15 * 60 * 1000);
+const loginAccountLimiter = new FixedWindowRateLimiter(20, 15 * 60 * 1000);
+const loginIpLimiter = new FixedWindowRateLimiter(50, 15 * 60 * 1000);
+const registerIpLimiter = new FixedWindowRateLimiter(10, 60 * 60 * 1000);
+
+function getRequestIp(req: express.Request): string {
+  return req.ip || req.socket.remoteAddress || "unknown";
 }
 
-function verifyPassword(password: string, storedHash: string): boolean {
-  try {
-    const [salt, hash] = storedHash.split(":");
-    const checkHash = crypto.pbkdf2Sync(password, salt, 600000, 64, "sha512").toString("hex");
-    return hash === checkHash;
-  } catch (err) {
-    return false;
-  }
+function rejectRateLimited(res: express.Response, retryAfter: number) {
+  res.setHeader("Retry-After", String(retryAfter));
+  return res.status(429).json({
+    success: false,
+    errorMsg: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+  });
+}
+
+function signToken(username: string, tokenVersion: number): string {
+  return jwt.sign({ username, tokenVersion }, JWT_SECRET, { expiresIn: "7d" });
 }
 
 function isPasswordComplex(password: string): boolean {
@@ -31,8 +40,19 @@ function isPasswordComplex(password: string): boolean {
 
 // POST Endpoint for User Registration
 router.post("/register", async (req, res) => {
+  const ipKey = `register:${getRequestIp(req)}`;
+  const retryAfter = registerIpLimiter.getRetryAfterSeconds(ipKey);
+  if (retryAfter) return rejectRateLimited(res, retryAfter);
+  registerIpLimiter.recordAttempt(ipKey);
+
   const { username, password } = req.body;
-  if (!username || !password || username.trim() === "" || password.trim() === "") {
+  if (
+    typeof username !== "string" ||
+    typeof password !== "string" ||
+    username.trim().length < 1 ||
+    username.trim().length > 50 ||
+    password.length > 128
+  ) {
     return res.json({ success: false, errorMsg: "아이디와 비밀번호를 모두 입력해 주세요." });
   }
 
@@ -52,20 +72,16 @@ router.post("/register", async (req, res) => {
       return res.json({ success: false, errorMsg: "이미 존재하는 아이디입니다." });
     }
 
-    const hashedPassword = hashPassword(password.trim());
+    const hashedPassword = await hashPassword(password.trim());
     await db.collection("users").insertOne({
       username: normalizedUsername,
       displayName: username.trim(),
       password: hashedPassword,
-      createdAt: new Date()
+      createdAt: new Date(),
+      tokenVersion: 0,
     });
 
-    // Sign JWT token
-    const token = jwt.sign(
-      { username: normalizedUsername },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = signToken(normalizedUsername, 0);
 
     res.json({
       success: true,
@@ -81,7 +97,14 @@ router.post("/register", async (req, res) => {
 // POST Endpoint for User Login
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password || username.trim() === "" || password.trim() === "") {
+  if (
+    typeof username !== "string" ||
+    typeof password !== "string" ||
+    username.trim().length < 1 ||
+    username.trim().length > 50 ||
+    password.length < 1 ||
+    password.length > 128
+  ) {
     return res.json({ success: false, errorMsg: "아이디와 비밀번호를 모두 입력해 주세요." });
   }
 
@@ -92,17 +115,28 @@ router.post("/login", async (req, res) => {
 
   try {
     const normalizedUsername = username.trim().toLowerCase();
+    const ipKey = `login-ip:${getRequestIp(req)}`;
+    const accountKey = `login-account:${normalizedUsername}`;
+    const credentialKey = `login-credential:${getRequestIp(req)}:${normalizedUsername}`;
+    const retryAfter = Math.max(
+      loginIpLimiter.getRetryAfterSeconds(ipKey) || 0,
+      loginAccountLimiter.getRetryAfterSeconds(accountKey) || 0,
+      loginCredentialLimiter.getRetryAfterSeconds(credentialKey) || 0,
+    );
+    if (retryAfter) return rejectRateLimited(res, retryAfter);
+
     const user = await db.collection("users").findOne({ username: normalizedUsername });
-    if (!user || !verifyPassword(password.trim(), user.password)) {
+    if (!user || !(await verifyPassword(password.trim(), user.password))) {
+      loginIpLimiter.recordAttempt(ipKey);
+      loginAccountLimiter.recordAttempt(accountKey);
+      loginCredentialLimiter.recordAttempt(credentialKey);
       return res.json({ success: false, errorMsg: "아이디 또는 비밀번호가 올바르지 않습니다." });
     }
+    loginAccountLimiter.reset(accountKey);
+    loginCredentialLimiter.reset(credentialKey);
 
-    // Sign JWT token
-    const token = jwt.sign(
-      { username: normalizedUsername },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const tokenVersion = Number.isInteger(user.tokenVersion) ? user.tokenVersion : 0;
+    const token = signToken(normalizedUsername, tokenVersion);
 
     res.json({
       success: true,
@@ -120,7 +154,14 @@ router.post("/change-password", authMiddleware as any, async (req: Authenticated
   const username = req.user!.username;
   const { currentPassword, newPassword } = req.body;
 
-  if (!currentPassword || !newPassword || currentPassword.trim() === "" || newPassword.trim() === "") {
+  if (
+    typeof currentPassword !== "string" ||
+    typeof newPassword !== "string" ||
+    currentPassword.length < 1 ||
+    currentPassword.length > 128 ||
+    newPassword.length < 1 ||
+    newPassword.length > 128
+  ) {
     return res.json({ success: false, errorMsg: "현재 비밀번호와 새 비밀번호를 모두 입력해 주세요." });
   }
 
@@ -133,7 +174,7 @@ router.post("/change-password", authMiddleware as any, async (req: Authenticated
     const normalizedUsername = username.trim().toLowerCase();
     const user = await db.collection("users").findOne({ username: normalizedUsername });
     
-    if (!user || !verifyPassword(currentPassword.trim(), user.password)) {
+    if (!user || !(await verifyPassword(currentPassword.trim(), user.password))) {
       return res.json({ success: false, errorMsg: "현재 비밀번호가 일치하지 않습니다." });
     }
 
@@ -141,16 +182,41 @@ router.post("/change-password", authMiddleware as any, async (req: Authenticated
       return res.json({ success: false, errorMsg: "새 비밀번호는 영문, 숫자, 특수문자를 혼합하여 8자 이상이어야 합니다." });
     }
 
-    const hashedPassword = hashPassword(newPassword.trim());
+    const hashedPassword = await hashPassword(newPassword.trim());
     await db.collection("users").updateOne(
       { username: normalizedUsername },
-      { $set: { password: hashedPassword } }
+      { $set: { password: hashedPassword }, $inc: { tokenVersion: 1 } }
     );
 
     res.json({ success: true });
   } catch (err: any) {
     console.error("Change password error:", err);
     res.json({ success: false, errorMsg: `비밀번호 변경 중 오류가 발생했습니다: ${err.message}` });
+  }
+});
+
+router.post("/logout", authMiddleware as any, async (req: AuthenticatedRequest, res) => {
+  const db = getDB();
+  if (!db) {
+    return res.status(503).json({
+      success: false,
+      errorMsg: "데이터베이스 연결에 실패했습니다.",
+    });
+  }
+
+  const username = req.user!.username.trim().toLowerCase();
+  try {
+    await db.collection("users").updateOne(
+      { username },
+      { $inc: { tokenVersion: 1 } },
+    );
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return res.status(500).json({
+      success: false,
+      errorMsg: "로그아웃 처리 중 오류가 발생했습니다.",
+    });
   }
 });
 

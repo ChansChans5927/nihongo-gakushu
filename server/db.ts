@@ -15,6 +15,7 @@ export async function connectDB(): Promise<Db | null> {
       await db
         .collection("quiz_attempts")
         .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+      await db.collection("users").createIndex({ username: 1 }, { unique: true });
       console.log("Connected to MongoDB Atlas successfully.");
       return db;
     } catch (dbErr) {

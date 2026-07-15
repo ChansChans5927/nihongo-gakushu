@@ -33,8 +33,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
   logout: () => {
+    const token = localStorage.getItem("nihongo_token");
     set({ currentUser: null, isReviewMode: false });
     localStorage.removeItem("user");
     localStorage.removeItem("nihongo_token");
+    if (token && /^[A-Za-z0-9\-_=\.]+$/.test(token)) {
+      void fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch((error) => {
+        console.warn("Failed to revoke server session:", error);
+      });
+    }
   },
 }));

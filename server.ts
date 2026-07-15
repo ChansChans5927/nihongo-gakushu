@@ -22,6 +22,9 @@ dotenv.config();
 const app = express();
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
+if (process.env.TRUST_PROXY === "true") {
+  app.set("trust proxy", 1);
+}
 app.use(express.json());
 
 // API Routes
