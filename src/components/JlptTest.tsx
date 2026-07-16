@@ -25,7 +25,7 @@ interface JlptTestProps {
   handlePrevJlptQuestion: () => void;                                 // 이전 문항 이동 함수
   handleNextJlptQuestion: () => void;                                 // 다음 문항 이동 함수
   handleGradeJlptQuiz: () => void;                                    // 시험지 채점 제출 함수
-  handleGoHomeJlpt: () => void;                                       // 홈(기출 등급 목록)으로 이동 함수
+  handleGoHomeJlpt: () => void;                                       // 홈(모의 테스트 등급 목록)으로 이동 함수
   startJlptQuiz: () => void;                                          // 시험 시작/초기화 함수
   currentTheme?: string;                                              // 디자인 테마 명칭
 }
@@ -169,7 +169,7 @@ export function JlptTest({
             {/* 문항 번호 표기 및 나가기 컨트롤 바 */}
             <div className="flex items-center justify-between border-b border-slate-100/20 pb-3 relative z-10">
               <span className={theme.sealBadgeClassJlpt}>
-                기출 문항 #{currentJlptIndex + 1}
+                모의 문항 #{currentJlptIndex + 1}
               </span>
               <button
                 onClick={handleGoHomeJlpt}

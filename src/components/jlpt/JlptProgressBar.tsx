@@ -24,7 +24,7 @@ export function JlptProgressBar({
       <div className={`flex items-center justify-between text-xs font-semibold ${theme.headerTextColor}`}>
         <span className="flex items-center gap-1">
           <Award className={`w-4 h-4 ${theme.headerIconColorKanji}`} />
-          <span>JLPT {level} 실전 기출 평가</span>
+          <span>JLPT {level} 모의 테스트</span>
         </span>
         <span className="font-mono">
           진행률: {displayIndex} / {totalCount} 문제 ({progressPercent}%)

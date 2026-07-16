@@ -172,11 +172,20 @@ router.post("/user/settings", async (req: AuthenticatedRequest, res) => {
   }
   try {
     const normalizedUsername = username.trim().toLowerCase();
+    const updateOperation: Record<string, Record<string, boolean | string>> = {
+      $set: updateDoc,
+    };
+    if (notificationsEnabled === false) {
+      updateOperation.$unset = {
+        pushSubscription: "",
+        expoPushToken: "",
+      };
+    }
     const result = await db
       .collection("users")
       .updateOne(
         { username: normalizedUsername },
-        { $set: updateDoc },
+        updateOperation,
       );
     if (result.matchedCount !== 1) {
       return res.status(404).json({

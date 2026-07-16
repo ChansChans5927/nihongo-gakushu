@@ -1,6 +1,6 @@
 /**
  * JLPT 모의고사 슬라이스
- * - JLPT 기출문제 생성(API 호출), 답 선택, 문제 탐색, 채점, 홈 복귀 액션을 담당합니다.
+ * - JLPT 모의 테스트 생성(API 호출), 답 선택, 문제 탐색, 채점, 홈 복귀 액션을 담당합니다.
  * - 채점 시 맞힌 문제 수만큼 포인트를 적립합니다.
  */
 import { StateCreator } from "zustand";
@@ -24,7 +24,7 @@ export const createJlptSlice: StateCreator<StudyState, [], [], JlptSlice> = (set
   setJlptCount: (jlptCount) => set({ jlptCount }),
   setSelectedJlptLevel: (selectedJlptLevel) => set({ selectedJlptLevel }),
 
-  // JLPT 기출문제 시작 (서버에서 문제 데이터 로딩)
+  // JLPT 모의 테스트 시작 (서버에서 문제 데이터 로딩)
   startJlptQuiz: async () => {
     set({
       isJlptLoading: true,
@@ -63,11 +63,11 @@ export const createJlptSlice: StateCreator<StudyState, [], [], JlptSlice> = (set
           phase: 'jlpt'
         });
       } else {
-        throw new Error(resData.errorMsg || "JLPT 기출문제를 불러오는 데 실패했습니다.");
+        throw new Error(resData.errorMsg || "JLPT 모의 테스트를 불러오는 데 실패했습니다.");
       }
     } catch (err: any) {
       console.error("Failed to load JLPT questions:", err);
-      set({ jlptErrorMsg: err.message || "JLPT 기출문제를 가져오는 도중 연결 오류가 발생했습니다. 다시 시도해 주세요." });
+      set({ jlptErrorMsg: err.message || "JLPT 모의 테스트를 가져오는 도중 연결 오류가 발생했습니다. 다시 시도해 주세요." });
     } finally {
       set({ isJlptLoading: false });
     }

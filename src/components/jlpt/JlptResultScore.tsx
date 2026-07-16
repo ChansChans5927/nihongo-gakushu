@@ -9,7 +9,7 @@ interface JlptResultScoreProps {
   level: string;                 // 시험 등급 (예: N3)
   isJlptLoading: boolean;        // 다시 풀기 로딩 여부
   startJlptQuiz: () => void;     // 한 번 더 응시 핸들러
-  handleGoHome: () => void;      // 기출 목록 홈으로 이동 핸들러
+  handleGoHome: () => void;      // 모의 테스트 목록 홈으로 이동 핸들러
   theme: any;                    // 테마 스타일 객체
 }
 
@@ -44,7 +44,7 @@ export function JlptResultScore({
       {/* 성적 요약 텍스트 설명글 */}
       <div className="space-y-1">
         <h3 className={`text-2xl font-bold transition-colors duration-300 ${theme.breakdownKanjiMeaning}`}>
-          JLPT {level} 기출 실전 성적 : {scorePercent}점!
+          JLPT {level} 모의 테스트 성적 : {scorePercent}점!
         </h3>
         <p className={`text-sm max-w-md mx-auto leading-relaxed transition-colors duration-300 ${theme.wordSubText}`}>
           {scorePercent === 100
@@ -76,7 +76,7 @@ export function JlptResultScore({
           }}
           className={`py-2.5 px-5 text-xs font-semibold rounded-xl transition-colors cursor-pointer ${theme.btnSecondary}`}
         >
-          기출 세트 목록으로
+          모의 테스트 목록으로
         </button>
       </div>
     </div>

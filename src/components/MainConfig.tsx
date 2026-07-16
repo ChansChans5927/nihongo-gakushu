@@ -110,7 +110,7 @@ export function MainConfig({
         </h2>
         <p className={`text-sm sm:text-base max-w-xl mx-auto px-4 relative z-10 transition-colors duration-300 ${theme.wordSubText}`}>
           <span className="block">무작정 쓰면서 외우지 마세요. <br className="block sm:hidden" />가장 친숙한 스토리텔링 연상법과</span>
-          <span className="block">JLPT 기출 풀이로 <br className="block sm:hidden" />일본어 실력을 확실하게 완성합니다.</span>
+          <span className="block">JLPT 모의 테스트로 <br className="block sm:hidden" />일본어 실력을 확실하게 완성합니다.</span>
         </p>
       </div>
 
@@ -160,7 +160,7 @@ export function MainConfig({
             }`}
         >
           <Award className="w-3.5 h-3.5 shrink-0" />
-          <span className="hidden sm:inline">JLPT 평가</span>
+          <span className="hidden sm:inline">JLPT 모의 테스트</span>
           <span className="inline sm:hidden">JLPT</span>
         </button>
       </div>
@@ -526,13 +526,13 @@ export function MainConfig({
             <div className="text-center space-y-3">
               <span className={`inline-flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full border ${theme.wordPanelBg} ${theme.tableBorder} ${theme.breakdownKanjiMeaning}`}>
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                실전 기출 평가
+                JLPT 모의 테스트
               </span>
               <h4 className={`text-lg sm:text-xl font-bold leading-snug font-display tracking-tight transition-colors duration-300 ${theme.breakdownKanjiMeaning}`}>
-                JLPT 기출문제 풀기
+                JLPT 모의 테스트
               </h4>
               <p className={`text-xs max-w-md mx-auto leading-relaxed transition-colors duration-300 ${theme.wordSubText}`}>
-                엄선된 JLPT 기출 문제로 진짜 실력을 검증하세요.
+                JLPT 유형을 참고한 모의 테스트로 실력을 점검하세요.
               </p>
             </div>
 
@@ -593,7 +593,7 @@ export function MainConfig({
                   {isJlptLoading ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
-                      <span>기출 자료 받는 중...</span>
+                      <span>모의 테스트 준비 중...</span>
                     </>
                   ) : isLoading ? (
                     <>
@@ -603,13 +603,13 @@ export function MainConfig({
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4 shrink-0" />
-                      <span>JLPT {selectedJlptLevel} 기출문제 시작</span>
+                      <span>JLPT {selectedJlptLevel} 모의 테스트 시작</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </>
                   )}
                 </button>
                 <div className={`text-[10px] text-center ${theme.wordSubText}`}>
-                  * 실제 시험 유형 완벽 반영
+                  * JLPT 유형을 참고한 AI 생성 문제이며 실제 기출문제가 아닙니다.
                 </div>
               </div>
             </div>

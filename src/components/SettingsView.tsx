@@ -207,7 +207,9 @@ export function SettingsView({ username, currentTheme = "default", onGoBack, onL
       if (!data.success) {
         throw new Error(data.errorMsg);
       }
-      
+
+      localStorage.removeItem(`${username}_ttsSpeed`);
+      localStorage.removeItem(`${username}_ttsGender`);
       alert("계정이 성공적으로 삭제되었습니다.");
       onLogout(); // Call App.tsx to log out the user
     } catch (error: any) {

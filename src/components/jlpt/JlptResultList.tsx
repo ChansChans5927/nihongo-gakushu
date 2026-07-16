@@ -8,7 +8,7 @@ interface JlptResultListProps {
   theme: any;                                    // 테마 스타일 객체
 }
 
-// 시험 완료 후 출력되는 개별 기출문제 오답/정답 해설 보고서 리스트 컴포넌트
+// 모의 테스트 완료 후 출력되는 개별 문항 오답/정답 해설 보고서 리스트 컴포넌트
 export function JlptResultList({
   questions,
   answers,
@@ -40,7 +40,7 @@ export function JlptResultList({
             {/* 문항 번호 및 정답 여부 라벨 */}
             <div className="flex items-center justify-between text-xs">
               <span className={`font-mono font-bold ${theme.wordSubText}`}>
-                기출문제 #{idx + 1}
+                테스트 문항 #{idx + 1}
               </span>
 
               {isCorrect ? (
@@ -122,7 +122,7 @@ export function JlptResultList({
             <div className="bg-amber-500/10 border-l-4 border-amber-500 rounded-r-xl p-3 sm:p-4 space-y-2 text-xs leading-relaxed">
               <div className="flex items-center gap-1 text-amber-500 font-bold">
                 <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>기출 분석 핵심 해설</span>
+                <span>핵심 해설</span>
               </div>
               <p className={`p-3 rounded-lg border ${theme.breakdownItemBg} ${theme.tableBorder} ${theme.wordSubText}`}>
                 {q.explanation}
