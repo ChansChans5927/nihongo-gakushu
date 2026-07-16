@@ -1,6 +1,6 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import { getDB } from "../db.ts";
+import { getDB, isDuplicateKeyError } from "../db.ts";
 import { authMiddleware, AuthenticatedRequest } from "../middlewares/authMiddleware.ts";
 import { JWT_SECRET } from "../env.ts";
 import {
@@ -88,9 +88,13 @@ router.post("/register", async (req, res) => {
       token,
       user: { username: username.trim() }
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (isDuplicateKeyError(err)) {
+      return res.json({ success: false, errorMsg: "이미 존재하는 아이디입니다." });
+    }
     console.error("Registration error:", err);
-    res.json({ success: false, errorMsg: `회원가입 중 오류가 발생했습니다: ${err.message}` });
+    const message = err instanceof Error ? err.message : "알 수 없는 오류";
+    res.json({ success: false, errorMsg: `회원가입 중 오류가 발생했습니다: ${message}` });
   }
 });
 
