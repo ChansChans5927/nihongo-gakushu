@@ -4,14 +4,26 @@ import { callGeminiJSON, KANJI_BREAKDOWN_SCHEMA, RELATED_WORDS_SCHEMA, EXAMPLE_S
 import { Type } from "@google/genai";
 import fs from "fs";
 import path from "path";
+import { parseKanjiGenerationInput } from "../services/inputValidation.ts";
 
 const router = express.Router();
 
 router.post("/generate", async (req, res) => {
-  const { count, level, excludeKanji, forceGenerate, targetKanjis, deepLinkTarget } = req.body;
-  const numCount = parseInt(count, 10) || 5;
-  const targetLevel = level || "all";
-  const excludedList = Array.isArray(excludeKanji) ? excludeKanji : [];
+  const input = parseKanjiGenerationInput(req.body);
+  if (!input) {
+    return res.status(400).json({
+      success: false,
+      errorMsg: "올바르지 않은 한자 생성 요청입니다.",
+    });
+  }
+  const {
+    count: numCount,
+    level: targetLevel,
+    excludeKanji: excludedList,
+    forceGenerate,
+    targetKanjis,
+    deepLinkTarget,
+  } = input;
 
   const hasProject = !process.env.GCP_PROJECT_ID || process.env.GCP_PROJECT_ID === "YOUR_GCP_PROJECT_ID" ? false : true;
 
@@ -23,7 +35,7 @@ router.post("/generate", async (req, res) => {
 
   try {
     let cachedKanjis: any[] = [];
-    let explicitTargets = Array.isArray(targetKanjis) ? [...targetKanjis] : [];
+    let explicitTargets = [...targetKanjis];
     if (deepLinkTarget && deepLinkTarget.kanji) {
       if (!explicitTargets.includes(deepLinkTarget.kanji)) {
         explicitTargets.unshift(deepLinkTarget.kanji);

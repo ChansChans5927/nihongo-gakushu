@@ -4,14 +4,26 @@ import { callGeminiJSON, VOCAB_KANJI_BREAKDOWN_SCHEMA, EXAMPLE_SENTENCE_SCHEMA, 
 import { Type } from "@google/genai";
 import fs from "fs";
 import path from "path";
+import { parseVocabGenerationInput } from "../services/inputValidation.ts";
 
 const router = express.Router();
 
 router.post("/generate", async (req, res) => {
-  const { count, level, excludeVocab, forceGenerate, targetVocabs, deepLinkTarget } = req.body;
-  const numCount = parseInt(count, 10) || 5;
-  const targetLevel = level || "all";
-  const excludedList = Array.isArray(excludeVocab) ? excludeVocab : [];
+  const input = parseVocabGenerationInput(req.body);
+  if (!input) {
+    return res.status(400).json({
+      success: false,
+      errorMsg: "올바르지 않은 단어 생성 요청입니다.",
+    });
+  }
+  const {
+    count: numCount,
+    level: targetLevel,
+    excludeVocab: excludedList,
+    forceGenerate,
+    targetVocabs,
+    deepLinkTarget,
+  } = input;
 
   const hasProject = !process.env.GCP_PROJECT_ID || process.env.GCP_PROJECT_ID === "YOUR_GCP_PROJECT_ID" ? false : true;
   if (!hasProject) {
@@ -22,7 +34,7 @@ router.post("/generate", async (req, res) => {
 
   try {
     let cachedVocabs: any[] = [];
-    let explicitTargets = Array.isArray(targetVocabs) ? [...targetVocabs] : [];
+    let explicitTargets = [...targetVocabs];
     if (deepLinkTarget && deepLinkTarget.word) {
       if (!explicitTargets.some(t => t.word === deepLinkTarget.word)) {
         explicitTargets.unshift({ word: deepLinkTarget.word });

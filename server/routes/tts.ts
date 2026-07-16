@@ -1,17 +1,25 @@
 import express from "express";
 import { tts } from "../config.ts";
+import { isEnumValue, isSafeString } from "../services/inputValidation.ts";
 
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  const text = req.query.q as string;
-  const lang = (req.query.lang as string) || "ja";
-  const speed = (req.query.speed as string) || "normal";
-  const gender = (req.query.gender as string) || "female";
+  const text = req.query.q;
+  const lang = req.query.lang ?? "ja";
+  const speed = req.query.speed ?? "normal";
+  const gender = req.query.gender ?? "female";
 
-  if (!text) {
-    return res.status(400).json({ error: "Missing q parameter" });
+  if (
+    !isSafeString(text, { maxLength: 500 }) ||
+    !isEnumValue(lang, ["ja"] as const) ||
+    !isEnumValue(speed, ["slow", "normal", "fast"] as const) ||
+    !isEnumValue(gender, ["female", "male"] as const)
+  ) {
+    return res.status(400).json({ error: "Invalid TTS parameters" });
   }
+
+  const normalizedText = text.trim();
 
   try {
     let voiceName = "ja-JP-Wavenet-B"; // default female WaveNet
@@ -31,7 +39,7 @@ router.get("/", async (req, res) => {
 
     const response = await tts.text.synthesize({
       requestBody: {
-        input: { text },
+        input: { text: normalizedText },
         voice: {
           languageCode: "ja-JP",
           name: voiceName,
@@ -59,7 +67,7 @@ router.get("/", async (req, res) => {
   } catch (e) {
     console.error("Google Cloud TTS error, falling back to unofficial Translate TTS:", e);
     try {
-      const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${encodeURIComponent(lang)}&client=tw-ob&q=${encodeURIComponent(text)}`;
+      const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${encodeURIComponent(lang)}&client=tw-ob&q=${encodeURIComponent(normalizedText)}`;
 
       const response = await fetch(ttsUrl, {
         headers: {

@@ -3,13 +3,23 @@ import { getDB } from "../db.ts";
 import { callGeminiJSON } from "../services/gemini.ts";
 import { Type } from "@google/genai";
 import { sanitizeQuizQuestions } from "../services/quizAttempts.ts";
+import { parseJlptGenerationInput } from "../services/inputValidation.ts";
 
 const router = express.Router();
 
 router.post("/generate", async (req, res) => {
-  const { level, count, forceGenerate } = req.body;
-  const targetLevel = level || "N5";
-  const numQuestions = parseInt(count, 10) || 5;
+  const input = parseJlptGenerationInput(req.body);
+  if (!input) {
+    return res.status(400).json({
+      success: false,
+      errorMsg: "올바르지 않은 JLPT 생성 요청입니다.",
+    });
+  }
+  const {
+    level: targetLevel,
+    count: numQuestions,
+    forceGenerate,
+  } = input;
   const hasProject = !process.env.GCP_PROJECT_ID || process.env.GCP_PROJECT_ID === "YOUR_GCP_PROJECT_ID" ? false : true;
   if (!hasProject) {
     return res.json({ success: false, errorMsg: "구글 클라우드 프로젝트 ID가 구성되지 않았습니다. .env 파일에 GCP_PROJECT_ID를 설정해 주세요." });
@@ -20,10 +30,7 @@ router.post("/generate", async (req, res) => {
   try {
     let cachedQuestions: any[] = [];
     if (db) {
-      const query: any = {};
-      if (targetLevel !== "all") {
-        query.level = targetLevel;
-      }
+      const query = { level: targetLevel };
       try {
         cachedQuestions = await db.collection("jlpt_questions").find(query).toArray();
       } catch (err) {

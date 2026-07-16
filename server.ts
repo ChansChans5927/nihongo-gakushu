@@ -25,7 +25,23 @@ const PORT = parseInt(process.env.PORT || "3000", 10);
 if (process.env.TRUST_PROXY === "true") {
   app.set("trust proxy", 1);
 }
-app.use(express.json());
+app.use(express.json({ limit: "256kb", strict: true }));
+app.use(((error, _req, res, next) => {
+  const bodyError = error as { status?: unknown; type?: unknown };
+  if (bodyError.type === "entity.too.large") {
+    return res.status(413).json({
+      success: false,
+      errorMsg: "요청 데이터가 너무 큽니다.",
+    });
+  }
+  if (bodyError.status === 400) {
+    return res.status(400).json({
+      success: false,
+      errorMsg: "올바르지 않은 JSON 요청입니다.",
+    });
+  }
+  next(error);
+}) as express.ErrorRequestHandler);
 
 // API Routes
 app.use("/api/auth", authRouter);

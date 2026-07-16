@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { Db } from "mongodb";
 import { generateQuiz, generateVocabQuiz } from "../../src/utils.ts";
 import { Question, JlptQuestion } from "../../src/types.ts";
+import { parseUniqueStringArray } from "./inputValidation.ts";
 
 export const QUIZ_ACTIVITIES = [
   "kanji_quiz",
@@ -57,17 +58,14 @@ function parseQuestionCount(value: unknown): number | null {
 }
 
 function parseItemKeys(value: unknown): string[] | null {
-  if (!Array.isArray(value) || value.length < 1 || value.length > MAX_QUIZ_QUESTION_COUNT) {
+  const keys = parseUniqueStringArray(value, {
+    maxItems: MAX_QUIZ_QUESTION_COUNT,
+    maxItemLength: 100,
+  });
+  if (!keys || keys.length < 1) {
     return null;
   }
-
-  const keys = value.map((item) => (typeof item === "string" ? item.trim() : ""));
-  if (keys.some((item) => !item || item.length > 100)) {
-    return null;
-  }
-
-  const uniqueKeys = Array.from(new Set(keys));
-  return uniqueKeys.length === keys.length ? uniqueKeys : null;
+  return keys;
 }
 
 export function sanitizeQuizQuestions<T extends { correctIndex?: number }>(

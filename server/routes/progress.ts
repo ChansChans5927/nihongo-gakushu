@@ -18,8 +18,18 @@ import {
   QuizAttemptDocument,
   QuizSubmissionResult,
 } from "../services/quizAttempts.ts";
+import {
+  isEnumValue,
+  isKanjiCharacter,
+  isPlainRecord,
+  isSafeString,
+  isStudyType,
+} from "../services/inputValidation.ts";
 
 const router = express.Router();
+const MAX_BOOKMARKS_PER_TYPE = 500;
+const TTS_SPEEDS = ["slow", "normal", "fast"] as const;
+const TTS_GENDERS = ["female", "male"] as const;
 
 // Apply authMiddleware globally to all routes in this router
 router.use(authMiddleware as any);
@@ -117,7 +127,38 @@ router.get("/user/settings", async (req: AuthenticatedRequest, res) => {
 // POST Endpoint to save user settings
 router.post("/user/settings", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
+  if (!isPlainRecord(req.body)) {
+    return res.status(400).json({
+      success: false,
+      errorMsg: "올바르지 않은 설정 데이터입니다.",
+    });
+  }
+
   const { notificationsEnabled, ttsSpeed, ttsGender } = req.body;
+  if (
+    (notificationsEnabled !== undefined &&
+      typeof notificationsEnabled !== "boolean") ||
+    (ttsSpeed !== undefined && !isEnumValue(ttsSpeed, TTS_SPEEDS)) ||
+    (ttsGender !== undefined && !isEnumValue(ttsGender, TTS_GENDERS))
+  ) {
+    return res.status(400).json({
+      success: false,
+      errorMsg: "올바르지 않은 설정 값입니다.",
+    });
+  }
+
+  const updateDoc: Record<string, boolean | string> = {};
+  if (typeof notificationsEnabled === "boolean")
+    updateDoc.notificationsEnabled = notificationsEnabled;
+  if (isEnumValue(ttsSpeed, TTS_SPEEDS)) updateDoc.ttsSpeed = ttsSpeed;
+  if (isEnumValue(ttsGender, TTS_GENDERS)) updateDoc.ttsGender = ttsGender;
+  if (Object.keys(updateDoc).length === 0) {
+    return res.status(400).json({
+      success: false,
+      errorMsg: "변경할 설정 값이 없습니다.",
+    });
+  }
+
   const db = getDB();
   if (!db) {
     return res.json({
@@ -127,19 +168,18 @@ router.post("/user/settings", async (req: AuthenticatedRequest, res) => {
   }
   try {
     const normalizedUsername = username.trim().toLowerCase();
-    const updateDoc: any = {};
-    if (notificationsEnabled !== undefined)
-      updateDoc.notificationsEnabled = notificationsEnabled;
-    if (ttsSpeed !== undefined) updateDoc.ttsSpeed = ttsSpeed;
-    if (ttsGender !== undefined) updateDoc.ttsGender = ttsGender;
-
-    await db
+    const result = await db
       .collection("users")
       .updateOne(
         { username: normalizedUsername },
         { $set: updateDoc },
-        { upsert: true },
       );
+    if (result.matchedCount !== 1) {
+      return res.status(404).json({
+        success: false,
+        errorMsg: "사용자 계정을 찾을 수 없습니다.",
+      });
+    }
     res.json({ success: true });
   } catch (err: any) {
     res.json({
@@ -634,13 +674,13 @@ router.post("/progress/equipTheme", async (req: AuthenticatedRequest, res) => {
 // POST Endpoint to reset user progress
 router.post("/progress/reset", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
-  const { type } = req.body;
-  if (!type) {
-    return res.json({
+  if (!isPlainRecord(req.body) || !isStudyType(req.body.type)) {
+    return res.status(400).json({
       success: false,
-      errorMsg: "올바르지 않은 요청 데이터입니다.",
+      errorMsg: "올바르지 않은 학습 유형입니다.",
     });
   }
+  const type = req.body.type;
 
   const db = getDB();
   if (!db) {
@@ -675,14 +715,13 @@ router.post("/progress/reset", async (req: AuthenticatedRequest, res) => {
 // POST Endpoint to fetch review cards
 router.post("/progress/review", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
-  const { type } = req.body;
-
-  if (!type) {
-    return res.json({
+  if (!isPlainRecord(req.body) || !isStudyType(req.body.type)) {
+    return res.status(400).json({
       success: false,
-      errorMsg: "올바르지 않은 요청 데이터입니다.",
+      errorMsg: "올바르지 않은 학습 유형입니다.",
     });
   }
+  const type = req.body.type;
 
   const db = getDB();
   if (!db) {
@@ -788,13 +827,25 @@ router.post("/progress/review", async (req: AuthenticatedRequest, res) => {
 // POST Endpoint to toggle bookmark status of kanji or vocab
 router.post("/progress/bookmark", async (req: AuthenticatedRequest, res) => {
   const username = req.user!.username;
-  const { type, item } = req.body;
-  if (!type || !item) {
-    return res.json({
+  if (!isPlainRecord(req.body) || !isStudyType(req.body.type)) {
+    return res.status(400).json({
       success: false,
-      errorMsg: "올바르지 않은 요청 데이터입니다.",
+      errorMsg: "올바르지 않은 학습 유형입니다.",
     });
   }
+  const { type, item } = req.body;
+  if (
+    typeof item !== "string" ||
+    (type === "kanji"
+      ? !isKanjiCharacter(item)
+      : !isSafeString(item, { maxLength: 100 }))
+  ) {
+    return res.status(400).json({
+      success: false,
+      errorMsg: "올바르지 않은 북마크 항목입니다.",
+    });
+  }
+  const normalizedItem = item.trim();
 
   const db = getDB();
   if (!db) {
@@ -811,23 +862,43 @@ router.post("/progress/bookmark", async (req: AuthenticatedRequest, res) => {
     const progress = await db
       .collection("progress")
       .findOne({ username: normalizedUsername });
-    const list = progress?.[field] || [];
-    const isBookmarked = list.includes(item);
+    const list = Array.isArray(progress?.[field]) ? progress[field] : [];
+    const isBookmarked = list.includes(normalizedItem);
 
     if (isBookmarked) {
       await db
         .collection("progress")
         .updateOne(
           { username: normalizedUsername },
-          { $pull: { [field]: item } as any },
+          { $pull: { [field]: normalizedItem } as any },
           { upsert: true },
         );
     } else {
+      if (list.length >= MAX_BOOKMARKS_PER_TYPE) {
+        return res.status(409).json({
+          success: false,
+          errorMsg: `북마크는 유형별로 최대 ${MAX_BOOKMARKS_PER_TYPE}개까지 저장할 수 있습니다.`,
+        });
+      }
+
+      const sourceCollection = type === "kanji" ? "kanjis" : "vocabs";
+      const sourceField = type === "kanji" ? "kanji" : "word";
+      const existingItem = await db.collection(sourceCollection).findOne(
+        { [sourceField]: normalizedItem },
+        { projection: { _id: 1 } },
+      );
+      if (!existingItem) {
+        return res.status(400).json({
+          success: false,
+          errorMsg: "존재하지 않는 학습 항목은 북마크할 수 없습니다.",
+        });
+      }
+
       await db
         .collection("progress")
         .updateOne(
           { username: normalizedUsername },
-          { $addToSet: { [field]: item } as any },
+          { $addToSet: { [field]: normalizedItem } as any },
           { upsert: true },
         );
     }

@@ -8,6 +8,7 @@ import {
   hashPassword,
   verifyPassword,
 } from "../services/authSecurity.ts";
+import { isSafeString, isValidUsername } from "../services/inputValidation.ts";
 
 const router = express.Router();
 
@@ -47,10 +48,8 @@ router.post("/register", async (req, res) => {
 
   const { username, password } = req.body;
   if (
-    typeof username !== "string" ||
+    !isValidUsername(username) ||
     typeof password !== "string" ||
-    username.trim().length < 1 ||
-    username.trim().length > 50 ||
     password.length > 128
   ) {
     return res.json({ success: false, errorMsg: "아이디와 비밀번호를 모두 입력해 주세요." });
@@ -102,10 +101,8 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   if (
-    typeof username !== "string" ||
+    !isSafeString(username, { maxLength: 50 }) ||
     typeof password !== "string" ||
-    username.trim().length < 1 ||
-    username.trim().length > 50 ||
     password.length < 1 ||
     password.length > 128
   ) {
