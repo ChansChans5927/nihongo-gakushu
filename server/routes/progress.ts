@@ -25,6 +25,10 @@ import {
   isSafeString,
   isStudyType,
 } from "../services/inputValidation.ts";
+import {
+  AccountIdentityMismatchError,
+  deleteAccountAtomically,
+} from "../services/accountDeletion.ts";
 
 const router = express.Router();
 const MAX_BOOKMARKS_PER_TYPE = 500;
@@ -191,33 +195,31 @@ router.post("/user/settings", async (req: AuthenticatedRequest, res) => {
 
 // DELETE Endpoint to delete user account
 router.delete("/user", async (req: AuthenticatedRequest, res) => {
-  const username = req.user!.username;
+  const username = req.user!.username.trim().toLowerCase();
+  const accountId = req.user!.accountId;
   const db = getDB();
-  if (!db) {
-    return res.json({
+  const client = getDBClient();
+  if (!db || !client) {
+    return res.status(503).json({
       success: false,
       errorMsg: "데이터베이스 연결에 실패했습니다.",
     });
   }
   try {
-    const normalizedUsername = username.trim().toLowerCase();
-
-    // Delete user
-    await db.collection("users").deleteOne({ username: normalizedUsername });
-
-    // Delete associated data (progress, subscriptions)
-    await db
-      .collection("progress")
-      .deleteMany({ username: normalizedUsername });
-    await db
-      .collection("subscriptions")
-      .deleteMany({ username: normalizedUsername });
+    await deleteAccountAtomically(client, db, { username, accountId });
 
     res.json({ success: true });
-  } catch (err: any) {
-    res.json({
+  } catch (err: unknown) {
+    if (err instanceof AccountIdentityMismatchError) {
+      return res.status(401).json({
+        success: false,
+        errorMsg: "이미 삭제되었거나 다른 계정으로 변경된 사용자입니다.",
+      });
+    }
+    console.error("Delete account error:", err);
+    res.status(500).json({
       success: false,
-      errorMsg: `계정 삭제 중 오류가 발생했습니다: ${err.message}`,
+      errorMsg: "계정 삭제 중 오류가 발생했습니다.",
     });
   }
 });

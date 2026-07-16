@@ -201,9 +201,7 @@ export function SettingsView({ username, currentTheme = "default", onGoBack, onL
     setMessage(null);
     try {
       const res = await fetch('/api/user', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username })
+        method: 'DELETE'
       });
       const data = await res.json();
       if (!data.success) {

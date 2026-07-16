@@ -2,10 +2,15 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../env.ts";
 import { getDB } from "../db.ts";
+import {
+  authIdentityMatchesUser,
+  parseAuthIdentity,
+} from "../services/authIdentity.ts";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
     username: string;
+    accountId: string;
   };
 }
 
@@ -20,17 +25,15 @@ export async function authMiddleware(req: AuthenticatedRequest, res: Response, n
     return res.status(401).json({ success: false, errorMsg: "올바르지 않은 토큰 형식입니다." });
   }
 
-  let decoded: { username?: unknown; tokenVersion?: unknown };
+  let decoded: unknown;
   try {
-    decoded = jwt.verify(token, JWT_SECRET) as typeof decoded;
+    decoded = jwt.verify(token, JWT_SECRET);
   } catch {
     return res.status(401).json({ success: false, errorMsg: "유효하지 않거나 만료된 토큰입니다." });
   }
 
-  if (
-    typeof decoded.username !== "string" ||
-    !Number.isInteger(decoded.tokenVersion)
-  ) {
+  const identity = parseAuthIdentity(decoded);
+  if (!identity) {
     return res.status(401).json({ success: false, errorMsg: "유효하지 않은 인증 토큰입니다." });
   }
 
@@ -41,17 +44,17 @@ export async function authMiddleware(req: AuthenticatedRequest, res: Response, n
 
   try {
     const user = await db.collection("users").findOne(
-      { username: decoded.username },
+      { username: identity.username },
       { projection: { tokenVersion: 1 } },
     );
-    const currentTokenVersion = Number.isInteger(user?.tokenVersion)
-      ? user.tokenVersion
-      : 0;
-    if (!user || decoded.tokenVersion !== currentTokenVersion) {
+    if (!authIdentityMatchesUser(identity, user)) {
       return res.status(401).json({ success: false, errorMsg: "폐기되었거나 만료된 인증 토큰입니다." });
     }
 
-    req.user = { username: decoded.username };
+    req.user = {
+      username: identity.username,
+      accountId: identity.accountId,
+    };
     next();
   } catch (error) {
     console.error("Authentication database lookup error:", error);

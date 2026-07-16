@@ -29,8 +29,14 @@ function rejectRateLimited(res: express.Response, retryAfter: number) {
   });
 }
 
-function signToken(username: string, tokenVersion: number): string {
-  return jwt.sign({ username, tokenVersion }, JWT_SECRET, { expiresIn: "7d" });
+function signToken(
+  username: string,
+  tokenVersion: number,
+  accountId: string,
+): string {
+  return jwt.sign({ username, tokenVersion, accountId }, JWT_SECRET, {
+    expiresIn: "7d",
+  });
 }
 
 function isPasswordComplex(password: string): boolean {
@@ -72,7 +78,7 @@ router.post("/register", async (req, res) => {
     }
 
     const hashedPassword = await hashPassword(password.trim());
-    await db.collection("users").insertOne({
+    const insertedUser = await db.collection("users").insertOne({
       username: normalizedUsername,
       displayName: username.trim(),
       password: hashedPassword,
@@ -80,7 +86,11 @@ router.post("/register", async (req, res) => {
       tokenVersion: 0,
     });
 
-    const token = signToken(normalizedUsername, 0);
+    const token = signToken(
+      normalizedUsername,
+      0,
+      insertedUser.insertedId.toHexString(),
+    );
 
     res.json({
       success: true,
@@ -137,7 +147,11 @@ router.post("/login", async (req, res) => {
     loginCredentialLimiter.reset(credentialKey);
 
     const tokenVersion = Number.isInteger(user.tokenVersion) ? user.tokenVersion : 0;
-    const token = signToken(normalizedUsername, tokenVersion);
+    const token = signToken(
+      normalizedUsername,
+      tokenVersion,
+      String(user._id),
+    );
 
     res.json({
       success: true,
