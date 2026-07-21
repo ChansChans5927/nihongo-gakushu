@@ -217,7 +217,7 @@ router.post("/generate", async (req, res) => {
             - "onyomiKorean" & "hunyomiKorean": MUST be Korean pronunciations ONLY. Represent Japanese 'つ' (tsu) strictly as '쯔' (e.g., 쯔, 쯔레테, 마쯔) and NEVER as '츠'. All characters MUST be 100% Hangul.
             - "radicalsBreakdown": Provide constituent components. For each component, provide "component", "meaning" (in Korean), and "mnemonic" (under 1 sentence, max 15 Korean words).
             - "relatedWords": Exactly 3 practical words containing the Kanji. The Korean pronunciation for these words MUST represent Japanese 'つ' (tsu) strictly as '쯔' and contain no English/romaji or Japanese characters.
-            - "exampleSentence": 1 natural sentence utilizing the Kanji. The 'japanese' field MUST NOT contain any Korean characters or particles. The 'pronunciation' field MUST be 100% Hangul and represent 'つ' strictly as '쯔'.
+            - "exampleSentence": 1 natural sentence utilizing the Kanji. The 'japanese' field MUST contain ONLY standard Japanese characters (Kanji, Hiragana, Katakana, and Japanese punctuation) and MUST NOT contain any Korean characters, syllables, particles, or endings (e.g. '입니다', '를', '은', '이'). The 'pronunciation' field MUST be 100% Hangul and represent 'つ' strictly as '쯔'.
 
 
             Return absolutely valid JSON matching the responseSchema precisely.
@@ -255,7 +255,7 @@ router.post("/generate", async (req, res) => {
             - "onyomiKorean" & "hunyomiKorean": MUST be Korean pronunciations ONLY. Represent Japanese 'つ' (tsu) strictly as '쯔' (e.g., 쯔, 쯔레테, 마쯔) and NEVER as '츠'. All characters MUST be 100% Hangul.
             - "radicalsBreakdown": Provide constituent components. For each component, provide "component", "meaning" (in Korean), and "mnemonic" (under 1 sentence, max 15 Korean words).
             - "relatedWords": Exactly 3 practical words containing the Kanji. The Korean pronunciation for these words MUST represent Japanese 'つ' (tsu) strictly as '쯔' and contain no English/romaji or Japanese characters.
-            - "exampleSentence": 1 natural sentence utilizing the Kanji. The 'japanese' field MUST NOT contain any Korean characters or particles. The 'pronunciation' field MUST be 100% Hangul and represent 'つ' strictly as '쯔'.
+            - "exampleSentence": 1 natural sentence utilizing the Kanji. The 'japanese' field MUST contain ONLY standard Japanese characters (Kanji, Hiragana, Katakana, and Japanese punctuation) and MUST NOT contain any Korean characters, syllables, particles, or endings (e.g. '입니다', '를', '은', '이'). The 'pronunciation' field MUST be 100% Hangul and represent 'つ' strictly as '쯔'.
 
     
             Return absolutely valid JSON matching the responseSchema precisely.

@@ -241,7 +241,7 @@ router.post("/generate", async (req, res) => {
             - Generate exactly ${batch.length} vocabulary cards.
             - 'word' and 'hiragana' MUST NOT contain any Korean characters or particles.
             - 'pronunciation' MUST be written in 100% Korean Hangul, with no English/romaji or Japanese characters. Represent Japanese 'つ' (tsu) strictly as '쯔' (e.g. 쯔, 쯔레테, 마쯔) and NEVER as '츠'.
-            - 'exampleSentence' MUST be a natural sentence. The 'japanese' field MUST NOT contain any Korean characters. The 'pronunciation' field MUST be 100% Hangul and represent 'つ' strictly as '쯔'.
+            - 'exampleSentence' MUST be a natural sentence. The 'japanese' field MUST contain ONLY standard Japanese characters (Kanji, Hiragana, Katakana, and Japanese punctuation) and MUST NOT contain any Korean characters, syllables, particles, or endings (e.g. '입니다', '를', '은', '이'). The 'pronunciation' field MUST be 100% Hangul and represent 'つ' strictly as '쯔'.
 
             
             For the "quiz" array:
@@ -285,7 +285,7 @@ router.post("/generate", async (req, res) => {
             - Generate exactly ${size} vocabulary cards.
             - 'word' and 'hiragana' MUST NOT contain any Korean characters or particles.
             - 'pronunciation' MUST be written in 100% Korean Hangul, with no English/romaji or Japanese characters. Represent Japanese 'つ' (tsu) strictly as '쯔' (e.g. 쯔, 쯔레테, 마쯔) and NEVER as '츠'.
-            - 'exampleSentence' MUST be a natural sentence. The 'japanese' field MUST NOT contain any Korean characters. The 'pronunciation' field MUST be 100% Hangul and represent 'つ' strictly as '쯔'.
+            - 'exampleSentence' MUST be a natural sentence. The 'japanese' field MUST contain ONLY standard Japanese characters (Kanji, Hiragana, Katakana, and Japanese punctuation) and MUST NOT contain any Korean characters, syllables, particles, or endings (e.g. '입니다', '를', '은', '이'). The 'pronunciation' field MUST be 100% Hangul and represent 'つ' strictly as '쯔'.
 
             
             For the "quiz" array:
