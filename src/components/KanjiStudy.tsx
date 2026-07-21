@@ -62,7 +62,7 @@ export function KanjiStudy({
         theme={theme}
       />
 
-      <div className={`${theme.cardContainer} overflow-hidden flex flex-col shrink-0 relative font-sans ${currentTheme === 'golden_aura' ? 'golden-aura-card-glow' : ''}`}>
+      <div className={`${theme.cardContainer} overflow-hidden flex flex-col shrink-0 relative font-sans h-[calc(100dvh-150px)] sm:h-auto ${currentTheme === 'golden_aura' ? 'golden-aura-card-glow' : ''}`}>
         {/* 테마별 특수 시각 효과 백그라운드 렌더링 */}
         <ThemeParticles theme={currentTheme} />
 
@@ -74,7 +74,7 @@ export function KanjiStudy({
           theme={theme}
         />
 
-        <div className="p-5 sm:p-6 space-y-5">
+        <div className="p-5 sm:p-6 space-y-5 flex-1 overflow-y-auto sm:overflow-y-visible">
           {/* 주요 레이아웃 격자 (Grid) 구성 */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
             {/* 3. 좌측 메인 한자 비주얼 패널 */}

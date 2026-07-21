@@ -383,7 +383,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     wordPronunciationText: "text-amber-955 font-black",
     btnHintQuiz: "border border-dashed border-amber-900/40 text-amber-955 bg-amber-900/5 hover:bg-amber-900/10 rounded-xl",
     hintModalBg: "bg-[#f5e6ca] border-amber-900/40 text-amber-955 rounded-xl shadow-[6px_6px_0px_#5d3a1a] font-sans",
-    globalBg: "bg-[#efe4cb] text-amber-955 font-sans min-h-screen",
+    globalBg: "bg-[#efe4cb] text-amber-955 font-sans min-h-full min-h-[100dvh]",
     headerBgClass: "bg-[#f4e8d1]/90 backdrop-blur-md border-b border-amber-900/30",
     headerTextClass: "text-amber-955 font-sans font-bold",
     footerBgClass: "bg-[#f4e8d1]/90 border-t border-amber-900/20 text-amber-900/70"
@@ -509,7 +509,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     wordPronunciationText: "text-[#c084fc] font-bold",
     btnHintQuiz: "border border-dashed border-[#a78bfa]/40 text-[#a78bfa] bg-[#a78bfa]/5 hover:bg-[#a78bfa]/15",
     hintModalBg: "bg-[#0b101c] border-[#a78bfa]/30 text-[#f8f9fa] rounded-[20px] shadow-[0_0_30px_rgba(139,92,246,0.15)]",
-    globalBg: "bg-[#030712] text-slate-200 font-sans min-h-screen",
+    globalBg: "bg-[#030712] text-slate-200 font-sans min-h-full min-h-[100dvh]",
     headerBgClass: "bg-[#030712]/80 backdrop-blur-lg border-b border-[#a78bfa]/10",
     headerTextClass: "text-[#a78bfa] font-bold",
     footerBgClass: "bg-[#030712]/90 border-t border-[#a78bfa]/10 text-[#a78bfa]/40"
@@ -635,7 +635,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     wordPronunciationText: "text-emerald-900 font-bold",
     btnHintQuiz: "border border-dashed border-emerald-600/40 text-emerald-800 bg-emerald-50 hover:bg-emerald-100",
     hintModalBg: "bg-[#f5f8f6] border-emerald-600/30 text-emerald-955 rounded-[32px] shadow-[0_15px_40px_rgba(74,114,86,0.1)]",
-    globalBg: "bg-[#f3f7f4] text-emerald-955 font-sans min-h-screen",
+    globalBg: "bg-[#f3f7f4] text-emerald-955 font-sans min-h-full min-h-[100dvh]",
     headerBgClass: "bg-emerald-50/90 backdrop-blur-md border-b border-emerald-600/10",
     headerTextClass: "text-emerald-800 font-bold",
     footerBgClass: "bg-emerald-50/50 border-t border-emerald-600/15 text-emerald-800/60"
@@ -761,7 +761,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     wordPronunciationText: "text-emerald-100 font-bold",
     btnHintQuiz: "border border-dashed border-white/20 text-yellow-300 bg-white/5 hover:bg-white/10",
     hintModalBg: "bg-[#163024] border border-white/20 text-slate-100 rounded-[8px] shadow-[0_8px_20px_rgba(0,0,0,0.4)] font-mono",
-    globalBg: "bg-[#0b2415] text-slate-100 font-sans min-h-screen",
+    globalBg: "bg-[#0b2415] text-slate-100 font-sans min-h-full min-h-[100dvh]",
     headerBgClass: "bg-black/25 border-b border-white/10",
     headerTextClass: "text-yellow-400 font-bold",
     footerBgClass: "bg-black/25 border-t border-white/10 text-slate-350/70"
@@ -887,7 +887,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     wordPronunciationText: "text-rose-850 font-bold",
     btnHintQuiz: "border border-dashed border-rose-200 text-rose-600 bg-rose-50/50 hover:bg-rose-50",
     hintModalBg: "bg-white/95 border-rose-200/80 text-rose-800 rounded-xl shadow-[0_10px_30px_rgba(244,63,94,0.15)]",
-    globalBg: "bg-gradient-to-tr from-[#fff1f2] via-[#fff5f6] to-[#fffbeb] text-rose-950 min-h-screen selection:bg-rose-200",
+    globalBg: "bg-gradient-to-tr from-[#fff1f2] via-[#fff5f6] to-[#fffbeb] text-rose-950 min-h-full min-h-[100dvh] selection:bg-rose-200",
     headerBgClass: "bg-white/80 border-b border-rose-200/50 backdrop-blur-md",
     headerTextClass: "text-rose-900 font-bold",
     footerBgClass: "bg-white border-t border-rose-100 text-rose-450"
@@ -1013,7 +1013,7 @@ export const THEME_CONFIGS: Record<string, ThemeConfig> = {
     wordPronunciationText: "text-amber-300 font-bold",
     btnHintQuiz: "border border-dashed border-amber-500/30 text-amber-400 bg-amber-500/5 hover:bg-amber-500/10",
     hintModalBg: "bg-stone-950 border-amber-500/30 text-stone-200 rounded-xl shadow-[0_10px_35px_rgba(245,158,11,0.1)]",
-    globalBg: "bg-[#0c0a09] text-stone-200 min-h-screen",
+    globalBg: "bg-[#0c0a09] text-stone-200 min-h-full min-h-[100dvh]",
     headerBgClass: "bg-[#1c1917]/90 border-b border-amber-500/20 backdrop-blur-md",
     headerTextClass: "text-amber-400 font-bold font-display",
     footerBgClass: "bg-[#120f0e] border-t border-stone-900 text-stone-500"

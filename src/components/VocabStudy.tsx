@@ -58,7 +58,7 @@ export function VocabStudy({
         theme={theme}
       />
 
-      <div className={`${theme.cardContainer} overflow-hidden relative ${currentTheme === 'golden_aura' ? 'golden-aura-card-glow' : ''}`}>
+      <div className={`${theme.cardContainer} overflow-hidden relative flex flex-col h-[calc(100dvh-150px)] sm:h-auto ${currentTheme === 'golden_aura' ? 'golden-aura-card-glow' : ''}`}>
         {/* 테마별 배경 특수 시각 효과 */}
         <ThemeParticles theme={currentTheme} />
 
@@ -69,7 +69,7 @@ export function VocabStudy({
           theme={theme}
         />
 
-        <div className="p-5 sm:p-6 space-y-5">
+        <div className="p-5 sm:p-6 space-y-5 flex-1 overflow-y-auto sm:overflow-y-visible">
           {/* 주요 콘텐츠 격자(Grid) 배치 레이아웃 */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
             {/* 3. 좌측 메인 단어 비주얼 패널 */}
